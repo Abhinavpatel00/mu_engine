@@ -300,7 +300,7 @@ VoxelMaterial voxel_materials[VOXEL_COUNT] =
 [PINK_WOOL] = { .face_tex = CUBE("data/block/pink_wool.png"), .debug_name = "PINK_WOOL" },
 [PURPLE_WOOL] = { .face_tex = CUBE("data/block/purple_wool.png"), .debug_name = "PURPLE_WOOL" },
 [RED_WOOL] = { .face_tex = CUBE("data/block/red_wool.png"), .debug_name = "RED_WOOL" },
-[SILVER_WOOL] = { .face_tex = CUBE("data/block/silver_wool.png"), .debug_name = "SILVER_WOOL" },
+[SILVER_WOOL] = { .face_tex = CUBE("data/block/light_gray_wool.png"), .debug_name = "SILVER_WOOL" },
 [WHITE_WOOL] = { .face_tex = CUBE("data/block/white_wool.png"), .debug_name = "WHITE_WOOL" },
 [YELLOW_WOOL] = { .face_tex = CUBE("data/block/yellow_wool.png"), .debug_name = "YELLOW_WOOL" },
 
@@ -317,7 +317,7 @@ VoxelMaterial voxel_materials[VOXEL_COUNT] =
 [PINK_TERRACOTTA] = { .face_tex = CUBE("data/block/pink_terracotta.png"), .debug_name = "PINK_TERRACOTTA" },
 [PURPLE_TERRACOTTA] = { .face_tex = CUBE("data/block/purple_terracotta.png"), .debug_name = "PURPLE_TERRACOTTA" },
 [RED_TERRACOTTA] = { .face_tex = CUBE("data/block/red_terracotta.png"), .debug_name = "RED_TERRACOTTA" },
-[SILVER_TERRACOTTA] = { .face_tex = CUBE("data/block/silver_terracotta.png"), .debug_name = "SILVER_TERRACOTTA" },
+[SILVER_TERRACOTTA] = { .face_tex = CUBE("data/block/light_gray_terracotta.png"), .debug_name = "SILVER_TERRACOTTA" },
 [WHITE_TERRACOTTA] = { .face_tex = CUBE("data/block/white_terracotta.png"), .debug_name = "WHITE_TERRACOTTA" },
 [YELLOW_TERRACOTTA] = { .face_tex = CUBE("data/block/yellow_terracotta.png"), .debug_name = "YELLOW_TERRACOTTA" },
 

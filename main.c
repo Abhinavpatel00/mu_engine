@@ -21,7 +21,17 @@
 #define GB(x) ((x) * 1024ULL * 1024ULL * 1024ULL)
 #define PAD(name, size) uint8_t name[(size)]
 // imp gpu validation shows false positives may be bacause of data races
+typedef struct
+{
+    vec3 position;
+    float radius;
 
+    vec3 direction;
+    float angle;
+
+    vec3 color;
+    float intensity;
+} SpotLight;
 
 static const VoxelType terrain_voxels[] = {
     STONE, GRASS, DIRT, SAND, GRAVEL, CLAY,
@@ -284,6 +294,21 @@ static TextureCacheEntry voxel_texture_cache[MAX_TEXTURES];
 uint32_t                 voxel_texture_cache_count = 0;
 
 static TextureID block_textures[VOXEL_COUNT][6];
+static bool      block_texture_resolved[VOXEL_COUNT][6];
+static TextureID block_texture_fallback = UINT32_MAX;
+
+typedef struct
+{
+    bool     active;
+    int      center_chunk_x;
+    int      center_chunk_z;
+    uint32_t next_chunk_index;
+    ChunkMesh mesh;
+} StreamBuildState;
+
+static void generate_chunk_wfc(Chunk* chunk, int chunk_x, int chunk_z);
+void        append_chunk_mesh(Renderer* r, Chunk* chunk, ChunkMesh* mesh, int rel_chunk_x, int rel_chunk_z);
+
 TextureID        get_texture(Renderer* r, const char* path)
 {
     for(uint32_t i = 0; i < voxel_texture_cache_count; i++)
@@ -301,38 +326,99 @@ TextureID        get_texture(Renderer* r, const char* path)
 
 void init_block_textures(Renderer* r)
 {
-    TextureID fallback = get_texture(r, "data/dummy_texture.png");
+    block_texture_fallback = get_texture(r, "data/dummy_texture.png");
 
     for(int b = 0; b < VOXEL_COUNT; b++)
     {
         for(int f = 0; f < 6; f++)
         {
-            block_textures[b][f] = fallback;
+            block_textures[b][f]        = block_texture_fallback;
+            block_texture_resolved[b][f] = false;
         }
     }
+}
 
-    for(int b = 0; b < VOXEL_COUNT; b++)
+static inline TextureID resolve_block_texture(Renderer* r, VoxelType type, FaceDir face)
+{
+    if(block_texture_resolved[type][face])
+        return block_textures[type][face];
+
+    block_texture_resolved[type][face] = true;
+
+    const char* path = voxel_materials[type].face_tex[face];
+    if(path)
     {
-        for(int f = 0; f < 6; f++)
+        TextureID id = get_texture(r, path);
+        if(id != UINT32_MAX)
         {
-            const char* path = voxel_materials[b].face_tex[f];
-
-            if(path)
-                block_textures[b][f] = get_texture(r, path);
+            block_textures[type][face] = id;
+            return id;
         }
     }
+
+    block_textures[type][face] = block_texture_fallback;
+    return block_texture_fallback;
+}
+
+static void stream_build_begin(StreamBuildState* state, int center_chunk_x, int center_chunk_z)
+{
+    state->active           = true;
+    state->center_chunk_x   = center_chunk_x;
+    state->center_chunk_z   = center_chunk_z;
+    state->next_chunk_index = 0;
+    state->mesh.face_count  = 0;
+}
+
+static bool stream_build_step(Renderer* r, StreamBuildState* state, Chunk* scratch_chunk, uint32_t chunk_budget)
+{
+    if(!state->active)
+        return true;
+
+    const int diameter = STREAM_CHUNK_DIAMETER;
+
+    for(uint32_t i = 0; i < chunk_budget; i++)
+    {
+        if(state->next_chunk_index >= STREAM_CHUNK_COUNT)
+        {
+            state->active = false;
+            return true;
+        }
+
+        uint32_t index = state->next_chunk_index++;
+
+        int dx = (int)(index % (uint32_t)diameter) - STREAM_CHUNK_RADIUS;
+        int dz = (int)(index / (uint32_t)diameter) - STREAM_CHUNK_RADIUS;
+
+        int world_cx = state->center_chunk_x + dx;
+        int world_cz = state->center_chunk_z + dz;
+
+        generate_chunk_wfc(scratch_chunk, world_cx, world_cz);
+        append_chunk_mesh(r, scratch_chunk, &state->mesh, dx, dz);
+    }
+
+    return false;
 }
 
 void build_debug_voxel_palette(Chunk* chunk)
 {
     memset(chunk, 0, sizeof(*chunk));
 
+    const int step          = 2;
+    const int cells_per_axis = CHUNK_SIZE / step;
+    const int cells_per_layer = cells_per_axis * cells_per_axis;
 
     for(int t = 1; t < VOXEL_COUNT; t++)
     {
-        int x = x + 2;
+        int slot = t - 1;
 
-        chunk->voxels[x][0][0].type = (VoxelType)t;
+        int x = (slot % cells_per_axis) * step;
+        int z = ((slot / cells_per_axis) % cells_per_axis) * step;
+        int y = (slot / cells_per_layer) * step;
+
+        if(y >= CHUNK_SIZE)
+            break;
+
+        chunk->voxels[x][y][z].type = (VoxelType)t;
     }
 }
 
@@ -608,7 +694,7 @@ static inline void emit_face(ChunkMesh* mesh, PackedFace face)
         mesh->faces[mesh->face_count++] = face;
 }
 
-void append_chunk_mesh(Chunk* chunk, ChunkMesh* mesh, int rel_chunk_x, int rel_chunk_z)
+void append_chunk_mesh(Renderer* r, Chunk* chunk, ChunkMesh* mesh, int rel_chunk_x, int rel_chunk_z)
 {
     for(int x = 0; x < CHUNK_SIZE; x++)
         for(int y = 0; y < CHUNK_SIZE; y++)
@@ -620,26 +706,32 @@ void append_chunk_mesh(Chunk* chunk, ChunkMesh* mesh, int rel_chunk_x, int rel_c
                     continue;
 
                 if(is_air(chunk, x + 1, y, z))
-                    emit_face(mesh, pack_face(x, y, z, FACE_POS_X, block_textures[v.type][FACE_POS_X], rel_chunk_x, rel_chunk_z));
+                    emit_face(mesh,
+                              pack_face(x, y, z, FACE_POS_X, resolve_block_texture(r, v.type, FACE_POS_X), rel_chunk_x, rel_chunk_z));
 
                 if(is_air(chunk, x - 1, y, z))
-                    emit_face(mesh, pack_face(x, y, z, FACE_NEG_X, block_textures[v.type][FACE_NEG_X], rel_chunk_x, rel_chunk_z));
+                    emit_face(mesh,
+                              pack_face(x, y, z, FACE_NEG_X, resolve_block_texture(r, v.type, FACE_NEG_X), rel_chunk_x, rel_chunk_z));
 
                 if(is_air(chunk, x, y + 1, z))
-                    emit_face(mesh, pack_face(x, y, z, FACE_POS_Y, block_textures[v.type][FACE_POS_Y], rel_chunk_x, rel_chunk_z));
+                    emit_face(mesh,
+                              pack_face(x, y, z, FACE_POS_Y, resolve_block_texture(r, v.type, FACE_POS_Y), rel_chunk_x, rel_chunk_z));
 
                 if(is_air(chunk, x, y - 1, z))
-                    emit_face(mesh, pack_face(x, y, z, FACE_NEG_Y, block_textures[v.type][FACE_NEG_Y], rel_chunk_x, rel_chunk_z));
+                    emit_face(mesh,
+                              pack_face(x, y, z, FACE_NEG_Y, resolve_block_texture(r, v.type, FACE_NEG_Y), rel_chunk_x, rel_chunk_z));
 
                 if(is_air(chunk, x, y, z + 1))
-                    emit_face(mesh, pack_face(x, y, z, FACE_POS_Z, block_textures[v.type][FACE_POS_Z], rel_chunk_x, rel_chunk_z));
+                    emit_face(mesh,
+                              pack_face(x, y, z, FACE_POS_Z, resolve_block_texture(r, v.type, FACE_POS_Z), rel_chunk_x, rel_chunk_z));
 
                 if(is_air(chunk, x, y, z - 1))
-                    emit_face(mesh, pack_face(x, y, z, FACE_NEG_Z, block_textures[v.type][FACE_NEG_Z], rel_chunk_x, rel_chunk_z));
+                    emit_face(mesh,
+                              pack_face(x, y, z, FACE_NEG_Z, resolve_block_texture(r, v.type, FACE_NEG_Z), rel_chunk_x, rel_chunk_z));
             }
 }
 
-void rebuild_streamed_world_mesh(Chunk* scratch_chunk, ChunkMesh* mesh, int center_chunk_x, int center_chunk_z)
+void rebuild_streamed_world_mesh(Renderer* r, Chunk* scratch_chunk, ChunkMesh* mesh, int center_chunk_x, int center_chunk_z)
 {
     mesh->face_count = 0;
 
@@ -650,7 +742,7 @@ void rebuild_streamed_world_mesh(Chunk* scratch_chunk, ChunkMesh* mesh, int cent
             int world_cz = center_chunk_z + dz;
 
             generate_chunk_wfc(scratch_chunk, world_cx, world_cz);
-            append_chunk_mesh(scratch_chunk, mesh, dx, dz);
+            append_chunk_mesh(r, scratch_chunk, mesh, dx, dz);
         }
 
     if(mesh->face_count >= mesh->capacity)
@@ -771,16 +863,6 @@ int main()
 
     VkBufferDeviceAddressInfo addrInfo = {.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO, .buffer = pool.buffer};
     TextureID         tex_id = load_texture(&renderer, "/home/lk/myprojects/flowgame/data/PNG/Tiles/greystone.png");
-    SamplerCreateDesc desc   = {.mag_filter = VK_FILTER_LINEAR,
-                                .min_filter = VK_FILTER_LINEAR,
-
-                                .address_u   = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                .address_v   = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                .address_w   = VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                .mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-                                .max_lod     = 1.0f};
-
-    SamplerID   linear_sampler = create_sampler(&renderer, &desc);
     BufferSlice indirect_slice = buffer_pool_alloc(&pool, sizeof(VkDrawIndirectCommand), 16);
     BufferSlice count_slice    = buffer_pool_alloc(&pool, sizeof(uint32_t), 4);
 
@@ -795,17 +877,26 @@ int main()
     mesh.capacity   = MAX_STREAM_FACES;
     mesh.face_count = 0;
 
+    StreamBuildState stream_build = {
+        .active = false,
+        .mesh = {
+            .faces      = malloc(sizeof(PackedFace) * MAX_STREAM_FACES),
+            .capacity   = MAX_STREAM_FACES,
+            .face_count = 0,
+        },
+    };
+
     int world_chunk_x = 0;
     int world_chunk_z = 0;
 
     if(voxel_debug)
     {
         build_debug_voxel_palette(&scratch_chunk);
-        append_chunk_mesh(&scratch_chunk, &mesh, 0, 0);
+        append_chunk_mesh(&renderer, &scratch_chunk, &mesh, 0, 0);
     }
     else
     {
-        rebuild_streamed_world_mesh(&scratch_chunk, &mesh, world_chunk_x, world_chunk_z);
+        stream_build_begin(&stream_build, world_chunk_x, world_chunk_z);
     }
 
     printf("voxel debug: face_count=%u\n", mesh.face_count);
@@ -922,14 +1013,27 @@ int main()
                 cam.position[0] -= (float)(new_world_chunk_x * CHUNK_SIZE);
                 cam.position[2] -= (float)(new_world_chunk_z * CHUNK_SIZE);
 
-                rebuild_streamed_world_mesh(&scratch_chunk, &mesh, world_chunk_x, world_chunk_z);
+                stream_build_begin(&stream_build, world_chunk_x, world_chunk_z);
+                printf("streaming queued center=(%d,%d)\n", world_chunk_x, world_chunk_z);
+            }
 
-                memcpy(cpu_faces, mesh.faces, sizeof(PackedFace) * mesh.face_count);
-                vmaFlushAllocation(renderer.vmaallocator, pool.allocation, face_slice.offset, sizeof(PackedFace) * mesh.face_count);
+            if(stream_build.active)
+            {
+                if(stream_build_step(&renderer, &stream_build, &scratch_chunk, 2))
+                {
+                    PackedFace* old_faces      = mesh.faces;
+                    mesh.faces                 = stream_build.mesh.faces;
+                    stream_build.mesh.faces    = old_faces;
+                    mesh.face_count            = stream_build.mesh.face_count;
+                    stream_build.mesh.face_count = 0;
 
-                cpu_indirect[0].vertexCount = mesh.face_count * 6;
+                    memcpy(cpu_faces, mesh.faces, sizeof(PackedFace) * mesh.face_count);
+                    vmaFlushAllocation(renderer.vmaallocator, pool.allocation, face_slice.offset, sizeof(PackedFace) * mesh.face_count);
 
-                printf("streamed chunks center=(%d,%d) faces=%u\n", world_chunk_x, world_chunk_z, mesh.face_count);
+                    cpu_indirect[0].vertexCount = mesh.face_count * 6;
+
+                    printf("streamed chunks center=(%d,%d) faces=%u\n", world_chunk_x, world_chunk_z, mesh.face_count);
+                }
             }
         }
 
@@ -1045,8 +1149,8 @@ int main()
                 push.face_ptr   = face_ptr;
                 push.face_count = mesh.face_count;
                 push.texture_id = tex_id;
-                push.sampler_id = linear_sampler;
 
+            push.sampler_id = renderer.default_samplers.samplers[SAMPLER_LINEAR_CLAMP];
 
                 glm_mat4_copy(cam.view_proj, push.view_proj);
 
@@ -1072,7 +1176,7 @@ int main()
             PostPush pp_push        = {0};
             pp_push.src_texture_id  = renderer.hdr_color[renderer.swapchain.current_image].bindless_index;
             pp_push.output_image_id = renderer.ldr_color[renderer.swapchain.current_image].bindless_index;
-            pp_push.sampler_id      = linear_sampler;
+            pp_push.sampler_id      =  renderer.default_samplers.samplers[SAMPLER_LINEAR_CLAMP];
             pp_push.width           = renderer.swapchain.extent.width;
             pp_push.height          = renderer.swapchain.extent.height;
             pp_push.frame           = pp_frame_counter++;
