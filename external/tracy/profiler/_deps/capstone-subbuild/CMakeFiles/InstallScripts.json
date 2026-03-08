@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/lk/vkutils/newestvkutil/external/tracy/profiler/_deps/capstone-subbuild/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

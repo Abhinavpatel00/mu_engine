@@ -1,0 +1,349 @@
+HDR render target   VK_FORMAT_R16G16B16A16_SFLOAT;
+        ↓
+Compute shader (this)
+        ↓
+LDR texture UNORM
+        ↓
+Copy → swapchain UNORM
+        ↓
+Present
+
+
+Load SRGB images w/ VK_FORMAT_R8G8B8A8_SRGB
+Load LINEAR images w/ VK_FORMAT_R8G8B8A8_UNORM
+
+
+
+
+
+
+
+
+
+
+
+renderer_create
+    create bindless layout
+    create bindless pool
+    allocate bindless set
+    create global pipeline layout
+
+Design decision:
+    We use a single descriptor set layout and a single pipeline layout for all pipelines.
+    This keeps the bindless renderer simple and avoids per-pipeline layout churn.
+
+    New buffers are suballocated from larger GPU buffers.
+    We pass offsets via push constants and use an offset allocator to manage ranges.
+
+create pipelines using global layout
+
+per frame:
+    bind descriptor set ONCE
+
+per draw:
+    push constants
+    bind pipeline
+    draw
+
+GPU pulls everything
+Instead of:
+
+bind descriptor set
+bind vertex buffer
+draw
+
+You do:
+
+push GPU address
+draw
+
+maxPushConstantsSize = 256 bytes
+That’s the Vulkan-guaranteed fast path. This memory lives in register space or extremely fast constant cache, not VRAM.
+
+When you call:
+
+vkCmdPushConstants(cmd, layout, stageFlags, 0, 256, data);
+This does NOT:
+
+• allocate memory
+• touch VRAM
+• stall GPU
+• use descriptor memory
+
+It just copies 256 bytes into command buffer state.
+
+This is basically free.
+
+ven 10,000 draws per frame is fine
+
+Worst case math:
+
+256 bytes × 10,000 draws = 2.5 MB per frame
+
+
+At 60 FPS:
+
+2.5 MB × 60 = 150 MB/sec
+
+
+Modern CPUs handle 30–50 GB/sec memory bandwidth.
+
+This is nothing.
+
+
+then we dont neeeed pipeline cache and descriptor cache fucck yyaaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhh
+
+
+Opaque resources are things like textures and samplers – they have no memory address you can directly compute; they are “handles” to fixed‑function hardware. Descriptor sets are perfect for those because the hardware needs that opaque handle.
+
+Non‑opaque resources – like buffers containing arbitrary data – are just chunks of memory. In theory, you could access them via a raw pointer if you knew the GPU’s virtual address. That’s where buffer device addresses come in.
+
+Use buffer device address for:
+
+vertex buffers
+index buffers
+transforms
+materials
+instance data
+scene data
+
+
+Use descriptors for:
+
+textures
+samplers
+storage images
+
+An SSBO (Shader Storage Buffer Object) in Vulkan is essentially a buffer that you access via a descriptor set. Under the hood, the GPU driver will also give you a memory address, but you don’t see it directly – you use GLSL’s buffer block syntax. The driver handles the translation.
+
+When you use BDA, you skip the descriptor layer. You ask the driver for the raw address (vkGetBufferDeviceAddress) and then you manually pass that address to the shader. The shader then casts that integer to a pointer type (using the GL_EXT_buffer_reference extension) and dereferences it.
+
+Advantages of BDA over SSBOs:
+
+Fewer descriptor sets: You don’t need to update or bind descriptors for every buffer you access.
+
+Flexibility: You can build complex data structures in memory (linked lists, trees) and navigate them with pointers, just like in CPU code.
+
+Potentially lower overhead: No indirection through descriptor tables (though the difference may be small on modern hardware)
+
+
+ a uniform buffer is declared as uniform and has a fixed size. On NVIDIA hardware, uniform buffers are implemented using constant memory. Constant memory is a special region of GPU memory that is aggressively cached (it uses a dedicated cache). Because of this caching, accessing data from a uniform buffer can be very fast – if the data is read uniformly across many threads (i.e., all threads in a warp access the same address).
+
+However, constant memory has severe limitations:
+
+Size limit: Typically 64 KB total per GPU (or less). You cannot have large arrays in uniform buffers.
+
+No dynamic indexing into arrays unless the index is uniform across the warp.
+
+If you exceed the cache size, performance plummets because data gets evicted.
+
+
+For very small, frequently accessed, and uniformly read data, uniform buffers can indeed be faster because they hit the constant cache.
+
+But if you try to store per‑instance data for thousands of instances in a uniform buffer, you will either:
+
+Run out of space (max 64 KB, which holds maybe 1024 vec4 values at most).
+
+Thrash the cache if you try to cycle through different instances, because the constant cache is small.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GPU
+ └── Compute Units (SM / CU)
+      └── Workgroups
+           └── Warps / Wavefronts
+                └── Lanes (threads)
+
+Lane = one thread (smallest unit)
+
+A lane is literally one execution thread on the GPU.
+
+It executes:
+
+one shader invocation
+one compute invocation
+one vertex shader invocation
+one fragment shader invocation
+
+
+Example compute shader:
+
+layout(local_size_x = 64) in;
+
+void main()
+{
+    uint id = gl_GlobalInvocationID.x;
+}
+
+
+If you dispatch:
+
+vkCmdDispatch(cmd, 1024, 1, 1);
+
+
+You create:
+
+1024 lanes (threads)
+
+
+Each lane runs independently.
+
+Think of lane as:
+
+lane = 1 worker
+
+
+
+
+GPUs do NOT execute lanes individually.
+
+They execute groups.
+
+These groups are called:
+
+Vendor	Name
+NVIDIA	Warp (32 lanes)
+AMD	Wavefront (64 lanes)
+Intel	Subgroup (8–32 lanes)
+
+Example:
+
+NVIDIA warp:
+
+32 lanes execute same instruction simultaneously
+
+
+This is called:
+
+SIMD = Single Instruction Multiple Data
+
+
+Example:
+
+lane 0: result = a[0] * b[0]
+lane 1: result = a[1] * b[1]
+lane 2: result = a[2] * b[2]
+...
+lane 31
+
+
+All execute SAME instruction at same time.
+
+Different data.
+
+
+
+Workgroup = group of warps
+
+Workgroup is what YOU define in compute shader:
+
+layout(local_size_x = 128) in;
+
+
+This means:
+
+workgroup = 128 lanes
+
+
+Hardware splits it into warps:
+
+NVIDIA:
+
+128 lanes = 4 warps (32 lanes each)
+
+
+AMD:
+
+128 lanes = 2 wavefronts (64 lanes each)
+
+
+Workgroup is important because:
+
+• lanes inside workgroup can share memory
+• lanes can synchronize
+• workgroups run independently
+
+Example:
+
+shared float cache[128];
+
+
+This is shared within workgroup.
+
+Not global.
+
+
+
+GPU = factory
+SM = department
+Workgroup = team
+Warp = squad
+Lane = worker
+
+Factory
+ ├── Department
+ │    ├── Team
+ │    │    ├── Squad
+ │    │    │    ├── Worker
+ │    │    │    ├── Worker
+ │    │    │    ├── Worker
+
+
+
+Lane = single worker
+Warp = squad executing same instruction
+Workgroup = team sharing memory
+SM = execution core
+GPU = army of SMs
+
+
+
+
+
+
+
+
+
+
+HDR scene
+↓
+tonemap
+↓
+SMAA edge detect
+↓
+SMAA blend weight
+↓
+SMAA neighborhood blend
+↓
+swapchain
+
+
+
+

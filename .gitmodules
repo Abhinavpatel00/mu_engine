@@ -1,0 +1,15 @@
+[submodule "external/simde"]
+	path = external/simde
+	url = https://github.com/simd-everywhere/simde
+[submodule "external/libalgebra"]
+	path = external/libalgebra
+	url = https://github.com/mklarqvist/libalgebra.git
+[submodule "external/FastNoiseLite"]
+	path = external/FastNoiseLite
+	url = https://github.com/Auburn/FastNoiseLite.git
+[submodule "external/debugbreak"]
+	path = external/debugbreak
+	url = https://github.com/scottt/debugbreak.git
+[submodule "external/dmon"]
+	path = external/dmon
+	url = https://github.com/septag/dmon.git

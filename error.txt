@@ -1,0 +1,66 @@
+Compiling C main.c
+clang -std=gnu99  -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wdouble-promotion -Wformat=2 -Wundef -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition -Wno-unused-parameter     -fsanitize=undefined      -O0 -g -ggdb -fno-omit-frame-pointer -c main.c -o build/main.o
+Compiling C ext.c
+clang -std=gnu99  -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wdouble-promotion -Wformat=2 -Wundef -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition -Wno-unused-parameter     -fsanitize=undefined      -O0 -g -ggdb -fno-omit-frame-pointer -c ext.c -o build/ext.o
+Compiling C vk.c
+clang -std=gnu99  -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wdouble-promotion -Wformat=2 -Wundef -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition -Wno-unused-parameter     -fsanitize=undefined      -O0 -g -ggdb -fno-omit-frame-pointer -c vk.c -o build/vk.o
+Compiling C helpers.c
+clang -std=gnu99  -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wdouble-promotion -Wformat=2 -Wundef -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition -Wno-unused-parameter     -fsanitize=undefined      -O0 -g -ggdb -fno-omit-frame-pointer -c helpers.c -o build/helpers.o
+Compiling C offset_allocator.c
+clang -std=gnu99  -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Wdouble-promotion -Wformat=2 -Wundef -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition -Wno-unused-parameter     -fsanitize=undefined      -O0 -g -ggdb -fno-omit-frame-pointer -c offset_allocator.c -o build/offset_allocator.o
+Compiling C++ vma.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c vma.cpp -o build/vma.o
+Compiling C++ external/meshoptimizer/src/allocator.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/allocator.cpp -o build/external/meshoptimizer/src/allocator.o
+Compiling C++ external/meshoptimizer/src/clusterizer.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/clusterizer.cpp -o build/external/meshoptimizer/src/clusterizer.o
+Compiling C++ external/meshoptimizer/src/indexanalyzer.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/indexanalyzer.cpp -o build/external/meshoptimizer/src/indexanalyzer.o
+Compiling C++ external/meshoptimizer/src/indexcodec.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/indexcodec.cpp -o build/external/meshoptimizer/src/indexcodec.o
+Compiling C++ external/meshoptimizer/src/indexgenerator.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/indexgenerator.cpp -o build/external/meshoptimizer/src/indexgenerator.o
+Compiling C++ external/meshoptimizer/src/meshletcodec.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/meshletcodec.cpp -o build/external/meshoptimizer/src/meshletcodec.o
+Compiling C++ external/meshoptimizer/src/overdrawoptimizer.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/overdrawoptimizer.cpp -o build/external/meshoptimizer/src/overdrawoptimizer.o
+Compiling C++ external/meshoptimizer/src/partition.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/partition.cpp -o build/external/meshoptimizer/src/partition.o
+Compiling C++ external/meshoptimizer/src/quantization.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/quantization.cpp -o build/external/meshoptimizer/src/quantization.o
+Compiling C++ external/meshoptimizer/src/rasterizer.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/rasterizer.cpp -o build/external/meshoptimizer/src/rasterizer.o
+Compiling C++ external/meshoptimizer/src/simplifier.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/simplifier.cpp -o build/external/meshoptimizer/src/simplifier.o
+Compiling C++ external/meshoptimizer/src/spatialorder.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/spatialorder.cpp -o build/external/meshoptimizer/src/spatialorder.o
+Compiling C++ external/meshoptimizer/src/stripifier.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/stripifier.cpp -o build/external/meshoptimizer/src/stripifier.o
+Compiling C++ external/meshoptimizer/src/vcacheoptimizer.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/vcacheoptimizer.cpp -o build/external/meshoptimizer/src/vcacheoptimizer.o
+Compiling C++ external/meshoptimizer/src/vertexcodec.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/vertexcodec.cpp -o build/external/meshoptimizer/src/vertexcodec.o
+Compiling C++ external/meshoptimizer/src/vertexfilter.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/vertexfilter.cpp -o build/external/meshoptimizer/src/vertexfilter.o
+Compiling C++ external/meshoptimizer/src/vfetchoptimizer.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/meshoptimizer/src/vfetchoptimizer.cpp -o build/external/meshoptimizer/src/vfetchoptimizer.o
+Compiling C++ external/cimgui/cimgui.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/cimgui/cimgui.cpp -o build/external/cimgui/cimgui.o
+Compiling C++ external/cimgui/cimgui_impl.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/cimgui/cimgui_impl.cpp -o build/external/cimgui/cimgui_impl.o
+Compiling C++ external/cimgui/imgui/imgui.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/cimgui/imgui/imgui.cpp -o build/external/cimgui/imgui/imgui.o
+Compiling C++ external/cimgui/imgui/imgui_draw.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/cimgui/imgui/imgui_draw.cpp -o build/external/cimgui/imgui/imgui_draw.o
+Compiling C++ external/cimgui/imgui/imgui_demo.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/cimgui/imgui/imgui_demo.cpp -o build/external/cimgui/imgui/imgui_demo.o
+Compiling C++ external/cimgui/imgui/imgui_tables.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/cimgui/imgui/imgui_tables.cpp -o build/external/cimgui/imgui/imgui_tables.o
+Compiling C++ external/cimgui/imgui/imgui_widgets.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/cimgui/imgui/imgui_widgets.cpp -o build/external/cimgui/imgui/imgui_widgets.o
+Compiling C++ external/cimgui/imgui/backends/imgui_impl_glfw.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/cimgui/imgui/backends/imgui_impl_glfw.cpp -o build/external/cimgui/imgui/backends/imgui_impl_glfw.o
+Compiling C++ external/cimgui/imgui/backends/imgui_impl_vulkan.cpp
+clang++ -std=c++17 -w -fno-common -Iexternal/cimgui -Iexternal/cimgui/imgui -Iexternal/cimgui/imgui/backends -DIMGUI_IMPL_VULKAN_NO_PROTOTYPES -DIMGUI_IMPL_API='extern "C"' -O0 -g -ggdb -fno-omit-frame-pointer -c external/cimgui/imgui/backends/imgui_impl_vulkan.cpp -o build/external/cimgui/imgui/backends/imgui_impl_vulkan.o
+Linking build/app
+clang++  build/main.o build/ext.o build/vk.o build/helpers.o build/offset_allocator.o build/vma.o build/external/meshoptimizer/src/allocator.o build/external/meshoptimizer/src/clusterizer.o build/external/meshoptimizer/src/indexanalyzer.o build/external/meshoptimizer/src/indexcodec.o build/external/meshoptimizer/src/indexgenerator.o build/external/meshoptimizer/src/meshletcodec.o build/external/meshoptimizer/src/overdrawoptimizer.o build/external/meshoptimizer/src/partition.o build/external/meshoptimizer/src/quantization.o build/external/meshoptimizer/src/rasterizer.o build/external/meshoptimizer/src/simplifier.o build/external/meshoptimizer/src/spatialorder.o build/external/meshoptimizer/src/stripifier.o build/external/meshoptimizer/src/vcacheoptimizer.o build/external/meshoptimizer/src/vertexcodec.o build/external/meshoptimizer/src/vertexfilter.o build/external/meshoptimizer/src/vfetchoptimizer.o build/external/cimgui/cimgui.o build/external/cimgui/cimgui_impl.o build/external/cimgui/imgui/imgui.o build/external/cimgui/imgui/imgui_draw.o build/external/cimgui/imgui/imgui_demo.o build/external/cimgui/imgui/imgui_tables.o build/external/cimgui/imgui/imgui_widgets.o build/external/cimgui/imgui/backends/imgui_impl_glfw.o build/external/cimgui/imgui/backends/imgui_impl_vulkan.o -o build/app -lvulkan -lm -lglfw -lX11 -lXi -lXrandr -lXcursor -lXinerama -ldl -lpthread

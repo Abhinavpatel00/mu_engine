@@ -1,0 +1,3022 @@
+
+---
+events:
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineSystem.cmake:12 (find_program)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_UNAME"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "uname"
+    candidate_directories:
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/usr/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+      - "/bin/"
+    searched_directories:
+      - "/home/lk/go/bin/uname"
+      - "/home/lka/.npm-global/bin/uname"
+      - "/home/lka/.cargo/bin/uname"
+      - "/home/lka/.ghcup/bin/uname"
+      - "/home/lka/virtualenvpython/bin/uname"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/uname"
+      - "/home/lka/.emacs.d/bin/uname"
+      - "/home/lka/.nix-profile/bin/uname"
+      - "/nix/var/nix/profiles/default/bin/uname"
+      - "/home/lka/go/bin/uname"
+      - "/home/lka/.local/bin/uname"
+      - "/home/lk/.local/share/nvim/mason/bin/uname"
+      - "/usr/local/sbin/uname"
+      - "/usr/local/bin/uname"
+    found: "/usr/bin/uname"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineSystem.cmake:212 (message)"
+      - "CMakeLists.txt:15 (project)"
+    message: |
+      The system is: Linux - 6.18.5-arch1-1 - x86_64
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeUnixFindMake.cmake:5 (find_program)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_MAKE_PROGRAM"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "gmake"
+      - "make"
+      - "smake"
+    candidate_directories:
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/usr/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    searched_directories:
+      - "/home/lk/go/bin/gmake"
+      - "/home/lka/.npm-global/bin/gmake"
+      - "/home/lka/.cargo/bin/gmake"
+      - "/home/lka/.ghcup/bin/gmake"
+      - "/home/lka/virtualenvpython/bin/gmake"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gmake"
+      - "/home/lka/.emacs.d/bin/gmake"
+      - "/home/lka/.nix-profile/bin/gmake"
+      - "/nix/var/nix/profiles/default/bin/gmake"
+      - "/home/lka/go/bin/gmake"
+      - "/home/lka/.local/bin/gmake"
+      - "/home/lk/.local/share/nvim/mason/bin/gmake"
+      - "/usr/local/sbin/gmake"
+      - "/usr/local/bin/gmake"
+      - "/usr/bin/gmake"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gmake"
+      - "/opt/android-sdk/platform-tools/gmake"
+      - "/opt/android-sdk/tools/gmake"
+      - "/opt/android-sdk/tools/bin/gmake"
+      - "/usr/lib/jvm/default/bin/gmake"
+      - "/usr/bin/site_perl/gmake"
+      - "/usr/bin/vendor_perl/gmake"
+      - "/usr/bin/core_perl/gmake"
+      - "/usr/lib/rustup/bin/gmake"
+      - "/usr/lib/smlnj/bin/gmake"
+      - "/home/lk/.local/bin/gmake"
+      - "/home/lk/go/bin/make"
+      - "/home/lka/.npm-global/bin/make"
+      - "/home/lka/.cargo/bin/make"
+      - "/home/lka/.ghcup/bin/make"
+      - "/home/lka/virtualenvpython/bin/make"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/make"
+      - "/home/lka/.emacs.d/bin/make"
+      - "/home/lka/.nix-profile/bin/make"
+      - "/nix/var/nix/profiles/default/bin/make"
+      - "/home/lka/go/bin/make"
+      - "/home/lka/.local/bin/make"
+      - "/home/lk/.local/share/nvim/mason/bin/make"
+      - "/usr/local/sbin/make"
+      - "/usr/local/bin/make"
+    found: "/usr/bin/make"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineCompiler.cmake:73 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:64 (_cmake_find_compiler)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_C_COMPILER"
+    description: "C compiler"
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "cc"
+      - "gcc"
+      - "cl"
+      - "bcc"
+      - "xlc"
+      - "icx"
+      - "clang"
+    candidate_directories:
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/usr/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    searched_directories:
+      - "/home/lk/go/bin/cc"
+      - "/home/lka/.npm-global/bin/cc"
+      - "/home/lka/.cargo/bin/cc"
+      - "/home/lka/.ghcup/bin/cc"
+      - "/home/lka/virtualenvpython/bin/cc"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/cc"
+      - "/home/lka/.emacs.d/bin/cc"
+      - "/home/lka/.nix-profile/bin/cc"
+      - "/nix/var/nix/profiles/default/bin/cc"
+      - "/home/lka/go/bin/cc"
+      - "/home/lka/.local/bin/cc"
+      - "/home/lk/.local/share/nvim/mason/bin/cc"
+      - "/usr/local/sbin/cc"
+      - "/usr/local/bin/cc"
+    found: "/usr/bin/cc"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake:462 (find_file)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake:500 (CMAKE_DETERMINE_COMPILER_ID_WRITE)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake:8 (CMAKE_DETERMINE_COMPILER_ID_BUILD)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:122 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "file"
+    variable: "src_in"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "CMakeCCompilerId.c.in"
+    candidate_directories:
+      - "/usr/share/cmake/Modules/"
+    found: "/usr/share/cmake/Modules/CMakeCCompilerId.c.in"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:122 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:15 (project)"
+    message: |
+      Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+      Compiler: /usr/bin/cc 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+      
+      The C compiler identification is GNU, found in:
+        /home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/4.2.1/CompilerIdC/a.out
+      
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_AR"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "ar"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    found: "/usr/bin/ar"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_RANLIB"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "ranlib"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    found: "/usr/bin/ranlib"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_STRIP"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "strip"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    found: "/usr/bin/strip"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_LINKER"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "ld"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    found: "/usr/bin/ld"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_NM"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "nm"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    found: "/usr/bin/nm"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_OBJDUMP"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "objdump"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    found: "/usr/bin/objdump"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_OBJCOPY"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "objcopy"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    found: "/usr/bin/objcopy"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_READELF"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "readelf"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    found: "/usr/bin/readelf"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_DLLTOOL"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "dlltool"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    searched_directories:
+      - "/usr/bin/dlltool"
+      - "/home/lk/go/bin/dlltool"
+      - "/home/lka/.npm-global/bin/dlltool"
+      - "/home/lka/.cargo/bin/dlltool"
+      - "/home/lka/.ghcup/bin/dlltool"
+      - "/home/lka/virtualenvpython/bin/dlltool"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/dlltool"
+      - "/home/lka/.emacs.d/bin/dlltool"
+      - "/home/lka/.nix-profile/bin/dlltool"
+      - "/nix/var/nix/profiles/default/bin/dlltool"
+      - "/home/lka/go/bin/dlltool"
+      - "/home/lka/.local/bin/dlltool"
+      - "/home/lk/.local/share/nvim/mason/bin/dlltool"
+      - "/usr/local/sbin/dlltool"
+      - "/usr/local/bin/dlltool"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/dlltool"
+      - "/opt/android-sdk/platform-tools/dlltool"
+      - "/opt/android-sdk/tools/dlltool"
+      - "/opt/android-sdk/tools/bin/dlltool"
+      - "/usr/lib/jvm/default/bin/dlltool"
+      - "/usr/bin/site_perl/dlltool"
+      - "/usr/bin/vendor_perl/dlltool"
+      - "/usr/bin/core_perl/dlltool"
+      - "/usr/lib/rustup/bin/dlltool"
+      - "/usr/lib/smlnj/bin/dlltool"
+      - "/home/lk/.local/bin/dlltool"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_ADDR2LINE"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "addr2line"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    found: "/usr/bin/addr2line"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeFindBinUtils.cmake:243 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:200 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_TAPI"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "tapi"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    searched_directories:
+      - "/usr/bin/tapi"
+      - "/home/lk/go/bin/tapi"
+      - "/home/lka/.npm-global/bin/tapi"
+      - "/home/lka/.cargo/bin/tapi"
+      - "/home/lka/.ghcup/bin/tapi"
+      - "/home/lka/virtualenvpython/bin/tapi"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/tapi"
+      - "/home/lka/.emacs.d/bin/tapi"
+      - "/home/lka/.nix-profile/bin/tapi"
+      - "/nix/var/nix/profiles/default/bin/tapi"
+      - "/home/lka/go/bin/tapi"
+      - "/home/lka/.local/bin/tapi"
+      - "/home/lk/.local/share/nvim/mason/bin/tapi"
+      - "/usr/local/sbin/tapi"
+      - "/usr/local/bin/tapi"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/tapi"
+      - "/opt/android-sdk/platform-tools/tapi"
+      - "/opt/android-sdk/tools/tapi"
+      - "/opt/android-sdk/tools/bin/tapi"
+      - "/usr/lib/jvm/default/bin/tapi"
+      - "/usr/bin/site_perl/tapi"
+      - "/usr/bin/vendor_perl/tapi"
+      - "/usr/bin/core_perl/tapi"
+      - "/usr/lib/rustup/bin/tapi"
+      - "/usr/lib/smlnj/bin/tapi"
+      - "/home/lk/.local/bin/tapi"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/Compiler/GNU-FindBinUtils.cmake:18 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:201 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_C_COMPILER_AR"
+    description: "A wrapper around 'ar' adding the appropriate '--plugin' option for the GCC compiler"
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "gcc-ar-15.2"
+      - "gcc-ar-15"
+      - "gcc-ar15"
+      - "gcc-ar"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    searched_directories:
+      - "/usr/bin/gcc-ar-15.2"
+      - "/home/lk/go/bin/gcc-ar-15.2"
+      - "/home/lka/.npm-global/bin/gcc-ar-15.2"
+      - "/home/lka/.cargo/bin/gcc-ar-15.2"
+      - "/home/lka/.ghcup/bin/gcc-ar-15.2"
+      - "/home/lka/virtualenvpython/bin/gcc-ar-15.2"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gcc-ar-15.2"
+      - "/home/lka/.emacs.d/bin/gcc-ar-15.2"
+      - "/home/lka/.nix-profile/bin/gcc-ar-15.2"
+      - "/nix/var/nix/profiles/default/bin/gcc-ar-15.2"
+      - "/home/lka/go/bin/gcc-ar-15.2"
+      - "/home/lka/.local/bin/gcc-ar-15.2"
+      - "/home/lk/.local/share/nvim/mason/bin/gcc-ar-15.2"
+      - "/usr/local/sbin/gcc-ar-15.2"
+      - "/usr/local/bin/gcc-ar-15.2"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gcc-ar-15.2"
+      - "/opt/android-sdk/platform-tools/gcc-ar-15.2"
+      - "/opt/android-sdk/tools/gcc-ar-15.2"
+      - "/opt/android-sdk/tools/bin/gcc-ar-15.2"
+      - "/usr/lib/jvm/default/bin/gcc-ar-15.2"
+      - "/usr/bin/site_perl/gcc-ar-15.2"
+      - "/usr/bin/vendor_perl/gcc-ar-15.2"
+      - "/usr/bin/core_perl/gcc-ar-15.2"
+      - "/usr/lib/rustup/bin/gcc-ar-15.2"
+      - "/usr/lib/smlnj/bin/gcc-ar-15.2"
+      - "/home/lk/.local/bin/gcc-ar-15.2"
+      - "/usr/bin/gcc-ar-15"
+      - "/home/lk/go/bin/gcc-ar-15"
+      - "/home/lka/.npm-global/bin/gcc-ar-15"
+      - "/home/lka/.cargo/bin/gcc-ar-15"
+      - "/home/lka/.ghcup/bin/gcc-ar-15"
+      - "/home/lka/virtualenvpython/bin/gcc-ar-15"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gcc-ar-15"
+      - "/home/lka/.emacs.d/bin/gcc-ar-15"
+      - "/home/lka/.nix-profile/bin/gcc-ar-15"
+      - "/nix/var/nix/profiles/default/bin/gcc-ar-15"
+      - "/home/lka/go/bin/gcc-ar-15"
+      - "/home/lka/.local/bin/gcc-ar-15"
+      - "/home/lk/.local/share/nvim/mason/bin/gcc-ar-15"
+      - "/usr/local/sbin/gcc-ar-15"
+      - "/usr/local/bin/gcc-ar-15"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gcc-ar-15"
+      - "/opt/android-sdk/platform-tools/gcc-ar-15"
+      - "/opt/android-sdk/tools/gcc-ar-15"
+      - "/opt/android-sdk/tools/bin/gcc-ar-15"
+      - "/usr/lib/jvm/default/bin/gcc-ar-15"
+      - "/usr/bin/site_perl/gcc-ar-15"
+      - "/usr/bin/vendor_perl/gcc-ar-15"
+      - "/usr/bin/core_perl/gcc-ar-15"
+      - "/usr/lib/rustup/bin/gcc-ar-15"
+      - "/usr/lib/smlnj/bin/gcc-ar-15"
+      - "/home/lk/.local/bin/gcc-ar-15"
+      - "/usr/bin/gcc-ar15"
+      - "/home/lk/go/bin/gcc-ar15"
+      - "/home/lka/.npm-global/bin/gcc-ar15"
+      - "/home/lka/.cargo/bin/gcc-ar15"
+      - "/home/lka/.ghcup/bin/gcc-ar15"
+      - "/home/lka/virtualenvpython/bin/gcc-ar15"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gcc-ar15"
+      - "/home/lka/.emacs.d/bin/gcc-ar15"
+      - "/home/lka/.nix-profile/bin/gcc-ar15"
+      - "/nix/var/nix/profiles/default/bin/gcc-ar15"
+      - "/home/lka/go/bin/gcc-ar15"
+      - "/home/lka/.local/bin/gcc-ar15"
+      - "/home/lk/.local/share/nvim/mason/bin/gcc-ar15"
+      - "/usr/local/sbin/gcc-ar15"
+      - "/usr/local/bin/gcc-ar15"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gcc-ar15"
+      - "/opt/android-sdk/platform-tools/gcc-ar15"
+      - "/opt/android-sdk/tools/gcc-ar15"
+      - "/opt/android-sdk/tools/bin/gcc-ar15"
+      - "/usr/lib/jvm/default/bin/gcc-ar15"
+      - "/usr/bin/site_perl/gcc-ar15"
+      - "/usr/bin/vendor_perl/gcc-ar15"
+      - "/usr/bin/core_perl/gcc-ar15"
+      - "/usr/lib/rustup/bin/gcc-ar15"
+      - "/usr/lib/smlnj/bin/gcc-ar15"
+      - "/home/lk/.local/bin/gcc-ar15"
+    found: "/usr/bin/gcc-ar"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/Compiler/GNU-FindBinUtils.cmake:30 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCCompiler.cmake:201 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_C_COMPILER_RANLIB"
+    description: "A wrapper around 'ranlib' adding the appropriate '--plugin' option for the GCC compiler"
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "gcc-ranlib-15.2"
+      - "gcc-ranlib-15"
+      - "gcc-ranlib15"
+      - "gcc-ranlib"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    searched_directories:
+      - "/usr/bin/gcc-ranlib-15.2"
+      - "/home/lk/go/bin/gcc-ranlib-15.2"
+      - "/home/lka/.npm-global/bin/gcc-ranlib-15.2"
+      - "/home/lka/.cargo/bin/gcc-ranlib-15.2"
+      - "/home/lka/.ghcup/bin/gcc-ranlib-15.2"
+      - "/home/lka/virtualenvpython/bin/gcc-ranlib-15.2"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gcc-ranlib-15.2"
+      - "/home/lka/.emacs.d/bin/gcc-ranlib-15.2"
+      - "/home/lka/.nix-profile/bin/gcc-ranlib-15.2"
+      - "/nix/var/nix/profiles/default/bin/gcc-ranlib-15.2"
+      - "/home/lka/go/bin/gcc-ranlib-15.2"
+      - "/home/lka/.local/bin/gcc-ranlib-15.2"
+      - "/home/lk/.local/share/nvim/mason/bin/gcc-ranlib-15.2"
+      - "/usr/local/sbin/gcc-ranlib-15.2"
+      - "/usr/local/bin/gcc-ranlib-15.2"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gcc-ranlib-15.2"
+      - "/opt/android-sdk/platform-tools/gcc-ranlib-15.2"
+      - "/opt/android-sdk/tools/gcc-ranlib-15.2"
+      - "/opt/android-sdk/tools/bin/gcc-ranlib-15.2"
+      - "/usr/lib/jvm/default/bin/gcc-ranlib-15.2"
+      - "/usr/bin/site_perl/gcc-ranlib-15.2"
+      - "/usr/bin/vendor_perl/gcc-ranlib-15.2"
+      - "/usr/bin/core_perl/gcc-ranlib-15.2"
+      - "/usr/lib/rustup/bin/gcc-ranlib-15.2"
+      - "/usr/lib/smlnj/bin/gcc-ranlib-15.2"
+      - "/home/lk/.local/bin/gcc-ranlib-15.2"
+      - "/usr/bin/gcc-ranlib-15"
+      - "/home/lk/go/bin/gcc-ranlib-15"
+      - "/home/lka/.npm-global/bin/gcc-ranlib-15"
+      - "/home/lka/.cargo/bin/gcc-ranlib-15"
+      - "/home/lka/.ghcup/bin/gcc-ranlib-15"
+      - "/home/lka/virtualenvpython/bin/gcc-ranlib-15"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gcc-ranlib-15"
+      - "/home/lka/.emacs.d/bin/gcc-ranlib-15"
+      - "/home/lka/.nix-profile/bin/gcc-ranlib-15"
+      - "/nix/var/nix/profiles/default/bin/gcc-ranlib-15"
+      - "/home/lka/go/bin/gcc-ranlib-15"
+      - "/home/lka/.local/bin/gcc-ranlib-15"
+      - "/home/lk/.local/share/nvim/mason/bin/gcc-ranlib-15"
+      - "/usr/local/sbin/gcc-ranlib-15"
+      - "/usr/local/bin/gcc-ranlib-15"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gcc-ranlib-15"
+      - "/opt/android-sdk/platform-tools/gcc-ranlib-15"
+      - "/opt/android-sdk/tools/gcc-ranlib-15"
+      - "/opt/android-sdk/tools/bin/gcc-ranlib-15"
+      - "/usr/lib/jvm/default/bin/gcc-ranlib-15"
+      - "/usr/bin/site_perl/gcc-ranlib-15"
+      - "/usr/bin/vendor_perl/gcc-ranlib-15"
+      - "/usr/bin/core_perl/gcc-ranlib-15"
+      - "/usr/lib/rustup/bin/gcc-ranlib-15"
+      - "/usr/lib/smlnj/bin/gcc-ranlib-15"
+      - "/home/lk/.local/bin/gcc-ranlib-15"
+      - "/usr/bin/gcc-ranlib15"
+      - "/home/lk/go/bin/gcc-ranlib15"
+      - "/home/lka/.npm-global/bin/gcc-ranlib15"
+      - "/home/lka/.cargo/bin/gcc-ranlib15"
+      - "/home/lka/.ghcup/bin/gcc-ranlib15"
+      - "/home/lka/virtualenvpython/bin/gcc-ranlib15"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gcc-ranlib15"
+      - "/home/lka/.emacs.d/bin/gcc-ranlib15"
+      - "/home/lka/.nix-profile/bin/gcc-ranlib15"
+      - "/nix/var/nix/profiles/default/bin/gcc-ranlib15"
+      - "/home/lka/go/bin/gcc-ranlib15"
+      - "/home/lka/.local/bin/gcc-ranlib15"
+      - "/home/lk/.local/share/nvim/mason/bin/gcc-ranlib15"
+      - "/usr/local/sbin/gcc-ranlib15"
+      - "/usr/local/bin/gcc-ranlib15"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gcc-ranlib15"
+      - "/opt/android-sdk/platform-tools/gcc-ranlib15"
+      - "/opt/android-sdk/tools/gcc-ranlib15"
+      - "/opt/android-sdk/tools/bin/gcc-ranlib15"
+      - "/usr/lib/jvm/default/bin/gcc-ranlib15"
+      - "/usr/bin/site_perl/gcc-ranlib15"
+      - "/usr/bin/vendor_perl/gcc-ranlib15"
+      - "/usr/bin/core_perl/gcc-ranlib15"
+      - "/usr/lib/rustup/bin/gcc-ranlib15"
+      - "/usr/lib/smlnj/bin/gcc-ranlib15"
+      - "/home/lk/.local/bin/gcc-ranlib15"
+    found: "/usr/bin/gcc-ranlib"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineCompiler.cmake:54 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake:69 (_cmake_find_compiler)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_CXX_COMPILER"
+    description: "CXX compiler"
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "c++"
+      - "CC"
+      - "g++"
+      - "aCC"
+      - "cl"
+      - "bcc"
+      - "xlC"
+      - "icpx"
+      - "icx"
+      - "clang++"
+    candidate_directories:
+      - "/usr/bin/"
+    found: "/usr/bin/c++"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake:462 (find_file)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake:500 (CMAKE_DETERMINE_COMPILER_ID_WRITE)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake:8 (CMAKE_DETERMINE_COMPILER_ID_BUILD)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake:125 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "file"
+    variable: "src_in"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "CMakeCXXCompilerId.cpp.in"
+    candidate_directories:
+      - "/usr/share/cmake/Modules/"
+    found: "/usr/share/cmake/Modules/CMakeCXXCompilerId.cpp.in"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake:125 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:15 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: /usr/bin/c++ 
+      Build flags: 
+      Id flags:  
+      
+      The output was:
+      0
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+      
+      The CXX compiler identification is GNU, found in:
+        /home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/4.2.1/CompilerIdCXX/a.out
+      
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/Compiler/GNU-FindBinUtils.cmake:18 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake:207 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_CXX_COMPILER_AR"
+    description: "A wrapper around 'ar' adding the appropriate '--plugin' option for the GCC compiler"
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "gcc-ar-15.2"
+      - "gcc-ar-15"
+      - "gcc-ar15"
+      - "gcc-ar"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    searched_directories:
+      - "/usr/bin/gcc-ar-15.2"
+      - "/home/lk/go/bin/gcc-ar-15.2"
+      - "/home/lka/.npm-global/bin/gcc-ar-15.2"
+      - "/home/lka/.cargo/bin/gcc-ar-15.2"
+      - "/home/lka/.ghcup/bin/gcc-ar-15.2"
+      - "/home/lka/virtualenvpython/bin/gcc-ar-15.2"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gcc-ar-15.2"
+      - "/home/lka/.emacs.d/bin/gcc-ar-15.2"
+      - "/home/lka/.nix-profile/bin/gcc-ar-15.2"
+      - "/nix/var/nix/profiles/default/bin/gcc-ar-15.2"
+      - "/home/lka/go/bin/gcc-ar-15.2"
+      - "/home/lka/.local/bin/gcc-ar-15.2"
+      - "/home/lk/.local/share/nvim/mason/bin/gcc-ar-15.2"
+      - "/usr/local/sbin/gcc-ar-15.2"
+      - "/usr/local/bin/gcc-ar-15.2"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gcc-ar-15.2"
+      - "/opt/android-sdk/platform-tools/gcc-ar-15.2"
+      - "/opt/android-sdk/tools/gcc-ar-15.2"
+      - "/opt/android-sdk/tools/bin/gcc-ar-15.2"
+      - "/usr/lib/jvm/default/bin/gcc-ar-15.2"
+      - "/usr/bin/site_perl/gcc-ar-15.2"
+      - "/usr/bin/vendor_perl/gcc-ar-15.2"
+      - "/usr/bin/core_perl/gcc-ar-15.2"
+      - "/usr/lib/rustup/bin/gcc-ar-15.2"
+      - "/usr/lib/smlnj/bin/gcc-ar-15.2"
+      - "/home/lk/.local/bin/gcc-ar-15.2"
+      - "/usr/bin/gcc-ar-15"
+      - "/home/lk/go/bin/gcc-ar-15"
+      - "/home/lka/.npm-global/bin/gcc-ar-15"
+      - "/home/lka/.cargo/bin/gcc-ar-15"
+      - "/home/lka/.ghcup/bin/gcc-ar-15"
+      - "/home/lka/virtualenvpython/bin/gcc-ar-15"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gcc-ar-15"
+      - "/home/lka/.emacs.d/bin/gcc-ar-15"
+      - "/home/lka/.nix-profile/bin/gcc-ar-15"
+      - "/nix/var/nix/profiles/default/bin/gcc-ar-15"
+      - "/home/lka/go/bin/gcc-ar-15"
+      - "/home/lka/.local/bin/gcc-ar-15"
+      - "/home/lk/.local/share/nvim/mason/bin/gcc-ar-15"
+      - "/usr/local/sbin/gcc-ar-15"
+      - "/usr/local/bin/gcc-ar-15"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gcc-ar-15"
+      - "/opt/android-sdk/platform-tools/gcc-ar-15"
+      - "/opt/android-sdk/tools/gcc-ar-15"
+      - "/opt/android-sdk/tools/bin/gcc-ar-15"
+      - "/usr/lib/jvm/default/bin/gcc-ar-15"
+      - "/usr/bin/site_perl/gcc-ar-15"
+      - "/usr/bin/vendor_perl/gcc-ar-15"
+      - "/usr/bin/core_perl/gcc-ar-15"
+      - "/usr/lib/rustup/bin/gcc-ar-15"
+      - "/usr/lib/smlnj/bin/gcc-ar-15"
+      - "/home/lk/.local/bin/gcc-ar-15"
+      - "/usr/bin/gcc-ar15"
+      - "/home/lk/go/bin/gcc-ar15"
+      - "/home/lka/.npm-global/bin/gcc-ar15"
+      - "/home/lka/.cargo/bin/gcc-ar15"
+      - "/home/lka/.ghcup/bin/gcc-ar15"
+      - "/home/lka/virtualenvpython/bin/gcc-ar15"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gcc-ar15"
+      - "/home/lka/.emacs.d/bin/gcc-ar15"
+      - "/home/lka/.nix-profile/bin/gcc-ar15"
+      - "/nix/var/nix/profiles/default/bin/gcc-ar15"
+      - "/home/lka/go/bin/gcc-ar15"
+      - "/home/lka/.local/bin/gcc-ar15"
+      - "/home/lk/.local/share/nvim/mason/bin/gcc-ar15"
+      - "/usr/local/sbin/gcc-ar15"
+      - "/usr/local/bin/gcc-ar15"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gcc-ar15"
+      - "/opt/android-sdk/platform-tools/gcc-ar15"
+      - "/opt/android-sdk/tools/gcc-ar15"
+      - "/opt/android-sdk/tools/bin/gcc-ar15"
+      - "/usr/lib/jvm/default/bin/gcc-ar15"
+      - "/usr/bin/site_perl/gcc-ar15"
+      - "/usr/bin/vendor_perl/gcc-ar15"
+      - "/usr/bin/core_perl/gcc-ar15"
+      - "/usr/lib/rustup/bin/gcc-ar15"
+      - "/usr/lib/smlnj/bin/gcc-ar15"
+      - "/home/lk/.local/bin/gcc-ar15"
+    found: "/usr/bin/gcc-ar"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/Compiler/GNU-FindBinUtils.cmake:30 (find_program)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCXXCompiler.cmake:207 (include)"
+      - "CMakeLists.txt:15 (project)"
+    mode: "program"
+    variable: "CMAKE_CXX_COMPILER_RANLIB"
+    description: "A wrapper around 'ranlib' adding the appropriate '--plugin' option for the GCC compiler"
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: false
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: false
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "gcc-ranlib-15.2"
+      - "gcc-ranlib-15"
+      - "gcc-ranlib15"
+      - "gcc-ranlib"
+    candidate_directories:
+      - "/usr/bin/"
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+    searched_directories:
+      - "/usr/bin/gcc-ranlib-15.2"
+      - "/home/lk/go/bin/gcc-ranlib-15.2"
+      - "/home/lka/.npm-global/bin/gcc-ranlib-15.2"
+      - "/home/lka/.cargo/bin/gcc-ranlib-15.2"
+      - "/home/lka/.ghcup/bin/gcc-ranlib-15.2"
+      - "/home/lka/virtualenvpython/bin/gcc-ranlib-15.2"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gcc-ranlib-15.2"
+      - "/home/lka/.emacs.d/bin/gcc-ranlib-15.2"
+      - "/home/lka/.nix-profile/bin/gcc-ranlib-15.2"
+      - "/nix/var/nix/profiles/default/bin/gcc-ranlib-15.2"
+      - "/home/lka/go/bin/gcc-ranlib-15.2"
+      - "/home/lka/.local/bin/gcc-ranlib-15.2"
+      - "/home/lk/.local/share/nvim/mason/bin/gcc-ranlib-15.2"
+      - "/usr/local/sbin/gcc-ranlib-15.2"
+      - "/usr/local/bin/gcc-ranlib-15.2"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gcc-ranlib-15.2"
+      - "/opt/android-sdk/platform-tools/gcc-ranlib-15.2"
+      - "/opt/android-sdk/tools/gcc-ranlib-15.2"
+      - "/opt/android-sdk/tools/bin/gcc-ranlib-15.2"
+      - "/usr/lib/jvm/default/bin/gcc-ranlib-15.2"
+      - "/usr/bin/site_perl/gcc-ranlib-15.2"
+      - "/usr/bin/vendor_perl/gcc-ranlib-15.2"
+      - "/usr/bin/core_perl/gcc-ranlib-15.2"
+      - "/usr/lib/rustup/bin/gcc-ranlib-15.2"
+      - "/usr/lib/smlnj/bin/gcc-ranlib-15.2"
+      - "/home/lk/.local/bin/gcc-ranlib-15.2"
+      - "/usr/bin/gcc-ranlib-15"
+      - "/home/lk/go/bin/gcc-ranlib-15"
+      - "/home/lka/.npm-global/bin/gcc-ranlib-15"
+      - "/home/lka/.cargo/bin/gcc-ranlib-15"
+      - "/home/lka/.ghcup/bin/gcc-ranlib-15"
+      - "/home/lka/virtualenvpython/bin/gcc-ranlib-15"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gcc-ranlib-15"
+      - "/home/lka/.emacs.d/bin/gcc-ranlib-15"
+      - "/home/lka/.nix-profile/bin/gcc-ranlib-15"
+      - "/nix/var/nix/profiles/default/bin/gcc-ranlib-15"
+      - "/home/lka/go/bin/gcc-ranlib-15"
+      - "/home/lka/.local/bin/gcc-ranlib-15"
+      - "/home/lk/.local/share/nvim/mason/bin/gcc-ranlib-15"
+      - "/usr/local/sbin/gcc-ranlib-15"
+      - "/usr/local/bin/gcc-ranlib-15"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gcc-ranlib-15"
+      - "/opt/android-sdk/platform-tools/gcc-ranlib-15"
+      - "/opt/android-sdk/tools/gcc-ranlib-15"
+      - "/opt/android-sdk/tools/bin/gcc-ranlib-15"
+      - "/usr/lib/jvm/default/bin/gcc-ranlib-15"
+      - "/usr/bin/site_perl/gcc-ranlib-15"
+      - "/usr/bin/vendor_perl/gcc-ranlib-15"
+      - "/usr/bin/core_perl/gcc-ranlib-15"
+      - "/usr/lib/rustup/bin/gcc-ranlib-15"
+      - "/usr/lib/smlnj/bin/gcc-ranlib-15"
+      - "/home/lk/.local/bin/gcc-ranlib-15"
+      - "/usr/bin/gcc-ranlib15"
+      - "/home/lk/go/bin/gcc-ranlib15"
+      - "/home/lka/.npm-global/bin/gcc-ranlib15"
+      - "/home/lka/.cargo/bin/gcc-ranlib15"
+      - "/home/lka/.ghcup/bin/gcc-ranlib15"
+      - "/home/lka/virtualenvpython/bin/gcc-ranlib15"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/gcc-ranlib15"
+      - "/home/lka/.emacs.d/bin/gcc-ranlib15"
+      - "/home/lka/.nix-profile/bin/gcc-ranlib15"
+      - "/nix/var/nix/profiles/default/bin/gcc-ranlib15"
+      - "/home/lka/go/bin/gcc-ranlib15"
+      - "/home/lka/.local/bin/gcc-ranlib15"
+      - "/home/lk/.local/share/nvim/mason/bin/gcc-ranlib15"
+      - "/usr/local/sbin/gcc-ranlib15"
+      - "/usr/local/bin/gcc-ranlib15"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/gcc-ranlib15"
+      - "/opt/android-sdk/platform-tools/gcc-ranlib15"
+      - "/opt/android-sdk/tools/gcc-ranlib15"
+      - "/opt/android-sdk/tools/bin/gcc-ranlib15"
+      - "/usr/lib/jvm/default/bin/gcc-ranlib15"
+      - "/usr/bin/site_perl/gcc-ranlib15"
+      - "/usr/bin/vendor_perl/gcc-ranlib15"
+      - "/usr/bin/core_perl/gcc-ranlib15"
+      - "/usr/lib/rustup/bin/gcc-ranlib15"
+      - "/usr/lib/smlnj/bin/gcc-ranlib15"
+      - "/home/lk/.local/bin/gcc-ranlib15"
+    found: "/usr/bin/gcc-ranlib"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:83 (try_compile)"
+      - "/usr/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:15 (project)"
+    checks:
+      - "Detecting C compiler ABI info"
+    directories:
+      source: "/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-nreP8M"
+      binary: "/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-nreP8M"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_C_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-nreP8M'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_d9a2f/fast
+        /usr/bin/make  -f CMakeFiles/cmTC_d9a2f.dir/build.make CMakeFiles/cmTC_d9a2f.dir/build
+        make[1]: Entering directory '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-nreP8M'
+        Building C object CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o
+        /usr/bin/cc   -v -o CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake/Modules/CMakeCCompilerABI.c
+        Using built-in specs.
+        COLLECT_GCC=/usr/bin/cc
+        Target: x86_64-pc-linux-gnu
+        Configured with: /build/gcc/src/gcc/configure --enable-languages=ada,c,c++,d,fortran,go,lto,m2,objc,obj-c++,rust,cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://gitlab.archlinux.org/archlinux/packaging/packages/gcc/-/issues --with-build-config=bootstrap-lto --with-linker-hash-style=gnu --with-system-zlib --enable-__cxa_atexit --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-libssp --disable-libstdcxx-pch --disable-werror
+        Thread model: posix
+        Supported LTO compression algorithms: zlib zstd
+        gcc version 15.2.1 20260103 (GCC) 
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_d9a2f.dir/'
+         /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/cc1 -quiet -v /usr/share/cmake/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_d9a2f.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -o /tmp/ccwIMtsv.s
+        GNU C23 (GCC) version 15.2.1 20260103 (x86_64-pc-linux-gnu)
+        	compiled by GNU C version 15.2.1 20260103, GMP version 6.3.0, MPFR version 4.2.2, MPC version 1.3.1, isl version isl-0.27-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        ignoring nonexistent directory "/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../x86_64-pc-linux-gnu/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include
+         /usr/local/include
+         /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed
+         /usr/include
+        End of search list.
+        Compiler executable checksum: 2aa0ead74273ed721e313ee5d9153840
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_d9a2f.dir/'
+         as -v --64 -o CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o /tmp/ccwIMtsv.s
+        GNU assembler version 2.45.1 (x86_64-pc-linux-gnu) using BFD version (GNU Binutils) 2.45.1
+        COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/
+        LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../:/lib/:/usr/lib/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.'
+        Linking C executable cmTC_d9a2f
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d9a2f.dir/link.txt --verbose=1
+        Using built-in specs.
+        COLLECT_GCC=/usr/bin/cc
+        COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper
+        Target: x86_64-pc-linux-gnu
+        Configured with: /build/gcc/src/gcc/configure --enable-languages=ada,c,c++,d,fortran,go,lto,m2,objc,obj-c++,rust,cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://gitlab.archlinux.org/archlinux/packaging/packages/gcc/-/issues --with-build-config=bootstrap-lto --with-linker-hash-style=gnu --with-system-zlib --enable-__cxa_atexit --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-libssp --disable-libstdcxx-pch --disable-werror
+        Thread model: posix
+        Supported LTO compression algorithms: zlib zstd
+        gcc version 15.2.1 20260103 (GCC) 
+        COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/
+        LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../:/lib/:/usr/lib/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_d9a2f' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_d9a2f.'
+         /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/collect2 -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper -plugin-opt=-fresolution=/tmp/cc77mgHX.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_d9a2f /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1 -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o
+        collect2 version 15.2.1 20260103
+        /usr/bin/ld -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper -plugin-opt=-fresolution=/tmp/cc77mgHX.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_d9a2f /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1 -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o
+        GNU ld (GNU Binutils) 2.45.1
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_d9a2f' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_d9a2f.'
+        /usr/bin/cc  -v -Wl,-v CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o -o cmTC_d9a2f
+        make[1]: Leaving directory '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-nreP8M'
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:217 (message)"
+      - "/usr/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:15 (project)"
+    message: |
+      Parsed C implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include]
+          add: [/usr/local/include]
+          add: [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed]
+          add: [/usr/include]
+        end of search list found
+        collapse include dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include] ==> [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include]
+        collapse include dir [/usr/local/include] ==> [/usr/local/include]
+        collapse include dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed] ==> [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed]
+        collapse include dir [/usr/include] ==> [/usr/include]
+        implicit include dirs: [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include;/usr/local/include;/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed;/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:253 (message)"
+      - "/usr/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:15 (project)"
+    message: |
+      Parsed C implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)))("|,| |$)]
+        ignore line: [Change Dir: '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-nreP8M']
+        ignore line: []
+        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_d9a2f/fast]
+        ignore line: [/usr/bin/make  -f CMakeFiles/cmTC_d9a2f.dir/build.make CMakeFiles/cmTC_d9a2f.dir/build]
+        ignore line: [make[1]: Entering directory '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-nreP8M']
+        ignore line: [Building C object CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o]
+        ignore line: [/usr/bin/cc   -v -o CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake/Modules/CMakeCCompilerABI.c]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/usr/bin/cc]
+        ignore line: [Target: x86_64-pc-linux-gnu]
+        ignore line: [Configured with: /build/gcc/src/gcc/configure --enable-languages=ada c c++ d fortran go lto m2 objc obj-c++ rust cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://gitlab.archlinux.org/archlinux/packaging/packages/gcc/-/issues --with-build-config=bootstrap-lto --with-linker-hash-style=gnu --with-system-zlib --enable-__cxa_atexit --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-libssp --disable-libstdcxx-pch --disable-werror]
+        ignore line: [Thread model: posix]
+        ignore line: [Supported LTO compression algorithms: zlib zstd]
+        ignore line: [gcc version 15.2.1 20260103 (GCC) ]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_d9a2f.dir/']
+        ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/cc1 -quiet -v /usr/share/cmake/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_d9a2f.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -o /tmp/ccwIMtsv.s]
+        ignore line: [GNU C23 (GCC) version 15.2.1 20260103 (x86_64-pc-linux-gnu)]
+        ignore line: [	compiled by GNU C version 15.2.1 20260103  GMP version 6.3.0  MPFR version 4.2.2  MPC version 1.3.1  isl version isl-0.27-GMP]
+        ignore line: []
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../x86_64-pc-linux-gnu/include"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include]
+        ignore line: [ /usr/local/include]
+        ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed]
+        ignore line: [ /usr/include]
+        ignore line: [End of search list.]
+        ignore line: [Compiler executable checksum: 2aa0ead74273ed721e313ee5d9153840]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_d9a2f.dir/']
+        ignore line: [ as -v --64 -o CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o /tmp/ccwIMtsv.s]
+        ignore line: [GNU assembler version 2.45.1 (x86_64-pc-linux-gnu) using BFD version (GNU Binutils) 2.45.1]
+        ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/]
+        ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../:/lib/:/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.']
+        ignore line: [Linking C executable cmTC_d9a2f]
+        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d9a2f.dir/link.txt --verbose=1]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/usr/bin/cc]
+        ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper]
+        ignore line: [Target: x86_64-pc-linux-gnu]
+        ignore line: [Configured with: /build/gcc/src/gcc/configure --enable-languages=ada c c++ d fortran go lto m2 objc obj-c++ rust cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://gitlab.archlinux.org/archlinux/packaging/packages/gcc/-/issues --with-build-config=bootstrap-lto --with-linker-hash-style=gnu --with-system-zlib --enable-__cxa_atexit --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-libssp --disable-libstdcxx-pch --disable-werror]
+        ignore line: [Thread model: posix]
+        ignore line: [Supported LTO compression algorithms: zlib zstd]
+        ignore line: [gcc version 15.2.1 20260103 (GCC) ]
+        ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/]
+        ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../:/lib/:/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_d9a2f' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_d9a2f.']
+        link line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/collect2 -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper -plugin-opt=-fresolution=/tmp/cc77mgHX.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_d9a2f /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1 -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o]
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/collect2] ==> ignore
+          arg [-plugin] ==> ignore
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/liblto_plugin.so] ==> ignore
+          arg [-plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/cc77mgHX.res] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [--build-id] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [--hash-style=gnu] ==> ignore
+          arg [-m] ==> ignore
+          arg [elf_x86_64] ==> ignore
+          arg [-dynamic-linker] ==> ignore
+          arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+          arg [-pie] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_d9a2f] ==> ignore
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o]
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o]
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o]
+          arg [-L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1] ==> dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1]
+          arg [-L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib] ==> dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib]
+          arg [-L/lib/../lib] ==> dir [/lib/../lib]
+          arg [-L/usr/lib/../lib] ==> dir [/usr/lib/../lib]
+          arg [-L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../..] ==> dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../..]
+          arg [-L/lib] ==> dir [/lib]
+          arg [-L/usr/lib] ==> dir [/usr/lib]
+          arg [-v] ==> ignore
+          arg [CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o] ==> ignore
+          arg [-lgcc] ==> lib [gcc]
+          arg [--push-state] ==> ignore
+          arg [--as-needed] ==> ignore
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [--pop-state] ==> ignore
+          arg [-lc] ==> lib [c]
+          arg [-lgcc] ==> lib [gcc]
+          arg [--push-state] ==> ignore
+          arg [--as-needed] ==> ignore
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [--pop-state] ==> ignore
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o]
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o]
+        ignore line: [collect2 version 15.2.1 20260103]
+        ignore line: [/usr/bin/ld -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper -plugin-opt=-fresolution=/tmp/cc77mgHX.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_d9a2f /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1 -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_d9a2f.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o]
+        linker tool for 'C': /usr/bin/ld
+        collapse obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o] ==> [/usr/lib/Scrt1.o]
+        collapse obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o] ==> [/usr/lib/crti.o]
+        collapse obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o] ==> [/usr/lib/crtn.o]
+        collapse library dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1] ==> [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1]
+        collapse library dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib] ==> [/usr/lib]
+        collapse library dir [/lib/../lib] ==> [/lib]
+        collapse library dir [/usr/lib/../lib] ==> [/usr/lib]
+        collapse library dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../..] ==> [/usr/lib]
+        collapse library dir [/lib] ==> [/lib]
+        collapse library dir [/usr/lib] ==> [/usr/lib]
+        implicit libs: [gcc;gcc_s;c;gcc;gcc_s]
+        implicit objs: [/usr/lib/Scrt1.o;/usr/lib/crti.o;/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o;/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o;/usr/lib/crtn.o]
+        implicit dirs: [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1;/usr/lib;/lib]
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/Internal/CMakeDetermineLinkerId.cmake:38 (message)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:299 (cmake_determine_linker_id)"
+      - "/usr/share/cmake/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:15 (project)"
+    message: |
+      Running the C compiler's linker: "/usr/bin/ld" "-v"
+      GNU ld (GNU Binutils) 2.45.1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:83 (try_compile)"
+      - "/usr/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:15 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-SmqNQ5"
+      binary: "/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-SmqNQ5"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_CXX_SCAN_FOR_MODULES: "OFF"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-SmqNQ5'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_faa51/fast
+        /usr/bin/make  -f CMakeFiles/cmTC_faa51.dir/build.make CMakeFiles/cmTC_faa51.dir/build
+        make[1]: Entering directory '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-SmqNQ5'
+        Building CXX object CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o
+        /usr/bin/c++   -std=gnu++20   -v -o CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp
+        Using built-in specs.
+        COLLECT_GCC=/usr/bin/c++
+        Target: x86_64-pc-linux-gnu
+        Configured with: /build/gcc/src/gcc/configure --enable-languages=ada,c,c++,d,fortran,go,lto,m2,objc,obj-c++,rust,cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://gitlab.archlinux.org/archlinux/packaging/packages/gcc/-/issues --with-build-config=bootstrap-lto --with-linker-hash-style=gnu --with-system-zlib --enable-__cxa_atexit --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-libssp --disable-libstdcxx-pch --disable-werror
+        Thread model: posix
+        Supported LTO compression algorithms: zlib zstd
+        gcc version 15.2.1 20260103 (GCC) 
+        COLLECT_GCC_OPTIONS='-std=gnu++20' '-v' '-o' 'CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_faa51.dir/'
+         /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_faa51.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -std=gnu++20 -version -o /tmp/ccs623oS.s
+        GNU C++20 (GCC) version 15.2.1 20260103 (x86_64-pc-linux-gnu)
+        	compiled by GNU C version 15.2.1 20260103, GMP version 6.3.0, MPFR version 4.2.2, MPC version 1.3.1, isl version isl-0.27-GMP
+        
+        GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+        ignoring nonexistent directory "/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../x86_64-pc-linux-gnu/include"
+        #include "..." search starts here:
+        #include <...> search starts here:
+         /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1
+         /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1/x86_64-pc-linux-gnu
+         /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1/backward
+         /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include
+         /usr/local/include
+         /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed
+         /usr/include
+        End of search list.
+        Compiler executable checksum: 26247f000d0c5f9b837c76e00a033f94
+        COLLECT_GCC_OPTIONS='-std=gnu++20' '-v' '-o' 'CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_faa51.dir/'
+         as -v --64 -o CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccs623oS.s
+        GNU assembler version 2.45.1 (x86_64-pc-linux-gnu) using BFD version (GNU Binutils) 2.45.1
+        COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/
+        LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../:/lib/:/usr/lib/
+        COLLECT_GCC_OPTIONS='-std=gnu++20' '-v' '-o' 'CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.'
+        Linking CXX executable cmTC_faa51
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_faa51.dir/link.txt --verbose=1
+        Using built-in specs.
+        COLLECT_GCC=/usr/bin/c++
+        COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper
+        Target: x86_64-pc-linux-gnu
+        Configured with: /build/gcc/src/gcc/configure --enable-languages=ada,c,c++,d,fortran,go,lto,m2,objc,obj-c++,rust,cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://gitlab.archlinux.org/archlinux/packaging/packages/gcc/-/issues --with-build-config=bootstrap-lto --with-linker-hash-style=gnu --with-system-zlib --enable-__cxa_atexit --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-libssp --disable-libstdcxx-pch --disable-werror
+        Thread model: posix
+        Supported LTO compression algorithms: zlib zstd
+        gcc version 15.2.1 20260103 (GCC) 
+        COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/
+        LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../:/lib/:/usr/lib/
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_faa51' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_faa51.'
+         /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/collect2 -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper -plugin-opt=-fresolution=/tmp/cczNlUXQ.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_faa51 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1 -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o
+        collect2 version 15.2.1 20260103
+        /usr/bin/ld -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper -plugin-opt=-fresolution=/tmp/cczNlUXQ.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_faa51 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1 -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o
+        GNU ld (GNU Binutils) 2.45.1
+        COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_faa51' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_faa51.'
+        /usr/bin/c++  -v -Wl,-v CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_faa51
+        make[1]: Leaving directory '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-SmqNQ5'
+        
+      exitCode: 0
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:217 (message)"
+      - "/usr/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:15 (project)"
+    message: |
+      Parsed CXX implicit include dir info: rv=done
+        found start of include info
+        found start of implicit include info
+          add: [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1]
+          add: [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1/x86_64-pc-linux-gnu]
+          add: [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1/backward]
+          add: [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include]
+          add: [/usr/local/include]
+          add: [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed]
+          add: [/usr/include]
+        end of search list found
+        collapse include dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1] ==> [/usr/include/c++/15.2.1]
+        collapse include dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1/x86_64-pc-linux-gnu] ==> [/usr/include/c++/15.2.1/x86_64-pc-linux-gnu]
+        collapse include dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1/backward] ==> [/usr/include/c++/15.2.1/backward]
+        collapse include dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include] ==> [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include]
+        collapse include dir [/usr/local/include] ==> [/usr/local/include]
+        collapse include dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed] ==> [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed]
+        collapse include dir [/usr/include] ==> [/usr/include]
+        implicit include dirs: [/usr/include/c++/15.2.1;/usr/include/c++/15.2.1/x86_64-pc-linux-gnu;/usr/include/c++/15.2.1/backward;/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include;/usr/local/include;/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed;/usr/include]
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:253 (message)"
+      - "/usr/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:15 (project)"
+    message: |
+      Parsed CXX implicit link information:
+        link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
+        linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)))("|,| |$)]
+        ignore line: [Change Dir: '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-SmqNQ5']
+        ignore line: []
+        ignore line: [Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_faa51/fast]
+        ignore line: [/usr/bin/make  -f CMakeFiles/cmTC_faa51.dir/build.make CMakeFiles/cmTC_faa51.dir/build]
+        ignore line: [make[1]: Entering directory '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-SmqNQ5']
+        ignore line: [Building CXX object CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o]
+        ignore line: [/usr/bin/c++   -std=gnu++20   -v -o CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/usr/bin/c++]
+        ignore line: [Target: x86_64-pc-linux-gnu]
+        ignore line: [Configured with: /build/gcc/src/gcc/configure --enable-languages=ada c c++ d fortran go lto m2 objc obj-c++ rust cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://gitlab.archlinux.org/archlinux/packaging/packages/gcc/-/issues --with-build-config=bootstrap-lto --with-linker-hash-style=gnu --with-system-zlib --enable-__cxa_atexit --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-libssp --disable-libstdcxx-pch --disable-werror]
+        ignore line: [Thread model: posix]
+        ignore line: [Supported LTO compression algorithms: zlib zstd]
+        ignore line: [gcc version 15.2.1 20260103 (GCC) ]
+        ignore line: [COLLECT_GCC_OPTIONS='-std=gnu++20' '-v' '-o' 'CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_faa51.dir/']
+        ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/cc1plus -quiet -v -D_GNU_SOURCE /usr/share/cmake/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_faa51.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -std=gnu++20 -version -o /tmp/ccs623oS.s]
+        ignore line: [GNU C++20 (GCC) version 15.2.1 20260103 (x86_64-pc-linux-gnu)]
+        ignore line: [	compiled by GNU C version 15.2.1 20260103  GMP version 6.3.0  MPFR version 4.2.2  MPC version 1.3.1  isl version isl-0.27-GMP]
+        ignore line: []
+        ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+        ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../x86_64-pc-linux-gnu/include"]
+        ignore line: [#include "..." search starts here:]
+        ignore line: [#include <...> search starts here:]
+        ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1]
+        ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1/x86_64-pc-linux-gnu]
+        ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../include/c++/15.2.1/backward]
+        ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include]
+        ignore line: [ /usr/local/include]
+        ignore line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include-fixed]
+        ignore line: [ /usr/include]
+        ignore line: [End of search list.]
+        ignore line: [Compiler executable checksum: 26247f000d0c5f9b837c76e00a033f94]
+        ignore line: [COLLECT_GCC_OPTIONS='-std=gnu++20' '-v' '-o' 'CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_faa51.dir/']
+        ignore line: [ as -v --64 -o CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccs623oS.s]
+        ignore line: [GNU assembler version 2.45.1 (x86_64-pc-linux-gnu) using BFD version (GNU Binutils) 2.45.1]
+        ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/]
+        ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../:/lib/:/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-std=gnu++20' '-v' '-o' 'CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.']
+        ignore line: [Linking CXX executable cmTC_faa51]
+        ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_faa51.dir/link.txt --verbose=1]
+        ignore line: [Using built-in specs.]
+        ignore line: [COLLECT_GCC=/usr/bin/c++]
+        ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper]
+        ignore line: [Target: x86_64-pc-linux-gnu]
+        ignore line: [Configured with: /build/gcc/src/gcc/configure --enable-languages=ada c c++ d fortran go lto m2 objc obj-c++ rust cobol --enable-bootstrap --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://gitlab.archlinux.org/archlinux/packaging/packages/gcc/-/issues --with-build-config=bootstrap-lto --with-linker-hash-style=gnu --with-system-zlib --enable-__cxa_atexit --enable-cet=auto --enable-checking=release --enable-clocale=gnu --enable-default-pie --enable-default-ssp --enable-gnu-indirect-function --enable-gnu-unique-object --enable-libstdcxx-backtrace --enable-link-serialization=1 --enable-linker-build-id --enable-lto --enable-multilib --enable-plugin --enable-shared --enable-threads=posix --disable-libssp --disable-libstdcxx-pch --disable-werror]
+        ignore line: [Thread model: posix]
+        ignore line: [Supported LTO compression algorithms: zlib zstd]
+        ignore line: [gcc version 15.2.1 20260103 (GCC) ]
+        ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/]
+        ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/:/lib/../lib/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../:/lib/:/usr/lib/]
+        ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_faa51' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_faa51.']
+        link line: [ /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/collect2 -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper -plugin-opt=-fresolution=/tmp/cczNlUXQ.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_faa51 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1 -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o]
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/collect2] ==> ignore
+          arg [-plugin] ==> ignore
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/liblto_plugin.so] ==> ignore
+          arg [-plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper] ==> ignore
+          arg [-plugin-opt=-fresolution=/tmp/cczNlUXQ.res] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lc] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+          arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+          arg [--build-id] ==> ignore
+          arg [--eh-frame-hdr] ==> ignore
+          arg [--hash-style=gnu] ==> ignore
+          arg [-m] ==> ignore
+          arg [elf_x86_64] ==> ignore
+          arg [-dynamic-linker] ==> ignore
+          arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+          arg [-pie] ==> ignore
+          arg [-o] ==> ignore
+          arg [cmTC_faa51] ==> ignore
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o]
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o]
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o]
+          arg [-L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1] ==> dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1]
+          arg [-L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib] ==> dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib]
+          arg [-L/lib/../lib] ==> dir [/lib/../lib]
+          arg [-L/usr/lib/../lib] ==> dir [/usr/lib/../lib]
+          arg [-L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../..] ==> dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../..]
+          arg [-L/lib] ==> dir [/lib]
+          arg [-L/usr/lib] ==> dir [/usr/lib]
+          arg [-v] ==> ignore
+          arg [CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+          arg [-lstdc++] ==> lib [stdc++]
+          arg [-lm] ==> lib [m]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [-lc] ==> lib [c]
+          arg [-lgcc_s] ==> lib [gcc_s]
+          arg [-lgcc] ==> lib [gcc]
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o]
+          arg [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o] ==> obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o]
+        ignore line: [collect2 version 15.2.1 20260103]
+        ignore line: [/usr/bin/ld -plugin /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/lto-wrapper -plugin-opt=-fresolution=/tmp/cczNlUXQ.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr --hash-style=gnu -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -o cmTC_faa51 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1 -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../.. -L/lib -L/usr/lib -v CMakeFiles/cmTC_faa51.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o]
+        linker tool for 'CXX': /usr/bin/ld
+        collapse obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/Scrt1.o] ==> [/usr/lib/Scrt1.o]
+        collapse obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o] ==> [/usr/lib/crti.o]
+        collapse obj [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crtn.o] ==> [/usr/lib/crtn.o]
+        collapse library dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1] ==> [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1]
+        collapse library dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib] ==> [/usr/lib]
+        collapse library dir [/lib/../lib] ==> [/lib]
+        collapse library dir [/usr/lib/../lib] ==> [/usr/lib]
+        collapse library dir [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../..] ==> [/usr/lib]
+        collapse library dir [/lib] ==> [/lib]
+        collapse library dir [/usr/lib] ==> [/usr/lib]
+        implicit libs: [stdc++;m;gcc_s;gcc;c;gcc_s;gcc]
+        implicit objs: [/usr/lib/Scrt1.o;/usr/lib/crti.o;/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o;/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtendS.o;/usr/lib/crtn.o]
+        implicit dirs: [/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1;/usr/lib;/lib]
+        implicit fwks: []
+      
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/Internal/CMakeDetermineLinkerId.cmake:38 (message)"
+      - "/usr/share/cmake/Modules/CMakeDetermineCompilerABI.cmake:299 (cmake_determine_linker_id)"
+      - "/usr/share/cmake/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:15 (project)"
+    message: |
+      Running the CXX compiler's linker: "/usr/bin/ld" "-v"
+      GNU ld (GNU Binutils) 2.45.1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/Internal/CheckSourceCompiles.cmake:104 (try_compile)"
+      - "/usr/share/cmake/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/usr/share/cmake/Modules/CheckCXXCompilerFlag.cmake:103 (cmake_check_compiler_flag)"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/cmake/config.cmake:9 (CHECK_CXX_COMPILER_FLAG)"
+      - "CMakeLists.txt:31 (include)"
+    checks:
+      - "Performing Test COMPILER_SUPPORTS_MARCH_NATIVE"
+    directories:
+      source: "/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-x8mmxU"
+      binary: "/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-x8mmxU"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "COMPILER_SUPPORTS_MARCH_NATIVE"
+      cached: true
+      stdout: |
+        Change Dir: '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-x8mmxU'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_d2fa1/fast
+        /usr/bin/make  -f CMakeFiles/cmTC_d2fa1.dir/build.make CMakeFiles/cmTC_d2fa1.dir/build
+        make[1]: Entering directory '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-x8mmxU'
+        Building CXX object CMakeFiles/cmTC_d2fa1.dir/src.cxx.o
+        /usr/bin/c++ -DCOMPILER_SUPPORTS_MARCH_NATIVE  -std=gnu++20   -march=native -o CMakeFiles/cmTC_d2fa1.dir/src.cxx.o -c /home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-x8mmxU/src.cxx
+        Linking CXX executable cmTC_d2fa1
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d2fa1.dir/link.txt --verbose=1
+        /usr/bin/c++ CMakeFiles/cmTC_d2fa1.dir/src.cxx.o -o cmTC_d2fa1
+        make[1]: Leaving directory '/home/lk/vkutils/newestvkutil/external/tracy/profiler/CMakeFiles/CMakeScratch/TryCompile-x8mmxU'
+        
+      exitCode: 0
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/home/lk/vkutils/newestvkutil/external/tracy/cmake/config.cmake:63 (find_program)"
+      - "CMakeLists.txt:31 (include)"
+    mode: "program"
+    variable: "CCACHE"
+    description: "Path to a program."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "ccache"
+    candidate_directories:
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/usr/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+      - "/usr/local/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/"
+      - "/usr/bin/"
+      - "/usr/sbin/"
+      - "/usr/"
+      - "/bin/"
+      - "/sbin/"
+      - "/usr/X11R6/bin/"
+      - "/usr/X11R6/sbin/"
+      - "/usr/X11R6/"
+      - "/usr/pkg/bin/"
+      - "/usr/pkg/sbin/"
+      - "/usr/pkg/"
+      - "/opt/bin/"
+      - "/opt/sbin/"
+      - "/opt/"
+    searched_directories:
+      - "/home/lk/go/bin/ccache"
+      - "/home/lka/.npm-global/bin/ccache"
+      - "/home/lka/.cargo/bin/ccache"
+      - "/home/lka/.ghcup/bin/ccache"
+      - "/home/lka/virtualenvpython/bin/ccache"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/ccache"
+      - "/home/lka/.emacs.d/bin/ccache"
+      - "/home/lka/.nix-profile/bin/ccache"
+      - "/nix/var/nix/profiles/default/bin/ccache"
+      - "/home/lka/go/bin/ccache"
+      - "/home/lka/.local/bin/ccache"
+      - "/home/lk/.local/share/nvim/mason/bin/ccache"
+      - "/usr/local/sbin/ccache"
+      - "/usr/local/bin/ccache"
+    found: "/usr/bin/ccache"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+      CMAKE_INSTALL_PREFIX: "/usr/local"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/usr/local"
+        - "/usr"
+        - "/"
+        - "/usr"
+        - "/usr/local"
+        - "/usr/X11R6"
+        - "/usr/pkg"
+        - "/opt"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/FindPkgConfig.cmake:517 (find_program)"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/cmake/vendor.cmake:8 (include)"
+      - "CMakeLists.txt:32 (include)"
+    mode: "program"
+    variable: "PKG_CONFIG_EXECUTABLE"
+    description: "pkg-config executable"
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "pkg-config"
+      - "pkgconf"
+    candidate_directories:
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/usr/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+      - "/usr/local/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/"
+      - "/usr/bin/"
+      - "/usr/sbin/"
+      - "/usr/"
+      - "/bin/"
+      - "/sbin/"
+      - "/usr/X11R6/bin/"
+      - "/usr/X11R6/sbin/"
+      - "/usr/X11R6/"
+      - "/usr/pkg/bin/"
+      - "/usr/pkg/sbin/"
+      - "/usr/pkg/"
+      - "/opt/bin/"
+      - "/opt/sbin/"
+      - "/opt/"
+    searched_directories:
+      - "/home/lk/go/bin/pkg-config"
+      - "/home/lk/go/bin/pkgconf"
+      - "/home/lka/.npm-global/bin/pkg-config"
+      - "/home/lka/.npm-global/bin/pkgconf"
+      - "/home/lka/.cargo/bin/pkg-config"
+      - "/home/lka/.cargo/bin/pkgconf"
+      - "/home/lka/.ghcup/bin/pkg-config"
+      - "/home/lka/.ghcup/bin/pkgconf"
+      - "/home/lka/virtualenvpython/bin/pkg-config"
+      - "/home/lka/virtualenvpython/bin/pkgconf"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/pkg-config"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/pkgconf"
+      - "/home/lka/.emacs.d/bin/pkg-config"
+      - "/home/lka/.emacs.d/bin/pkgconf"
+      - "/home/lka/.nix-profile/bin/pkg-config"
+      - "/home/lka/.nix-profile/bin/pkgconf"
+      - "/nix/var/nix/profiles/default/bin/pkg-config"
+      - "/nix/var/nix/profiles/default/bin/pkgconf"
+      - "/home/lka/go/bin/pkg-config"
+      - "/home/lka/go/bin/pkgconf"
+      - "/home/lka/.local/bin/pkg-config"
+      - "/home/lka/.local/bin/pkgconf"
+      - "/home/lk/.local/share/nvim/mason/bin/pkg-config"
+      - "/home/lk/.local/share/nvim/mason/bin/pkgconf"
+      - "/usr/local/sbin/pkg-config"
+      - "/usr/local/sbin/pkgconf"
+      - "/usr/local/bin/pkg-config"
+      - "/usr/local/bin/pkgconf"
+    found: "/usr/bin/pkg-config"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+      CMAKE_INSTALL_PREFIX: "/usr/local"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/usr/local"
+        - "/usr"
+        - "/"
+        - "/usr"
+        - "/usr/local"
+        - "/usr/X11R6"
+        - "/usr/pkg"
+        - "/opt"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/FindPkgConfig.cmake:761 (find_library)"
+      - "/usr/share/cmake/Modules/FindPkgConfig.cmake:811 (_pkg_find_libs)"
+      - "/usr/share/cmake/Modules/FindPkgConfig.cmake:1149 (_pkg_recalculate)"
+      - "/usr/share/cmake/Modules/FindPkgConfig.cmake:1166 (_pkg_check_modules_internal)"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/cmake/vendor.cmake:19 (pkg_check_modules)"
+      - "CMakeLists.txt:32 (include)"
+    mode: "library"
+    variable: "pkgcfg_lib_CAPSTONE_capstone"
+    description: "Path to a library."
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "capstone"
+    candidate_directories:
+      - "/usr/lib/"
+    found: "/usr/lib/libcapstone.so"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+      CMAKE_INSTALL_PREFIX: "/usr/local"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/usr/local"
+        - "/usr"
+        - "/"
+        - "/usr"
+        - "/usr/local"
+        - "/usr/X11R6"
+        - "/usr/pkg"
+        - "/opt"
+      CMAKE_SYSTEM_LIBRARY_PATH:
+        - "/usr/lib/X11"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "/usr/share/cmake/Modules/FindGit.cmake:111 (find_program)"
+      - "/usr/share/cmake/Modules/FetchContent.cmake:1884 (find_package)"
+      - "/usr/share/cmake/Modules/FetchContent.cmake:1619 (__FetchContent_populateSubbuild)"
+      - "/usr/share/cmake/Modules/FetchContent.cmake:2155:EVAL:2 (__FetchContent_doPopulation)"
+      - "/usr/share/cmake/Modules/FetchContent.cmake:2155 (cmake_language)"
+      - "/usr/share/cmake/Modules/FetchContent.cmake:2394 (__FetchContent_Populate)"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/cmake/CPM.cmake:1114 (FetchContent_MakeAvailable)"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/cmake/CPM.cmake:895 (cpm_fetch_package)"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/cmake/vendor.cmake:26 (CPMAddPackage)"
+      - "CMakeLists.txt:32 (include)"
+    mode: "program"
+    variable: "GIT_EXECUTABLE"
+    description: "Git command line client"
+    settings:
+      SearchFramework: "NEVER"
+      SearchAppBundle: "NEVER"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "git"
+    candidate_directories:
+      - "/home/lk/go/bin/"
+      - "/home/lka/.npm-global/bin/"
+      - "/home/lka/.cargo/bin/"
+      - "/home/lka/.ghcup/bin/"
+      - "/home/lka/virtualenvpython/bin/"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/"
+      - "/home/lka/.emacs.d/bin/"
+      - "/home/lka/.nix-profile/bin/"
+      - "/nix/var/nix/profiles/default/bin/"
+      - "/home/lka/go/bin/"
+      - "/home/lka/.local/bin/"
+      - "/home/lk/.local/share/nvim/mason/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/bin/"
+      - "/usr/bin/"
+      - "/opt/android-sdk/cmdline-tools/latest/bin/"
+      - "/opt/android-sdk/platform-tools/"
+      - "/opt/android-sdk/tools/"
+      - "/opt/android-sdk/tools/bin/"
+      - "/usr/lib/jvm/default/bin/"
+      - "/usr/bin/site_perl/"
+      - "/usr/bin/vendor_perl/"
+      - "/usr/bin/core_perl/"
+      - "/usr/lib/rustup/bin/"
+      - "/usr/lib/smlnj/bin/"
+      - "/home/lk/.local/bin/"
+      - "/usr/local/bin/"
+      - "/usr/local/sbin/"
+      - "/usr/local/"
+      - "/usr/bin/"
+      - "/usr/sbin/"
+      - "/usr/"
+      - "/bin/"
+      - "/sbin/"
+      - "/usr/X11R6/bin/"
+      - "/usr/X11R6/sbin/"
+      - "/usr/X11R6/"
+      - "/usr/pkg/bin/"
+      - "/usr/pkg/sbin/"
+      - "/usr/pkg/"
+      - "/opt/bin/"
+      - "/opt/sbin/"
+      - "/opt/"
+    searched_directories:
+      - "/home/lk/go/bin/git"
+      - "/home/lka/.npm-global/bin/git"
+      - "/home/lka/.cargo/bin/git"
+      - "/home/lka/.ghcup/bin/git"
+      - "/home/lka/virtualenvpython/bin/git"
+      - "/home/lk/vkutils/newestvkutil/external/tracy/profiler/bin/git"
+      - "/home/lka/.emacs.d/bin/git"
+      - "/home/lka/.nix-profile/bin/git"
+      - "/nix/var/nix/profiles/default/bin/git"
+      - "/home/lka/go/bin/git"
+      - "/home/lka/.local/bin/git"
+      - "/home/lk/.local/share/nvim/mason/bin/git"
+      - "/usr/local/sbin/git"
+      - "/usr/local/bin/git"
+    found: "/usr/bin/git"
+    search_context:
+      ENV{PATH}:
+        - "/home/lk/go/bin"
+        - "/home/lka/.npm-global/bin"
+        - "/home/lka/.cargo/bin"
+        - "/home/lka/.ghcup/bin/"
+        - "/home/lka/.ghcup/bin"
+        - "/home/lka/virtualenvpython/bin"
+        - "bin"
+        - "/home/lka/.emacs.d/bin"
+        - "/home/lka/.nix-profile/bin"
+        - "/nix/var/nix/profiles/default/bin"
+        - "/home/lka/go/bin"
+        - "/home/lka/.local/bin"
+        - "/home/lk/.local/share/nvim/mason/bin"
+        - "/usr/local/sbin"
+        - "/usr/local/bin"
+        - "/usr/bin"
+        - "/opt/android-sdk/cmdline-tools/latest/bin"
+        - "/opt/android-sdk/platform-tools"
+        - "/opt/android-sdk/tools"
+        - "/opt/android-sdk/tools/bin"
+        - "/usr/lib/jvm/default/bin"
+        - "/usr/bin/site_perl"
+        - "/usr/bin/vendor_perl"
+        - "/usr/bin/core_perl"
+        - "/usr/lib/rustup/bin"
+        - "/usr/lib/smlnj/bin"
+        - "/home/lk/.local/bin"
+        - "/home/lk/.local/bin"
+      CMAKE_INSTALL_PREFIX: "/usr/local"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/usr/local"
+        - "/usr"
+        - "/"
+        - "/usr"
+        - "/usr/local"
+        - "/usr/X11R6"
+        - "/usr/pkg"
+        - "/opt"
+...

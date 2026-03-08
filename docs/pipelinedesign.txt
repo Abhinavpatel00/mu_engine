@@ -1,0 +1,29 @@
+we might have some kind of data format for pipeline and load from files bcz that would make reloading a lot easier
+
+
+// renderer.pipelines[TRIANGLE_PIPELINE] = load(pipelines.json)
+
+
+and in pipelines.json 
+
+desc is defined 
+
+so inside loop 
+while(rendering)
+{
+watchpipelinerebuild(pipelines.json)
+
+
+}
+
+problem is json has no autocomplete i wish to use some way of autocomplete may be just a c header loaded dynamically
+
+
+while(rendering)
+{
+watchpipelinerebuild(pipelines.h)
+
+
+}
+
+

@@ -1,0 +1,14 @@
+# Target labels
+ capstone-populate
+# Source files and their labels
+/home/lk/vkutils/newestvkutil/external/tracy/profiler/_deps/capstone-subbuild/CMakeFiles/capstone-populate
+/home/lk/vkutils/newestvkutil/external/tracy/profiler/_deps/capstone-subbuild/CMakeFiles/capstone-populate.rule
+/home/lk/vkutils/newestvkutil/external/tracy/profiler/_deps/capstone-subbuild/CMakeFiles/capstone-populate-complete.rule
+/home/lk/vkutils/newestvkutil/external/tracy/profiler/_deps/capstone-subbuild/capstone-populate-prefix/src/capstone-populate-stamp/capstone-populate-build.rule
+/home/lk/vkutils/newestvkutil/external/tracy/profiler/_deps/capstone-subbuild/capstone-populate-prefix/src/capstone-populate-stamp/capstone-populate-configure.rule
+/home/lk/vkutils/newestvkutil/external/tracy/profiler/_deps/capstone-subbuild/capstone-populate-prefix/src/capstone-populate-stamp/capstone-populate-download.rule
+/home/lk/vkutils/newestvkutil/external/tracy/profiler/_deps/capstone-subbuild/capstone-populate-prefix/src/capstone-populate-stamp/capstone-populate-install.rule
+/home/lk/vkutils/newestvkutil/external/tracy/profiler/_deps/capstone-subbuild/capstone-populate-prefix/src/capstone-populate-stamp/capstone-populate-mkdir.rule
+/home/lk/vkutils/newestvkutil/external/tracy/profiler/_deps/capstone-subbuild/capstone-populate-prefix/src/capstone-populate-stamp/capstone-populate-patch.rule
+/home/lk/vkutils/newestvkutil/external/tracy/profiler/_deps/capstone-subbuild/capstone-populate-prefix/src/capstone-populate-stamp/capstone-populate-test.rule
+/home/lk/vkutils/newestvkutil/external/tracy/profiler/_deps/capstone-subbuild/capstone-populate-prefix/src/capstone-populate-stamp/capstone-populate-update.rule

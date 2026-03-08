@@ -1,0 +1,288 @@
+
+
+//TODO:
+typedef enum DrawType
+{
+    DRAW_DIRECT,
+    DRAW_INDIRECT,
+    DRAW_INDEXED,
+    DRAW_INDEXED_INDIRECT,
+    DRAW_INDEXED_INDIRECT_COUNT,
+} DrawType;
+
+
+typedef struct DrawCmd
+{
+    PipelineID pipeline;
+    DrawType   type;
+
+    union
+    {
+        struct
+        {
+            uint32_t vertexCount;
+            uint32_t instanceCount;
+            uint32_t firstVertex;
+            uint32_t firstInstance;
+        } direct;
+
+        struct
+        {
+            VkBuffer     buffer;
+            VkDeviceSize offset;
+            uint32_t     drawCount;
+            uint32_t     stride;
+        } indirect;
+
+        struct
+        {
+            uint32_t indexCount;
+            uint32_t instanceCount;
+            uint32_t firstIndex;
+            int32_t  vertexOffset;
+            uint32_t firstInstance;
+        } indexed;
+
+        struct
+        {
+            VkBuffer     buffer;
+            VkDeviceSize offset;
+            uint32_t     drawCount;
+            uint32_t     stride;
+        } indexed_indirect;
+
+        struct
+        {
+            VkBuffer     buffer;
+            VkDeviceSize offset;
+            VkBuffer     countBuffer;
+            VkDeviceSize countOffset;
+            uint32_t     maxDrawCount;
+            uint32_t     stride;
+        } indexed_indirect_count;
+    };
+
+} DrawCmd;
+#define MAX_PASS_RESOURCES 32
+#define MAX_COLOR_ATTACHMENTS 8
+typedef struct PassAttachments
+{
+    TextureHandle color[MAX_COLOR_ATTACHMENTS];
+    uint32_t      color_count;
+
+    TextureHandle depth;
+    bool          has_depth;
+
+} PassAttachments;
+
+
+typedef enum
+{
+    PASS_GRAPHICS,
+    PASS_COMPUTE,
+} PassType;
+
+typedef enum
+{
+    RESOURCE_TEXTURE,
+    RESOURCE_BUFFER,
+} ResourceType;
+
+typedef enum
+{
+    ACCESS_READ,
+    ACCESS_WRITE,
+    ACCESS_READ_WRITE,
+} ResourceAccess;
+
+typedef enum
+{
+    USAGE_COLOR_ATTACHMENT,
+    USAGE_DEPTH_ATTACHMENT,
+    USAGE_SAMPLED,
+    USAGE_STORAGE,
+    USAGE_UNIFORM_BUFFER,
+    USAGE_STORAGE_BUFFER,
+} ResourceUsage;
+
+typedef struct
+{
+    ResourceType type;
+    union
+    {
+        TextureHandle texture_handle;
+        BufferHandle  buffer_handle;
+    };
+    ResourceUsage  usage;
+    ResourceAccess access;
+} PassResource;
+
+
+typedef struct GraphicsWork
+{
+    uint32_t draw_count;
+    DrawCmd* draws;
+
+} GraphicsWork;
+
+typedef struct ComputeWork
+{
+    PipelineID pipeline;
+
+    uint32_t group_x;
+    uint32_t group_y;
+    uint32_t group_z;
+
+} ComputeWork;
+
+typedef struct Pass
+{
+    const char* name;
+
+    PassType type;
+
+    PassAttachments attachments;
+
+    uint32_t     resource_count;
+    PassResource resources[MAX_PASS_RESOURCES];
+
+    void*    push_data;
+    uint32_t push_size;
+
+    union
+    {
+        GraphicsWork graphics;
+        ComputeWork  compute;
+    };
+
+} Pass;
+
+static inline void execute_draw(VkCommandBuffer cmd, const DrawCmd* d)
+{
+    switch(d->type)
+    {
+        case DRAW_DIRECT:
+            vkCmdDraw(cmd, d->direct.vertexCount, d->direct.instanceCount, d->direct.firstVertex, d->direct.firstInstance);
+            break;
+
+        case DRAW_INDIRECT:
+            vkCmdDrawIndirect(cmd, d->indirect.buffer, d->indirect.offset, d->indirect.drawCount, d->indirect.stride);
+            break;
+
+        case DRAW_INDEXED:
+            vkCmdDrawIndexed(cmd, d->indexed.indexCount, d->indexed.instanceCount, d->indexed.firstIndex,
+                             d->indexed.vertexOffset, d->indexed.firstInstance);
+            break;
+
+        case DRAW_INDEXED_INDIRECT:
+            vkCmdDrawIndexedIndirect(cmd, d->indexed_indirect.buffer, d->indexed_indirect.offset,
+                                     d->indexed_indirect.drawCount, d->indexed_indirect.stride);
+            break;
+
+        case DRAW_INDEXED_INDIRECT_COUNT:
+            vkCmdDrawIndexedIndirectCount(cmd, d->indexed_indirect_count.buffer, d->indexed_indirect_count.offset,
+                                          d->indexed_indirect_count.countBuffer, d->indexed_indirect_count.countOffset,
+                                          d->indexed_indirect_count.maxDrawCount, d->indexed_indirect_count.stride);
+            break;
+    }
+}
+
+// void begin_rendering_from_attachments(Renderer* r, VkCommandBuffer cmd, const PassAttachments* att)
+// {
+//     VkRenderingAttachmentInfo colorInfos[MAX_COLOR_ATTACHMENTS];
+//
+//     for(uint32_t i = 0; i < att->color_count; i++)
+//     {
+//         Texture* tex = renderer_get_texture(r, att->color[i]);
+//
+//         colorInfos[i] = (VkRenderingAttachmentInfo){.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+//                                                     .imageView        = tex->view,
+//                                                     .imageLayout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+//                                                     .loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR,
+//                                                     .storeOp          = VK_ATTACHMENT_STORE_OP_STORE,
+//                                                     .clearValue.color = {{0, 0, 0, 1}}};
+//     }
+//
+//     VkRenderingAttachmentInfo depthInfo = {0};
+//
+//     if(att->has_depth)
+//     {
+//         Texture* tex = renderer_get_texture(r, att->depth);
+//
+//         depthInfo = (VkRenderingAttachmentInfo){.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+//                                                 .imageView   = tex->view,
+//                                                 .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+//                                                 .loadOp      = VK_ATTACHMENT_LOAD_OP_CLEAR,
+//                                                 .storeOp     = VK_ATTACHMENT_STORE_OP_STORE,
+//                                                 .clearValue.depthStencil.depth = 1.0f};
+//     }
+//
+//     VkRenderingInfo info = {.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO,
+//                             .renderArea.extent    = r->swapchain.extent,
+//                             .layerCount           = 1,
+//                             .colorAttachmentCount = att->color_count,
+//                             .pColorAttachments    = colorInfos,
+//                             .pDepthAttachment     = att->has_depth ? &depthInfo : NULL};
+//
+//     vkCmdBeginRendering(cmd, &info);
+// }
+
+
+// void execute_pass(Renderer* r, RendererPipelines* pipelines, VkCommandBuffer cmd, const Pass* pass)
+// {
+//     if(pass->type == PASS_GRAPHICS)
+//     {
+//         begin_rendering_from_attachments(r, cmd, &pass->attachments);
+//
+//         VkPipeline current_pipeline = VK_NULL_HANDLE;
+//
+//         for(uint32_t i = 0; i < pass->graphics.draw_count; i++)
+//         {
+//             const DrawCmd* d = &pass->graphics.draws[i];
+//
+//             VkPipeline pipeline = pipelines->pipelines[d->pipeline];
+//
+//             if(pipeline != current_pipeline)
+//             {
+//                 vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+//
+//                 current_pipeline = pipeline;
+//             }
+//
+//             if(pass->push_size)
+//             {
+//                 vkCmdPushConstants(cmd, r->bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, pass->push_size, pass->push_data);
+//             }
+//
+//             execute_draw(cmd, d);
+//         }
+//
+//         vkCmdEndRendering(cmd);
+//     }
+//     else
+//     {
+//         VkPipeline pipeline = pipelines->pipelines[pass->compute.pipeline];
+//
+//         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+//
+//         if(pass->push_size)
+//         {
+//             vkCmdPushConstants(cmd, r->bindless_system.pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, pass->push_size,
+//                                pass->push_data);
+//         }
+//
+//         vkCmdDispatch(cmd, pass->compute.group_x, pass->compute.group_y, pass->compute.group_z);
+//     }
+// }
+
+
+typedef enum PassID
+{
+    TRIANGLE_PASS,
+    PASS_COUNT
+} PassID;
+typedef struct RenderPasses
+{
+    Pass Passes[PASS_COUNT];
+} RendererPasses;
+

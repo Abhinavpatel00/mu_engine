@@ -1,0 +1,781 @@
+import { useState } from "react";
+
+const stages = [
+  {
+    id: "gbuffer",
+    phase: "G-BUFFER PASS",
+    color: "#00d4ff",
+    glow: "#00d4ff44",
+    icon: "⬡",
+    attachments: [
+      {
+        name: "Albedo / Base Color",
+        format: "VK_FORMAT_R8G8B8A8_SRGB",
+        bits: "8bpc sRGB",
+        why: "sRGB gamma-correct storage; GPU auto-linearizes on read. Alpha carries metallic mask.",
+        usage: "COLOR_ATTACHMENT | SAMPLED",
+        tag: "LDR",
+      },
+      {
+        name: "Normal (Octahedron)",
+        format: "VK_FORMAT_R16G16_SFLOAT",
+        bits: "16-bit half float × 2",
+        why: "Oct-encoded normals fit in RG16F. Full precision needed for specular; avoids 24-bit waste.",
+        usage: "COLOR_ATTACHMENT | SAMPLED",
+        tag: "HDR",
+      },
+      {
+        name: "ORM (Occlusion/Rough/Metal)",
+        format: "VK_FORMAT_R8G8B8A8_UNORM",
+        bits: "8bpc UNORM",
+        why: "Scalar PBR params don't need >256 levels. UNORM packs tightly; no gamma needed.",
+        usage: "COLOR_ATTACHMENT | SAMPLED",
+        tag: "LDR",
+      },
+      {
+        name: "Depth / Stencil",
+        format: "VK_FORMAT_D32_SFLOAT_S8_UINT",
+        bits: "32-bit float depth + 8-bit stencil",
+        why: "32F avoids Z-fighting at long distances. Stencil reserves 8 bits for deferred lighting masks.",
+        usage: "DEPTH_STENCIL_ATTACHMENT | SAMPLED",
+        tag: "DEPTH",
+      },
+    ],
+  },
+  {
+    id: "shadow",
+    phase: "SHADOW ATLAS PASS",
+    color: "#ff6b35",
+    glow: "#ff6b3544",
+    icon: "◈",
+    attachments: [
+      {
+        name: "Shadow Map Atlas",
+        format: "VK_FORMAT_D32_SFLOAT",
+        bits: "32-bit float",
+        why: "High-precision depth for PCF / PCSS filtering. 16F causes shadow acne at distance.",
+        usage: "DEPTH_STENCIL_ATTACHMENT | SAMPLED",
+        tag: "DEPTH",
+      },
+      {
+        name: "VSM Moments",
+        format: "VK_FORMAT_R32G32_SFLOAT",
+        bits: "32-bit float × 2",
+        why: "Variance Shadow Maps need E(depth) and E(depth²) with full float precision to avoid light bleeding.",
+        usage: "COLOR_ATTACHMENT | SAMPLED | STORAGE",
+        tag: "HDR",
+      },
+    ],
+  },
+  {
+    id: "lighting",
+    phase: "LIGHTING / IBL PASS",
+    color: "#ffd700",
+    glow: "#ffd70044",
+    icon: "✦",
+    attachments: [
+      {
+        name: "HDR Accumulation Buffer",
+        format: "VK_FORMAT_R16G16B16A16_SFLOAT",
+        bits: "16-bit half float × 4",
+        why: "Stores scene-linear radiance values far exceeding [0,1]. Half-float saves 50% bandwidth vs R32 while handling up to ~65,504 nits.",
+        usage: "COLOR_ATTACHMENT | STORAGE | SAMPLED",
+        tag: "HDR",
+      },
+      {
+        name: "IBL Specular (Pre-filtered Env)",
+        format: "VK_FORMAT_R16G16B16A16_SFLOAT cubemap",
+        bits: "16-bit float cube mips",
+        why: "Cubemap mip chain stores pre-integrated GGX at varying roughness. Needs HDR range for sky/sun values.",
+        usage: "SAMPLED | TRANSFER_DST",
+        tag: "HDR",
+      },
+      {
+        name: "BRDF LUT",
+        format: "VK_FORMAT_R16G16_SFLOAT",
+        bits: "16-bit float × 2",
+        why: "Stores split-sum FG terms (F0 scale + bias). RG16F sufficient; no color, just scalar integrals.",
+        usage: "SAMPLED",
+        tag: "HDR",
+      },
+      {
+        name: "AO Buffer (GTAO)",
+        format: "VK_FORMAT_R8_UNORM",
+        bits: "8-bit UNORM",
+        why: "Single-channel occlusion factor in [0,1]. 8-bit sufficient; blurred result hides quantization.",
+        usage: "STORAGE | SAMPLED",
+        tag: "LDR",
+      },
+    ],
+  },
+  {
+    id: "volumetric",
+    phase: "VOLUMETRIC / FOG PASS",
+    color: "#a78bfa",
+    glow: "#a78bfa44",
+    icon: "≋",
+    attachments: [
+      {
+        name: "Volumetric Froxel Grid",
+        format: "VK_FORMAT_R16G16B16A16_SFLOAT 3D",
+        bits: "16F 3D texture (160×90×64)",
+        why: "RGB=scattered radiance, A=transmittance. 3D froxel at half-res per axis; half-float balances precision vs 3D texture memory.",
+        usage: "STORAGE | SAMPLED",
+        tag: "HDR",
+      },
+      {
+        name: "Integrated Scattering",
+        format: "VK_FORMAT_R16G16B16A16_SFLOAT 3D",
+        bits: "16F 3D (front-to-back integrated)",
+        why: "Second froxel pass integrates along Z. Separate target allows read-write overlap during ray march.",
+        usage: "STORAGE | SAMPLED",
+        tag: "HDR",
+      },
+    ],
+  },
+  {
+    id: "temporal",
+    phase: "TAA / TEMPORAL PASS",
+    color: "#34d399",
+    glow: "#34d39944",
+    icon: "⟳",
+    attachments: [
+      {
+        name: "History Buffer (ping-pong)",
+        format: "VK_FORMAT_R16G16B16A16_SFLOAT",
+        bits: "16-bit half float × 4",
+        why: "Matches HDR accumulation format for lossless blend. Ping-pong pair avoids read-write hazard. Alpha holds confidence/blend weight.",
+        usage: "COLOR_ATTACHMENT | SAMPLED",
+        tag: "HDR",
+      },
+      {
+        name: "Motion Vectors",
+        format: "VK_FORMAT_R16G16_SFLOAT",
+        bits: "16-bit float × 2 (UV-space)",
+        why: "Sub-pixel motion in NDC space. 16F gives ±65504 range, far exceeding full-screen motion; half the bandwidth of R32G32.",
+        usage: "COLOR_ATTACHMENT | SAMPLED",
+        tag: "MV",
+      },
+    ],
+  },
+  {
+    id: "postprocess",
+    phase: "POST-PROCESS PASS",
+    color: "#f472b6",
+    glow: "#f472b644",
+    icon: "◎",
+    attachments: [
+      {
+        name: "Bloom Threshold / Extract",
+        format: "VK_FORMAT_R16G16B16A16_SFLOAT (half-res)",
+        bits: "16F half resolution",
+        why: "Extract pixels above luminance threshold. Half-res halves blur cost. 16F preserves overbright values needed for correct bloom shape.",
+        usage: "STORAGE | SAMPLED",
+        tag: "HDR",
+      },
+      {
+        name: "Bloom Blur Chain (mips)",
+        format: "VK_FORMAT_R16G16B16A16_SFLOAT mip chain",
+        bits: "16F dual-kawase mip chain",
+        why: "Progressive downsample/upsample (à la COD). Each mip halves resolution; 16F keeps highlight color accurate through blur passes.",
+        usage: "STORAGE | SAMPLED",
+        tag: "HDR",
+      },
+      {
+        name: "Lens Dirt / Flare LUT",
+        format: "VK_FORMAT_R8G8B8A8_SRGB",
+        bits: "8bpc sRGB",
+        why: "Artistic mask texture; no HDR values needed. sRGB for correct blending against linear scene buffer.",
+        usage: "SAMPLED",
+        tag: "LDR",
+      },
+    ],
+  },
+  {
+    id: "tonemap",
+    phase: "TONEMAPPING + COLOR GRADING",
+    color: "#fb923c",
+    glow: "#fb923c44",
+    icon: "▣",
+    attachments: [
+      {
+        name: "HDR Input (scene-linear)",
+        format: "VK_FORMAT_R16G16B16A16_SFLOAT",
+        bits: "16-bit scene-linear",
+        why: "Read-only input from accumulation. Full HDR scene data fed into tone operator (ACES/AgX/Hable).",
+        usage: "SAMPLED (read)",
+        tag: "HDR",
+      },
+      {
+        name: "3D Color Grading LUT",
+        format: "VK_FORMAT_R16G16B16A16_SFLOAT 3D (33³)",
+        bits: "16F 3D LUT",
+        why: "33³ resolution standard for cinematic grading. 16F avoids banding in shadows. Avoids per-pixel curve math.",
+        usage: "SAMPLED",
+        tag: "HDR",
+      },
+      {
+        name: "LDR Output",
+        format: "VK_FORMAT_A2B10G10R10_UNORM_PACK32",
+        bits: "10-bit per channel",
+        why: "10-bit display output eliminates banding in gradients visible at 8-bit. Maps to HDR10 / Rec.2020 display path with 2-bit alpha.",
+        usage: "STORAGE | TRANSFER_SRC",
+        tag: "10bit",
+      },
+    ],
+  },
+  {
+    id: "ui",
+    phase: "UI / COMPOSITE PASS",
+    color: "#64748b",
+    glow: "#64748b44",
+    icon: "⬜",
+    attachments: [
+      {
+        name: "UI Render Target",
+        format: "VK_FORMAT_R8G8B8A8_SRGB",
+        bits: "8bpc sRGB",
+        why: "UI elements are authored in sRGB. Separate target allows UI to composite over LDR without disrupting HDR buffer.",
+        usage: "COLOR_ATTACHMENT | SAMPLED",
+        tag: "LDR",
+      },
+      {
+        name: "Swapchain Image",
+        format: "VK_FORMAT_B8G8R8A8_SRGB or R8G8B8A8_SRGB",
+        bits: "8bpc (or B10GR10 for HDR display)",
+        why: "Platform swapchain format. BGRA8 is most common; HDR displays use R10G10B10A2. Final blit or composite writes here.",
+        usage: "TRANSFER_DST | PRESENT_SRC",
+        tag: "PRESENT",
+      },
+    ],
+  },
+];
+
+const tagColors = {
+  HDR: { bg: "#ffd70022", border: "#ffd700", text: "#ffd700" },
+  LDR: { bg: "#00d4ff22", border: "#00d4ff", text: "#00d4ff" },
+  DEPTH: { bg: "#ff6b3522", border: "#ff6b35", text: "#ff6b35" },
+  "10bit": { bg: "#34d39922", border: "#34d399", text: "#34d399" },
+  MV: { bg: "#a78bfa22", border: "#a78bfa", text: "#a78bfa" },
+  PRESENT: { bg: "#f472b622", border: "#f472b6", text: "#f472b6" },
+};
+
+const flowArrows = [
+  "Voxel / Mesh Geometry",
+  "Shadow Casters",
+  "G-Buffer Textures + Depth",
+  "Lit HDR Radiance",
+  "Froxel Scattering",
+  "TAA Stable HDR",
+  "Tonemapped LDR",
+  "Final Composite",
+];
+
+export default function HDRPipeline() {
+  const [active, setActive] = useState(null);
+  const [hoveredTag, setHoveredTag] = useState(null);
+
+  const activeStage = stages.find((s) => s.id === active);
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#070a0f",
+        fontFamily: "'Courier New', monospace",
+        color: "#c8d0e0",
+        padding: "32px 24px",
+      }}
+    >
+      {/* Header */}
+      <div style={{ textAlign: "center", marginBottom: 40 }}>
+        <div
+          style={{
+            fontSize: 11,
+            letterSpacing: "0.35em",
+            color: "#00d4ff",
+            marginBottom: 8,
+            opacity: 0.7,
+          }}
+        >
+          VULKAN · PHYSICALLY BASED · REAL-TIME
+        </div>
+        <h1
+          style={{
+            fontSize: "clamp(22px, 4vw, 36px)",
+            fontFamily: "'Courier New', monospace",
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            margin: 0,
+            color: "#fff",
+            textShadow: "0 0 40px #00d4ff88",
+          }}
+        >
+          ADVANCED HDR RENDERING PIPELINE
+        </h1>
+        <div
+          style={{
+            fontSize: 12,
+            color: "#4a5568",
+            marginTop: 8,
+            letterSpacing: "0.2em",
+          }}
+        >
+          TEXTURE FORMATS · USAGE FLAGS · STAGE RATIONALE
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          flexWrap: "wrap",
+          justifyContent: "center",
+          marginBottom: 36,
+        }}
+      >
+        {Object.entries(tagColors).map(([tag, c]) => (
+          <div
+            key={tag}
+            onMouseEnter={() => setHoveredTag(tag)}
+            onMouseLeave={() => setHoveredTag(null)}
+            style={{
+              padding: "4px 12px",
+              borderRadius: 4,
+              border: `1px solid ${c.border}`,
+              background: hoveredTag === tag ? c.bg : "transparent",
+              color: c.text,
+              fontSize: 11,
+              letterSpacing: "0.15em",
+              cursor: "default",
+              transition: "background 0.2s",
+            }}
+          >
+            {tag}
+          </div>
+        ))}
+      </div>
+
+      {/* Pipeline Flow */}
+      <div style={{ maxWidth: 960, margin: "0 auto" }}>
+        {stages.map((stage, i) => (
+          <div key={stage.id}>
+            {/* Flow Arrow Label */}
+            {i > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "6px 0",
+                  marginLeft: 28,
+                }}
+              >
+                <div
+                  style={{
+                    width: 1,
+                    height: 28,
+                    background: `linear-gradient(to bottom, ${stages[i - 1].color}88, ${stage.color}88)`,
+                  }}
+                />
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "#3d4a5c",
+                    letterSpacing: "0.15em",
+                  }}
+                >
+                  ▼ {flowArrows[i - 1]}
+                </div>
+              </div>
+            )}
+
+            {/* Stage Card */}
+            <div
+              onClick={() => setActive(active === stage.id ? null : stage.id)}
+              style={{
+                border: `1px solid ${active === stage.id ? stage.color : "#1a2030"}`,
+                borderRadius: 8,
+                background:
+                  active === stage.id
+                    ? `linear-gradient(135deg, #0d1117 0%, #0d111f 100%)`
+                    : "#0a0d14",
+                cursor: "pointer",
+                transition: "all 0.25s",
+                boxShadow:
+                  active === stage.id
+                    ? `0 0 30px ${stage.glow}, inset 0 0 30px ${stage.glow}`
+                    : "none",
+                overflow: "hidden",
+              }}
+            >
+              {/* Stage Header */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  padding: "14px 20px",
+                  borderBottom:
+                    active === stage.id ? `1px solid ${stage.color}33` : "none",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 22,
+                    color: stage.color,
+                    filter: `drop-shadow(0 0 8px ${stage.color})`,
+                  }}
+                >
+                  {stage.icon}
+                </span>
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    letterSpacing: "0.2em",
+                    color: stage.color,
+                  }}
+                >
+                  {stage.phase}
+                </span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "#2a3344",
+                    letterSpacing: "0.1em",
+                    marginLeft: "auto",
+                  }}
+                >
+                  {stage.attachments.length} attachment
+                  {stage.attachments.length > 1 ? "s" : ""}{" "}
+                  {active === stage.id ? "▲" : "▼"}
+                </span>
+              </div>
+
+              {/* Attachments (expanded) */}
+              {active === stage.id && (
+                <div style={{ padding: "16px 20px 20px" }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fill, minmax(280px, 1fr))",
+                      gap: 14,
+                    }}
+                  >
+                    {stage.attachments.map((att, j) => {
+                      const tc = tagColors[att.tag] || tagColors.LDR;
+                      return (
+                        <div
+                          key={j}
+                          style={{
+                            background: "#080b11",
+                            border: `1px solid #1a2030`,
+                            borderRadius: 6,
+                            padding: "14px 16px",
+                            position: "relative",
+                          }}
+                        >
+                          {/* Tag badge */}
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: 10,
+                              right: 10,
+                              padding: "2px 8px",
+                              borderRadius: 3,
+                              border: `1px solid ${tc.border}`,
+                              background: tc.bg,
+                              color: tc.text,
+                              fontSize: 9,
+                              letterSpacing: "0.15em",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {att.tag}
+                          </div>
+
+                          {/* Name */}
+                          <div
+                            style={{
+                              fontSize: 12,
+                              fontWeight: 700,
+                              color: "#e2e8f0",
+                              marginBottom: 8,
+                              paddingRight: 40,
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            {att.name}
+                          </div>
+
+                          {/* Format pill */}
+                          <div
+                            style={{
+                              background: "#0f1520",
+                              border: `1px solid ${stage.color}44`,
+                              borderRadius: 4,
+                              padding: "6px 10px",
+                              marginBottom: 8,
+                            }}
+                          >
+                            <div
+                              style={{
+                                fontSize: 10,
+                                color: stage.color,
+                                letterSpacing: "0.1em",
+                                marginBottom: 2,
+                              }}
+                            >
+                              FORMAT
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 11,
+                                color: "#94a3b8",
+                                wordBreak: "break-all",
+                              }}
+                            >
+                              {att.format}
+                            </div>
+                          </div>
+
+                          {/* Bits */}
+                          <div
+                            style={{
+                              fontSize: 10,
+                              color: "#4a5568",
+                              letterSpacing: "0.1em",
+                              marginBottom: 8,
+                            }}
+                          >
+                            ◆ {att.bits}
+                          </div>
+
+                          {/* Usage flags */}
+                          <div
+                            style={{
+                              background: "#0a0e16",
+                              borderRadius: 4,
+                              padding: "5px 8px",
+                              marginBottom: 10,
+                              fontSize: 9,
+                              color: "#3d5068",
+                              letterSpacing: "0.08em",
+                              wordBreak: "break-all",
+                            }}
+                          >
+                            USAGE: {att.usage}
+                          </div>
+
+                          {/* Why */}
+                          <div
+                            style={{
+                              fontSize: 11,
+                              color: "#64748b",
+                              lineHeight: 1.6,
+                              borderLeft: `2px solid ${stage.color}55`,
+                              paddingLeft: 10,
+                            }}
+                          >
+                            {att.why}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {/* Final Arrow */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "6px 0",
+            marginLeft: 28,
+          }}
+        >
+          <div
+            style={{
+              width: 1,
+              height: 28,
+              background: "linear-gradient(to bottom, #64748b88, #f472b688)",
+            }}
+          />
+          <div
+            style={{ fontSize: 10, color: "#3d4a5c", letterSpacing: "0.15em" }}
+          >
+            ▼ {flowArrows[flowArrows.length - 1]}
+          </div>
+        </div>
+
+        {/* Present Box */}
+        <div
+          style={{
+            border: "1px solid #f472b6",
+            borderRadius: 8,
+            background: "#0f0a10",
+            padding: "14px 20px",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            boxShadow: "0 0 20px #f472b622",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 20,
+              color: "#f472b6",
+              filter: "drop-shadow(0 0 6px #f472b6)",
+            }}
+          >
+            ⬡
+          </span>
+          <div>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.2em",
+                color: "#f472b6",
+              }}
+            >
+              QUEUE SUBMIT → PRESENT
+            </div>
+            <div style={{ fontSize: 11, color: "#4a5568", marginTop: 3 }}>
+              vkQueueSubmit2 · Timeline Semaphores · vkQueuePresentKHR
+            </div>
+          </div>
+        </div>
+
+        {/* Format Cheat Sheet */}
+        <div
+          style={{
+            marginTop: 48,
+            border: "1px solid #1a2030",
+            borderRadius: 8,
+            background: "#0a0d14",
+            padding: "24px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              letterSpacing: "0.25em",
+              color: "#00d4ff",
+              marginBottom: 20,
+            }}
+          >
+            FORMAT SELECTION RATIONALE — QUICK REFERENCE
+          </div>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gap: 12,
+            }}
+          >
+            {[
+              {
+                rule: "R8G8B8A8_SRGB",
+                use: "Albedo, UI targets, sRGB art assets",
+                why: "GPU linearizes on read; compact; correct perceptual storage",
+              },
+              {
+                rule: "R16G16B16A16_SFLOAT",
+                use: "HDR accumulation, history, bloom",
+                why: "Scene-linear radiance; 65k max; 50% smaller than R32F quad",
+              },
+              {
+                rule: "R32G32B32A32_SFLOAT",
+                use: "Offline / compute accumulation only",
+                why: "Full IEEE float; only when 16F range/precision is insufficient",
+              },
+              {
+                rule: "D32_SFLOAT_S8_UINT",
+                use: "Primary depth-stencil",
+                why: "32F avoids Z-fight; S8 for deferred lighting category masks",
+              },
+              {
+                rule: "D32_SFLOAT",
+                use: "Shadow maps, secondary depth",
+                why: "No stencil needed; full float range for stable PCF sampling",
+              },
+              {
+                rule: "A2B10G10R10_UNORM",
+                use: "LDR tonemapped output",
+                why: "10bpc eliminates gradient banding; maps to HDR10 display path",
+              },
+              {
+                rule: "R16G16_SFLOAT",
+                use: "Motion vectors, normal oct-encode",
+                why: "2-channel half float; half bandwidth vs R32G32; enough precision",
+              },
+              {
+                rule: "R8_UNORM",
+                use: "AO buffer, single-channel masks",
+                why: "Minimum bandwidth for scalar [0,1] data; blur hides quantization",
+              },
+            ].map((row, i) => (
+              <div
+                key={i}
+                style={{
+                  background: "#080b11",
+                  border: "1px solid #151d28",
+                  borderRadius: 5,
+                  padding: "12px 14px",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "#ffd700",
+                    marginBottom: 4,
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  {row.rule}
+                </div>
+                <div
+                  style={{ fontSize: 11, color: "#64748b", marginBottom: 5 }}
+                >
+                  → {row.use}
+                </div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "#3d4a5c",
+                    lineHeight: 1.5,
+                    borderLeft: "2px solid #1a2535",
+                    paddingLeft: 8,
+                  }}
+                >
+                  {row.why}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div
+          style={{
+            textAlign: "center",
+            marginTop: 28,
+            fontSize: 10,
+            color: "#1e2a38",
+            letterSpacing: "0.2em",
+          }}
+        >
+          CLICK ANY STAGE TO EXPAND ATTACHMENT DETAILS
+        </div>
+      </div>
+    </div>
+  );
+}

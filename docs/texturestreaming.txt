@@ -1,0 +1,7 @@
+https://notkyon.moe/vt/Clipmap.pdf
+
+https://github.com/colopl/libpino
+
+ you don't need a separate image for each mip level. If you create the image for your texture you only need to set mipLevels of the VkImageCreateInfo.
+oad them from a texture file (static mip levels) or do you need to generate them at runtime?
+
