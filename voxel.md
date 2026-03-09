@@ -842,3 +842,389 @@ Most implementations just restart the region.
 If you want, I can show you something extremely useful next:
 
 How to build a **3D WFC solver for voxel worlds** that runs in milliseconds and avoids most deadlocks. It’s about 150 lines of C and fits perfectly into your chunk system.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+================================================================================
+Voxel Face Texture Encoding System
+================================================================================
+
+Goal
+----
+Store the textures for the six faces of a voxel block in only 32 bits.
+
+Faces:
+    N = North
+    S = South
+    E = East
+    W = West
+    U = Up
+    D = Down
+
+Why do this?
+------------
+Naive layout per voxel face:
+
+    struct {
+        uint n;
+        uint s;
+        uint e;
+        uint w;
+        uint u;
+        uint d;
+    };
+
+That is 24 bytes.
+
+If you render millions of voxel faces, memory bandwidth becomes the main
+performance killer. Instead we compress the face data into ONE 32-bit integer.
+
+This integer uses multiple encoding layouts chosen by the first 2 bits.
+
+
+Encoding Overview
+-----------------
+
+bits [1:0] = encoding selector
+
+0 = Explicit faces
+1 = Axis grouped
+2 = Alternate grouping
+3 = Palette index
+
+
+Benefits
+--------
+
+• drastically reduces GPU memory bandwidth
+• fits nicely inside GPU buffers
+• decoding cost is extremely small
+• supports large texture libraries
+
+
+================================================================================
+Packed Face Representation
+================================================================================
+*/
+
+typedef union PackedFace
+{
+    uint32_t raw;
+
+
+
+    /*
+    -------------------------------------------------------------------------
+    Encoding 0 : Explicit faces
+    -------------------------------------------------------------------------
+
+    Use when every face might have a unique texture.
+
+    Layout:
+
+        bits
+        0-1   encoding selector (0)
+
+        2-6   north texture index
+        7-11  south texture index
+        12-16 east texture index
+        17-21 west texture index
+        22-26 up texture index
+        27-31 down texture index
+
+    Each face gets 5 bits → 32 possible textures per direction.
+
+    Very flexible but lowest compression.
+    */
+    struct
+    {
+        uint32_t encoding : 2;
+
+        uint32_t north : 5;
+        uint32_t south : 5;
+        uint32_t east  : 5;
+        uint32_t west  : 5;
+
+        uint32_t up    : 5;
+        uint32_t down  : 5;
+
+    } explicit_faces;
+
+
+
+    /*
+    -------------------------------------------------------------------------
+    Encoding 1 : Axis grouped
+    -------------------------------------------------------------------------
+
+    Many blocks share textures on opposite sides.
+
+    Example:
+        brick walls
+        pillars
+        logs
+
+    Layout:
+
+        bits
+        0-1   encoding selector (1)
+
+        2-9   down
+        10-15 up
+        16-23 north/south
+        24-31 east/west
+
+    This saves space because opposite faces reuse textures.
+    */
+    struct
+    {
+        uint32_t encoding : 2;
+
+        uint32_t down : 8;
+        uint32_t up   : 6;
+
+        uint32_t north_south : 8;
+        uint32_t east_west   : 8;
+
+    } axis_grouped;
+
+
+
+    /*
+    -------------------------------------------------------------------------
+    Encoding 2 : Alternate grouping
+    -------------------------------------------------------------------------
+
+    Another directional compression scheme used when
+    some faces share textures in diagonal patterns.
+
+    Useful for terrain or certain building structures.
+
+    Layout:
+
+        bits
+        0-1   encoding selector (2)
+
+        2-9   up
+        10-15 down
+        16-23 north/east
+        24-31 south/west
+    */
+    struct
+    {
+        uint32_t encoding : 2;
+
+        uint32_t up   : 8;
+        uint32_t down : 6;
+
+        uint32_t north_east : 8;
+        uint32_t south_west : 8;
+
+    } alt_grouped;
+
+
+
+    /*
+    -------------------------------------------------------------------------
+    Encoding 3 : Palette index
+    -------------------------------------------------------------------------
+
+    This is the most powerful mode.
+
+    Instead of storing textures directly we store
+    an index into a palette table.
+
+    That palette expands to all six faces.
+
+    Layout:
+
+        bits
+        0-1   encoding selector (3)
+
+        2-21  palette index (1M possible entries)
+
+    The palette table contains:
+
+        struct {
+            uint north;
+            uint south;
+            uint east;
+            uint west;
+            uint up;
+            uint down;
+        };
+
+    This allows thousands of block types while
+    keeping GPU data extremely compact.
+    */
+    struct
+    {
+        uint32_t encoding : 2;
+        uint32_t palette  : 20;
+        uint32_t unused   : 10;
+
+    } palette;
+
+} PackedFace;
+
+
+
+/*
+================================================================================
+Palette Structure
+================================================================================
+
+This lives in a GPU buffer.
+
+Each palette entry expands into the full face set.
+*/
+
+typedef struct FacePalette
+{
+    uint16_t north;
+    uint16_t south;
+    uint16_t east;
+    uint16_t west;
+    uint16_t up;
+    uint16_t down;
+
+} FacePalette;
+
+
+
+/*
+================================================================================
+How Data Is Sent To GPU
+================================================================================
+
+Typical pipeline:
+
+CPU
+---
+1. Build voxel mesh
+2. Encode face textures into PackedFace
+3. Upload array of PackedFace to GPU buffer
+
+
+GPU
+---
+vertex/compute shader receives:
+
+    buffer PackedFace faces[]
+
+
+The shader decodes like:
+
+    uint encoding = face & 3;
+
+
+switch(encoding)
+{
+    case 0:
+        decode explicit faces
+        break;
+
+    case 1:
+        decode grouped faces
+        break;
+
+    case 2:
+        decode alternate grouping
+        break;
+
+    case 3:
+        lookup palette
+        break;
+}
+
+
+
+================================================================================
+Why This Is Efficient
+================================================================================
+
+Memory bandwidth comparison:
+
+Naive:
+
+    6 faces * 4 bytes = 24 bytes
+
+Packed:
+
+    4 bytes
+
+Savings:
+
+    6x reduction in memory bandwidth
+
+
+This matters because GPUs are often bandwidth bound when rendering voxel worlds.
+
+
+
+================================================================================
+Caveats
+================================================================================
+
+1) Bitfields are compiler dependent
+
+C bitfield ordering is not guaranteed across compilers.
+If portability matters, prefer manual bit packing.
+
+2) GPU decoding cost
+
+Decoding requires some bit shifting.
+This cost is extremely small compared to memory fetch.
+
+3) Palette size
+
+Palette buffers must stay in GPU memory.
+Too large palettes hurt cache locality.
+
+4) Texture indexing limits
+
+If you need thousands of textures you should
+switch to bindless textures or texture arrays.
+
+5) Alignment
+
+Always upload data as raw uint32_t arrays.
+Avoid struct padding issues.
+
+
+================================================================================
+Summary
+================================================================================
+
+PackedFace is a bandwidth optimization.
+
+Instead of sending full texture data for every voxel face,
+we send a compact 32-bit encoding that the GPU expands
+during rendering.
+
+The tradeoff is tiny decoding work for massive bandwidth savings.
+
+This technique is common in high performance voxel engines
+and GPU driven rendering pipelines.
+
+================================================================================
+
+
+
+
+

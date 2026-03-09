@@ -1,4 +1,6 @@
 
+#include "external/cglm/include/cglm/types.h"
+#include "external/debugbreak/debugbreak.h"
 #include "tinytypes.h"
 #include "flow/flow.h"
 #include "vk_default.h"
@@ -18,9 +20,10 @@
 #include "voxel.h"
 #define DMON_IMPL
 #include "external/dmon/dmon.h"
-static bool voxel_debug     = false;
+static bool voxel_debug = true;
+
 static bool take_screenshot = true;
-#define VALIDATION false
+#define VALIDATION true
 #define KB(x) ((x) * 1024ULL)
 #define MB(x) ((x) * 1024ULL * 1024ULL)
 #define GB(x) ((x) * 1024ULL * 1024ULL * 1024ULL)
@@ -28,15 +31,45 @@ static bool take_screenshot = true;
 // imp gpu validation shows false positives may be bacause of data races
 typedef struct
 {
-    vec3 position;
+    vec3  position;
     float radius;
 
-    vec3 direction;
+    vec3  direction;
     float angle;
 
-    vec3 color;
+    vec3  color;
     float intensity;
 } SpotLight;
+typedef struct LightBeam
+{
+    float pos_width[4];   // xyz = position, w = width
+    float sun_height[4];  // xyz = sun_dir,  w = height
+    float misc[4];        // x = opacity
+} LightBeam;
+/*
+ if(editing mode of light)
+ {
+may be just cast a ray from mouse pointer to screen and if it matches then activate cimgui gizmo to capture stuff from it
+
+and also there should be save position to file option for that light so that     we can them just load it from from when editing isnt enabled and dmon watches for file changes anyway
+ }
+
+
+
+   */
+typedef struct
+{
+    uint32_t fullscreen;
+    uint32_t postprocess;
+    uint32_t triangle;
+    uint32_t smaa_edge;
+    uint32_t smaa_weight;
+    uint32_t smaa_blend;
+    uint32_t beam;
+} EnginePipelines;
+
+static EnginePipelines pipelines;
+
 
 static const VoxelType terrain_voxels[] = {
     STONE, GRASS, DIRT, SAND, GRAVEL, CLAY,
@@ -92,19 +125,6 @@ static bool shader_change_matches_spv(const char* changed, const char* spv)
 }
 
 
-
-typedef enum PipelineID
-{
-    PIPELINE_FULLSCREEN,
-    PIPELINE_POSTPROCESS,
-    PIPELINE_TRIANGLE_TEST,
-    PIPELINE_SMAA_EDGE,
-    PIPELINE_SMAA_WEIGHT,
-    PIPELINE_SMAA_BLEND,
-
-    PIPELINE_COUNT
-} PipelineID;
-
 typedef enum PipelineType
 {
     PIPELINE_TYPE_GRAPHICS,
@@ -131,25 +151,25 @@ typedef struct PipelineEntry
 
 typedef struct RendererPipelines
 {
-    VkPipeline    pipelines[PIPELINE_COUNT];
-    PipelineEntry entries[PIPELINE_COUNT];
-
+    VkPipeline    pipelines[MAX_PIPELINES];
+    PipelineEntry entries[MAX_PIPELINES];
+    uint32_t      count;
 } RendererPipelines;
 
 static RendererPipelines render_pipelines;
-static uint32_t current_pipeline_build;
+static uint32_t          current_pipeline_build;
 
 /* --------------------------------------------------------- */
 
-VkPipeline create_graphics_pipeline_cache(Renderer* r, GraphicsPipelineConfig* cfg)
+PipelineID create_graphics_pipeline_cache(Renderer* r, GraphicsPipelineConfig* cfg)
 {
     u32 id;
     flow_id_pool_create_id(&pipeline_id_pool, &id);
 
-    if(id >= PIPELINE_COUNT)
+    if(id >= MAX_PIPELINES)
     {
         printf("Pipeline overflow\n");
-        return VK_NULL_HANDLE;
+        debug_break();
     }
 
     PipelineEntry* e = &render_pipelines.entries[id];
@@ -163,19 +183,19 @@ VkPipeline create_graphics_pipeline_cache(Renderer* r, GraphicsPipelineConfig* c
     render_pipelines.pipelines[id] = p;
 
     current_pipeline_build++;
-
-    return p;
+    render_pipelines.count++;
+    return id;
 }
 
-VkPipeline create_compute_pipeline_cache(Renderer* r, const char* path)
+PipelineID create_compute_pipeline_cache(Renderer* r, const char* path)
 {
     u32 id;
     flow_id_pool_create_id(&pipeline_id_pool, &id);
 
-    if(id >= PIPELINE_COUNT)
+    if(id >= MAX_PIPELINES)
     {
         printf("Pipeline overflow\n");
-        return VK_NULL_HANDLE;
+        debug_break();
     }
 
     PipelineEntry* e = &render_pipelines.entries[id];
@@ -190,14 +210,15 @@ VkPipeline create_compute_pipeline_cache(Renderer* r, const char* path)
 
     current_pipeline_build++;
 
-    return p;
+    render_pipelines.count++;
+    return id;
 }
 
 /* --------------------------------------------------------- */
 
 void mark_pipelines_dirty(const char* changed)
 {
-    for(int i = 0; i < PIPELINE_COUNT; i++)
+    for(uint32_t i = 0; i < render_pipelines.count; i++)
     {
         PipelineEntry* e = &render_pipelines.entries[i];
 
@@ -208,9 +229,8 @@ void mark_pipelines_dirty(const char* changed)
 
         if(e->type == PIPELINE_TYPE_GRAPHICS)
         {
-            matches =
-                shader_change_matches_spv(changed, e->graphics.vert_path) ||
-                shader_change_matches_spv(changed, e->graphics.frag_path);
+            matches = shader_change_matches_spv(changed, e->graphics.vert_path)
+                      || shader_change_matches_spv(changed, e->graphics.frag_path);
         }
         else
         {
@@ -228,7 +248,7 @@ void rebuild_dirty_pipelines(Renderer* r)
 {
     bool any_dirty = false;
 
-    for(int i = 0; i < PIPELINE_COUNT; i++)
+    for(int i = 0; i < render_pipelines.count; i++)
         if(render_pipelines.entries[i].dirty)
             any_dirty = true;
 
@@ -237,7 +257,7 @@ void rebuild_dirty_pipelines(Renderer* r)
 
     vkDeviceWaitIdle(r->device);
 
-    for(int i = 0; i < PIPELINE_COUNT; i++)
+    for(int i = 0; i < render_pipelines.count; i++)
     {
         PipelineEntry* e = &render_pipelines.entries[i];
 
@@ -250,13 +270,11 @@ void rebuild_dirty_pipelines(Renderer* r)
 
         if(e->type == PIPELINE_TYPE_GRAPHICS)
         {
-            render_pipelines.pipelines[i] =
-                create_graphics_pipeline(r, &e->graphics);
+            render_pipelines.pipelines[i] = create_graphics_pipeline(r, &e->graphics);
         }
         else
         {
-            render_pipelines.pipelines[i] =
-                create_compute_pipeline(r, e->compute.path);
+            render_pipelines.pipelines[i] = create_compute_pipeline(r, e->compute.path);
         }
 
         printf("Pipeline %d hot reloaded\n", i);
@@ -324,17 +342,17 @@ static TextureID block_texture_fallback = UINT32_MAX;
 
 typedef struct
 {
-    bool     active;
-    int      center_chunk_x;
-    int      center_chunk_z;
-    uint32_t next_chunk_index;
+    bool      active;
+    int       center_chunk_x;
+    int       center_chunk_z;
+    uint32_t  next_chunk_index;
     ChunkMesh mesh;
 } StreamBuildState;
 
 static void generate_chunk_wfc(Chunk* chunk, int chunk_x, int chunk_z);
 void        append_chunk_mesh(Renderer* r, Chunk* chunk, ChunkMesh* mesh, int rel_chunk_x, int rel_chunk_z);
 
-TextureID        get_texture(Renderer* r, const char* path)
+TextureID get_texture(Renderer* r, const char* path)
 {
     for(uint32_t i = 0; i < voxel_texture_cache_count; i++)
     {
@@ -357,7 +375,7 @@ void init_block_textures(Renderer* r)
     {
         for(int f = 0; f < 6; f++)
         {
-            block_textures[b][f]        = block_texture_fallback;
+            block_textures[b][f]         = block_texture_fallback;
             block_texture_resolved[b][f] = false;
         }
     }
@@ -428,8 +446,8 @@ void build_debug_voxel_palette(Chunk* chunk)
 {
     memset(chunk, 0, sizeof(*chunk));
 
-    const int step          = 2;
-    const int cells_per_axis = CHUNK_SIZE / step;
+    const int step            = 2;
+    const int cells_per_axis  = CHUNK_SIZE / step;
     const int cells_per_layer = cells_per_axis * cells_per_axis;
 
     for(int t = 1; t < VOXEL_COUNT; t++)
@@ -731,28 +749,28 @@ void append_chunk_mesh(Renderer* r, Chunk* chunk, ChunkMesh* mesh, int rel_chunk
                     continue;
 
                 if(is_air(chunk, x + 1, y, z))
-                    emit_face(mesh,
-                              pack_face(x, y, z, FACE_POS_X, resolve_block_texture(r, v.type, FACE_POS_X), rel_chunk_x, rel_chunk_z));
+                    emit_face(mesh, pack_face(x, y, z, FACE_POS_X, resolve_block_texture(r, v.type, FACE_POS_X),
+                                              rel_chunk_x, rel_chunk_z));
 
                 if(is_air(chunk, x - 1, y, z))
-                    emit_face(mesh,
-                              pack_face(x, y, z, FACE_NEG_X, resolve_block_texture(r, v.type, FACE_NEG_X), rel_chunk_x, rel_chunk_z));
+                    emit_face(mesh, pack_face(x, y, z, FACE_NEG_X, resolve_block_texture(r, v.type, FACE_NEG_X),
+                                              rel_chunk_x, rel_chunk_z));
 
                 if(is_air(chunk, x, y + 1, z))
-                    emit_face(mesh,
-                              pack_face(x, y, z, FACE_POS_Y, resolve_block_texture(r, v.type, FACE_POS_Y), rel_chunk_x, rel_chunk_z));
+                    emit_face(mesh, pack_face(x, y, z, FACE_POS_Y, resolve_block_texture(r, v.type, FACE_POS_Y),
+                                              rel_chunk_x, rel_chunk_z));
 
                 if(is_air(chunk, x, y - 1, z))
-                    emit_face(mesh,
-                              pack_face(x, y, z, FACE_NEG_Y, resolve_block_texture(r, v.type, FACE_NEG_Y), rel_chunk_x, rel_chunk_z));
+                    emit_face(mesh, pack_face(x, y, z, FACE_NEG_Y, resolve_block_texture(r, v.type, FACE_NEG_Y),
+                                              rel_chunk_x, rel_chunk_z));
 
                 if(is_air(chunk, x, y, z + 1))
-                    emit_face(mesh,
-                              pack_face(x, y, z, FACE_POS_Z, resolve_block_texture(r, v.type, FACE_POS_Z), rel_chunk_x, rel_chunk_z));
+                    emit_face(mesh, pack_face(x, y, z, FACE_POS_Z, resolve_block_texture(r, v.type, FACE_POS_Z),
+                                              rel_chunk_x, rel_chunk_z));
 
                 if(is_air(chunk, x, y, z - 1))
-                    emit_face(mesh,
-                              pack_face(x, y, z, FACE_NEG_Z, resolve_block_texture(r, v.type, FACE_NEG_Z), rel_chunk_x, rel_chunk_z));
+                    emit_face(mesh, pack_face(x, y, z, FACE_NEG_Z, resolve_block_texture(r, v.type, FACE_NEG_Z),
+                                              rel_chunk_x, rel_chunk_z));
             }
 }
 
@@ -799,7 +817,7 @@ int main()
             .instance_layer_count        = 0,
             .instance_extension_count    = glfw_ext_count,
             .device_extension_count      = 2,
-            .enable_gpu_based_validation = false,
+            .enable_gpu_based_validation = VALIDATION,
             .enable_validation           = VALIDATION,
 
             .validation_severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
@@ -827,17 +845,16 @@ int main()
         renderer_create(&renderer, &desc);
         init_block_textures(&renderer);
         {
-            GraphicsPipelineConfig cfg                      = pipeline_config_default();
-            cfg.vert_path                                   = "compiledshaders/minimal_proc.vert.spv";
-            cfg.frag_path                                   = "compiledshaders/minimal_proc.frag.spv";
-            cfg.color_attachment_count                      = 1;
-            cfg.color_formats                               = &renderer.hdr_color[1].format;
-            cfg.depth_test_enable                           = false;
-            cfg.depth_write_enable                          = false;
-            render_pipelines.pipelines[PIPELINE_FULLSCREEN] = create_graphics_pipeline_cache(&renderer, &cfg);
+            GraphicsPipelineConfig cfg = pipeline_config_default();
+            cfg.vert_path              = "compiledshaders/minimal_proc.vert.spv";
+            cfg.frag_path              = "compiledshaders/minimal_proc.frag.spv";
+            cfg.color_attachment_count = 1;
+            cfg.color_formats          = &renderer.hdr_color[1].format;
+            cfg.depth_test_enable      = false;
+            cfg.depth_write_enable     = false;
+            pipelines.fullscreen       = create_graphics_pipeline_cache(&renderer, &cfg);
         }
-        render_pipelines.pipelines[PIPELINE_POSTPROCESS] =
-            create_compute_pipeline_cache(&renderer, "compiledshaders/postprocess.comp.spv");
+        pipelines.postprocess = create_compute_pipeline_cache(&renderer, "compiledshaders/postprocess.comp.spv");
         {
             GraphicsPipelineConfig cfg = pipeline_config_default();
             cfg.vert_path              = "compiledshaders/triangle.vert.spv";
@@ -847,7 +864,7 @@ int main()
             cfg.depth_format           = renderer.depth[1].format;
             cfg.polygon_mode           = VK_POLYGON_MODE_FILL;
 
-            render_pipelines.pipelines[PIPELINE_TRIANGLE_TEST] = create_graphics_pipeline_cache(&renderer, &cfg);
+            pipelines.triangle = create_graphics_pipeline_cache(&renderer, &cfg);
         }
         {
             GraphicsPipelineConfig cfg = pipeline_config_default();
@@ -856,7 +873,7 @@ int main()
             cfg.color_attachment_count = 1;
             cfg.color_formats          = &renderer.smaa_edges[1].format;
 
-            render_pipelines.pipelines[PIPELINE_SMAA_EDGE] = create_graphics_pipeline(&renderer, &cfg);
+            pipelines.smaa_edge = create_graphics_pipeline_cache(&renderer, &cfg);
         }
 
         {
@@ -866,7 +883,7 @@ int main()
             cfg.color_attachment_count = 1;
             cfg.color_formats          = &renderer.smaa_weights[1].format;
 
-            render_pipelines.pipelines[PIPELINE_SMAA_WEIGHT] = create_graphics_pipeline(&renderer, &cfg);
+            pipelines.smaa_weight = create_graphics_pipeline_cache(&renderer, &cfg);
         }
 
         {
@@ -876,7 +893,46 @@ int main()
             cfg.color_attachment_count = 1;
             cfg.color_formats          = &renderer.ldr_color[0].format;
 
-            render_pipelines.pipelines[PIPELINE_SMAA_BLEND] = create_graphics_pipeline(&renderer, &cfg);
+            pipelines.smaa_blend = create_graphics_pipeline_cache(&renderer, &cfg);
+        }
+        {
+
+            GraphicsPipelineConfig beam = pipeline_config_default();
+
+            beam.vert_path = "compiledshaders/light_beam.vert.spv";
+            beam.frag_path = "compiledshaders/light_beam.frag.spv";
+
+            beam.cull_mode              = VK_CULL_MODE_NONE;  // beams must be visible from both sides
+            beam.depth_test_enable      = true;               // prevents beams behind geometry
+            beam.depth_write_enable     = false;              // never write depth for transparent objects
+            beam.color_attachment_count = 1;
+            beam.color_formats          = &renderer.hdr_color[0].format;
+            beam.depth_format           = renderer.depth[1].format;
+            beam.blends[0]              = (ColorAttachmentBlend){
+                             .blend_enable = true,
+                             .src_color    = VK_BLEND_FACTOR_SRC_ALPHA,
+                             .dst_color    = VK_BLEND_FACTOR_ONE,
+                             .color_op     = VK_BLEND_OP_ADD,
+                             .src_alpha    = VK_BLEND_FACTOR_ONE,
+                             .dst_alpha    = VK_BLEND_FACTOR_ONE,
+                             .alpha_op     = VK_BLEND_OP_ADD,
+            };
+
+            pipelines.beam = create_graphics_pipeline_cache(&renderer, &beam);
+
+            // Blending
+            // Use additive blending.
+            //
+            // finalColor = beamColor * alpha + sceneColor
+            //
+            // That gives the glowing light effect.
+            //
+            // Typical blend setup:
+            //
+            // src = SRC_ALPHA
+            // dst = ONE
+            //
+            // Additive blending works better for light than standard alpha blending because light adds energy instead of blocking it.
         }
     }
 
@@ -887,12 +943,39 @@ int main()
                      VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT, 2048);
 
     VkBufferDeviceAddressInfo addrInfo = {.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO, .buffer = pool.buffer};
-    TextureID         tex_id = load_texture(&renderer, "/home/lk/myprojects/flowgame/data/PNG/Tiles/greystone.png");
+    VkDeviceAddress           base_addr = vkGetBufferDeviceAddress(renderer.device, &addrInfo);
+
+    TextureID   tex_id         = load_texture(&renderer, "/home/lk/myprojects/flowgame/data/PNG/Tiles/greystone.png");
     BufferSlice indirect_slice = buffer_pool_alloc(&pool, sizeof(VkDrawIndirectCommand), 16);
     BufferSlice count_slice    = buffer_pool_alloc(&pool, sizeof(uint32_t), 4);
-
     VkDrawIndirectCommand* cpu_indirect = (VkDrawIndirectCommand*)indirect_slice.mapped;
     uint32_t*              cpu_count    = (uint32_t*)count_slice.mapped;
+
+#define MAX_LIGHT_BEAM 64
+    BufferSlice     light_beam = buffer_pool_alloc(&pool, MAX_LIGHT_BEAM * sizeof(LightBeam), 16);
+    LightBeam*      cpu_beams  = (LightBeam*)light_beam.mapped;
+    VkDeviceAddress beam_addr  = base_addr + light_beam.offset;
+
+
+    u32 beam_count = 12;
+    {
+        const float beam_width  = 1.75f;
+        const float beam_height = 14.0f;
+        const float beam_alpha  = 1.25f;
+
+        for(u32 i = 0; i < beam_count; ++i)
+        {
+            float x = 4.0f + (float)(i % 4) * 6.0f;
+            float z = 2.0f + (float)(i / 4) * 6.0f;
+
+            cpu_beams[i] = (LightBeam){
+                .pos_width  = {x, 9.0f, z, beam_width},
+                .sun_height = {0.12f, -1.0f, 0.08f, beam_height},
+                .misc       = {beam_alpha, 0.0f, 0.0f, 0.0f},
+            };
+        }
+    }
+    vmaFlushAllocation(renderer.vmaallocator, pool.allocation, light_beam.offset, MAX_LIGHT_BEAM * sizeof(LightBeam));
 
 
     static Chunk scratch_chunk = {0};
@@ -904,11 +987,12 @@ int main()
 
     StreamBuildState stream_build = {
         .active = false,
-        .mesh = {
-            .faces      = malloc(sizeof(PackedFace) * MAX_STREAM_FACES),
-            .capacity   = MAX_STREAM_FACES,
-            .face_count = 0,
-        },
+        .mesh =
+            {
+                .faces      = malloc(sizeof(PackedFace) * MAX_STREAM_FACES),
+                .capacity   = MAX_STREAM_FACES,
+                .face_count = 0,
+            },
     };
 
     int world_chunk_x = 0;
@@ -984,13 +1068,19 @@ int main()
     /* Push layout shared with older geometry shaders
          face_ptr=0, face_count=8, aspect=12, pad0=16, pad1=20, pad2=24, pad3=28,
          view_proj=32, texture_id=96, sampler_id=100 */
+    // may be all push constant can be defined in one header that both gpu and cpu share
+    PUSH_CONSTANT(Push, VkDeviceAddress face_ptr;  //8
+                  uint  face_count;                //4
+                  float aspect;                    //4
+                  // Remove pad1/pad2/pad3, use them for camera data:
+                  vec3 cam_pos;  // camera world position
+                  uint pad1;     // alignment
+                  vec3 cam_dir;  // camera forward (normalized)
+                  uint pad2;
 
-    PUSH_CONSTANT(Push, VkDeviceAddress face_ptr; uint32_t face_count; float aspect; uint32_t pad0; uint32_t pad1;
-                  uint32_t pad2; uint32_t pad3;
+                  mat4 view_proj; uint texture_id; uint sampler_id;
 
-                  float view_proj[4][4];
-
-                  uint32_t texture_id; uint32_t sampler_id;);
+    );
 
     PUSH_CONSTANT(PostPush, uint32_t src_texture_id; uint32_t output_image_id; uint32_t sampler_id;
 
@@ -1006,6 +1096,12 @@ int main()
     PUSH_CONSTANT(BlendPush, uint32_t color_tex; uint32_t weight_tex; uint32_t sampler_id; uint32_t pad;);
 
     PUSH_CONSTANT(WeightPush, uint32_t edge_tex; uint32_t area_tex; uint32_t search_tex; uint32_t sampler_id;);
+    PUSH_CONSTANT(Lightbeampush, VkDeviceAddress beam_ptr;
+
+                  mat4 view_proj; uint texture_id; uint sampler_id;
+
+    );
+
 
     dmon_init();
     dmon_watch("shaders", watch_cb, DMON_WATCHFLAGS_RECURSIVE, NULL);
@@ -1046,10 +1142,10 @@ int main()
             {
                 if(stream_build_step(&renderer, &stream_build, &scratch_chunk, 2))
                 {
-                    PackedFace* old_faces      = mesh.faces;
-                    mesh.faces                 = stream_build.mesh.faces;
-                    stream_build.mesh.faces    = old_faces;
-                    mesh.face_count            = stream_build.mesh.face_count;
+                    PackedFace* old_faces        = mesh.faces;
+                    mesh.faces                   = stream_build.mesh.faces;
+                    stream_build.mesh.faces      = old_faces;
+                    mesh.face_count              = stream_build.mesh.face_count;
                     stream_build.mesh.face_count = 0;
 
                     memcpy(cpu_faces, mesh.faces, sizeof(PackedFace) * mesh.face_count);
@@ -1089,8 +1185,6 @@ int main()
                                            .loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR,
                                            .storeOp          = VK_ATTACHMENT_STORE_OP_STORE,
                                            .clearValue.color = {{0.1f, 0.1f, 0.1f, 1.0f}}};
-
-
         VkRenderingAttachmentInfo depth = {
             .sType                   = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
             .imageView               = renderer.depth[renderer.swapchain.current_image].view,
@@ -1165,7 +1259,7 @@ int main()
 
             GPU_SCOPE(frame_prof, cmd, "Main Pass", VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT)
             {
-                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[PIPELINE_TRIANGLE_TEST]);
+                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[pipelines.triangle]);
                 vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
 
                 Push push = {0};
@@ -1174,10 +1268,11 @@ int main()
                 push.face_ptr   = face_ptr;
                 push.face_count = mesh.face_count;
                 push.texture_id = tex_id;
+                push.sampler_id = renderer.default_samplers.samplers[SAMPLER_LINEAR_CLAMP];
 
-            push.sampler_id = renderer.default_samplers.samplers[SAMPLER_LINEAR_CLAMP];
-
-                glm_mat4_copy(cam.view_proj, push.view_proj);
+                glm_vec3_copy(cam.cam_dir, push.cam_dir);
+                glm_vec3_copy(cam.position, push.cam_pos);
+                glm_mat4_copy(cam.view_proj, push.view_proj);  // this one was already correct
 
                 vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(Push), &push);
 
@@ -1185,23 +1280,39 @@ int main()
                                        count_slice.offset, 1024, sizeof(VkDrawIndirectCommand));
             }
 
+            //
+            {
+                Lightbeampush push = {0};
+                push.beam_ptr      = beam_addr;
+                glm_mat4_copy(cam.view_proj, push.view_proj);
 
+                vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0,
+                                   sizeof(Lightbeampush), &push);
+                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[pipelines.beam]);
+                //6 vertices × beam_count instances
+                vkCmdDraw(cmd,
+                          6,           // vertices per quad
+                          beam_count,  // instances
+                          0, 0);
+            }
+
+            //
             vkCmdEndRendering(cmd);
         }
-        rt_transition_all(cmd, &renderer.hdr_color[renderer.swapchain.current_image], VK_IMAGE_LAYOUT_GENERAL,
-                          VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_READ_BIT);
 
 
         GPU_SCOPE(frame_prof, cmd, "POST", VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT)
         {
+            rt_transition_all(cmd, &renderer.hdr_color[renderer.swapchain.current_image], VK_IMAGE_LAYOUT_GENERAL,
+                              VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_READ_BIT);
 
 
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, render_pipelines.pipelines[PIPELINE_POSTPROCESS]);
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, render_pipelines.pipelines[pipelines.postprocess]);
 
             PostPush pp_push        = {0};
             pp_push.src_texture_id  = renderer.hdr_color[renderer.swapchain.current_image].bindless_index;
             pp_push.output_image_id = renderer.ldr_color[renderer.swapchain.current_image].bindless_index;
-            pp_push.sampler_id      =  renderer.default_samplers.samplers[SAMPLER_LINEAR_CLAMP];
+            pp_push.sampler_id      = renderer.default_samplers.samplers[SAMPLER_LINEAR_CLAMP];
             pp_push.width           = renderer.swapchain.extent.width;
             pp_push.height          = renderer.swapchain.extent.height;
             pp_push.frame           = pp_frame_counter++;
@@ -1233,7 +1344,7 @@ int main()
 
             vkCmdBeginRendering(cmd, &rendering);
 
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[PIPELINE_SMAA_EDGE]);
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[pipelines.smaa_edge]);
 
             vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
 
@@ -1267,7 +1378,7 @@ int main()
 
             vkCmdBeginRendering(cmd, &rendering);
 
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[PIPELINE_SMAA_WEIGHT]);
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[pipelines.smaa_weight]);
 
 
             vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
@@ -1285,10 +1396,11 @@ int main()
             vkCmdEndRendering(cmd);
         }
 
-        {
-            rt_transition_all(cmd, &renderer.ldr_color[current_image], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                              VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
+        rt_transition_all(cmd, &renderer.ldr_color[current_image], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                          VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
 
+
+        {
             VkRenderingAttachmentInfo color = {.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                                                .imageView   = renderer.ldr_color[current_image].view,
                                                .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -1303,7 +1415,7 @@ int main()
 
             vkCmdBeginRendering(cmd, &rendering);
 
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[PIPELINE_SMAA_BLEND]);
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[pipelines.smaa_blend]);
 
 
             vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
@@ -1385,10 +1497,11 @@ int main()
     }
 
 
-    printf("Push size = %zu\n", sizeof(Push));
+    printf(" renderer size is %zu", sizeof(float));
+    printf("Push size = %zu\n", alignof(Camera));
+    printf("Push size = %zu\n", alignof(Push));
     printf("view_proj offset = %zu\n", offsetof(Push, view_proj));
     printf(" pushis %zu    ", alignof(Push));
-    printf(" renderer size is %zu", sizeof(Renderer));
     //    ANALYZE_STRUCT(ImageState);
     //renderer_destroy(&renderer);
     return 0;

@@ -10,20 +10,20 @@ struct PackedFace
 
 static const uint VOXEL_CHUNK_SIZE = 128;
 
+
 struct Push
 {
-  uint64_t face_ptr;
-  uint     face_count;
-  float    aspect;
-  uint     pad0;
-  uint     pad1;
-  uint     pad2;
-  uint     pad3;
-  float4x4 view_proj;
-  uint     texture_id;
-  uint     sampler_id;
+    uint64_t face_ptr;
+    uint     face_count;
+    float    aspect;
+    float3   cam_pos;    // camera world position
+    uint     pad1;       // alignment
+    float3   cam_dir;    // camera forward (normalized)
+    uint     pad2;
+    float4x4 view_proj;
+    uint     texture_id;
+    uint     sampler_id;
 };
-
 struct VSOutput
 {
   float4               position : SV_Position;
@@ -109,77 +109,54 @@ VSOutput vs_main(uint vertexID: SV_VertexID)
 }
 
 [shader("fragment")]
-float4 fs_main(VSOutput input)
-    : SV_Target0
+float4 fs_main(VSOutput input) : SV_Target0
 {
-  Texture2D    tex  = textures[NonUniformResourceIndex(input.tex_id)];
-  SamplerState samp = samplers[push.sampler_id];
+    Texture2D    tex  = textures[NonUniformResourceIndex(input.tex_id)];
+    SamplerState samp = samplers[push.sampler_id];
 
-  float3 albedo = tex.Sample(samp, input.uv).rgb;
+    float3 albedo = tex.Sample(samp, input.uv).rgb;
 
-  // --------------------------
-  // Light parameters
-  // --------------------------
+    // --- Torch: light follows camera ---
+    float3 light_pos   = push.cam_pos;               // ← was hardcoded
+    float3 light_dir   = normalize(push.cam_dir);     // ← was hardcoded
 
-  float3 light_pos   = float3(0.0, 8.0, 3.0);
-  float3 light_dir   = normalize(float3(0.0, -1.0, -0.3));  // spotlight direction
+    float3 light_color = float3(1.0, 0.85, 0.5);     // warm torch color
+    float  light_radius = 30.0;
+    float  innerCone    = 0.97;                       // tight inner beam
+    float  outerCone    = 0.85;
 
-  float3 light_color = float3(1.0, 0.0, 0.0);
+    // Face normals
+    float3 normal =
+        input.face == 0 ? float3( 1, 0, 0) :
+        input.face == 1 ? float3(-1, 0, 0) :
+        input.face == 2 ? float3( 0, 1, 0) :
+        input.face == 3 ? float3( 0,-1, 0) :
+        input.face == 4 ? float3( 0, 0, 1) :
+                          float3( 0, 0,-1);
 
-  float light_radius = 60.0;
+    // Light vector
+    float3 L    = light_pos - input.world_pos;
+    float  dist = length(L);
+    L /= dist;
 
-  // spotlight cone angles
-  float innerCone = 0.98;
-  float outerCone = 0.82;
+    // Attenuation
+    float attenuation = saturate(1.0 - (dist / light_radius));
+    attenuation *= attenuation;
 
-  // --------------------------
-  // Voxel face normals
-  // --------------------------
+    // Diffuse
+    float NdotL = saturate(dot(normal, L));
 
-  float3 normal = input.face == 0 ? float3(1, 0, 0) :
-                  input.face == 1 ? float3(-1, 0, 0) :
-                  input.face == 2 ? float3(0, 1, 0) :
-                  input.face == 3 ? float3(0, -1, 0) :
-                  input.face == 4 ? float3(0, 0, 1) :
-                                    float3(0, 0, -1);
+    // Spotlight cone
+    float theta   = dot(L, -light_dir);
+    float epsilon = innerCone - outerCone;
+    float cone    = saturate((theta - outerCone) / epsilon);
 
-  // --------------------------
-  // Vector from fragment to light
-  // --------------------------
+    // Final
+    float3 ambient = albedo * 0.04;
+    float3 diffuse = albedo * light_color * NdotL * attenuation * cone * 5.0;
 
-  float3 L    = light_pos - input.world_pos;
-  float  dist = length(L);
-  L /= dist;
-
-  // --------------------------
-  // Point light attenuation
-  // --------------------------
-
-  float attenuation = saturate(1.0 - (dist / light_radius));
-  attenuation *= attenuation;
-
-  // --------------------------
-  // Diffuse lighting
-  // --------------------------
-
-  float NdotL = saturate(dot(normal, L));
-
-  // --------------------------
-  // Spotlight cone test
-  // --------------------------
-
-  float theta = dot(L, -light_dir);
-
-  float epsilon = innerCone - outerCone;
-  float cone    = saturate((theta - outerCone) / epsilon);
-
-  // --------------------------
-  // Final lighting
-  // --------------------------
-
-  float3 ambient = albedo * 0.08;
-
-  float3 diffuse = albedo * light_color * NdotL * attenuation * cone * 4.0;
-
-  return float4(cone.xxx*light_color, 1.0);
+    return float4(ambient + diffuse, 1.0);
 }
+
+
+

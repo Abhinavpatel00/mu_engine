@@ -1,4 +1,5 @@
 #pragma once
+#include "external/cglm/include/cglm/vec3.h"
 #include <bits/time.h>
 #include <time.h>
 #define IMGUI_IMPL_VULKAN_MINIMUM_IMAGE_SAMPLER_POOL_SIZE (1)
@@ -69,7 +70,10 @@ typedef struct VkPhysicalDeviceShaderNonSemanticInfoFeaturesKHR
 
 
 extern flow_id_pool pipeline_id_pool;
-typedef uint32_t TextureID;
+typedef uint32_t    PipelineID;
+typedef uint32_t    TextureID;
+
+
 typedef struct
 {
     VkInstance               instance;
@@ -738,13 +742,17 @@ FORCE_INLINE void imgui_begin_frame(void)
 
 typedef struct
 {
-    vec3  position;
+    vec3 position;
+
+    float near_z;
+    vec3  cam_dir;
+
     float yaw;    // radians
     float pitch;  // radians
+
     float move_speed;
     float look_speed;
     float fov_y;
-    float near_z;
     float far_z;
     mat4  view_proj;
     bool  mouse_captured;
@@ -980,6 +988,7 @@ static FLOW_INLINE void frame_start(Renderer* renderer, Camera* cam)
         -cosf(cam->pitch) * cosf(cam->yaw),
     };
     glm_vec3_normalize(forward);
+glm_vec3_copy(forward, cam->cam_dir);
 
     vec3 world_up = {0, 1, 0};
     vec3 right = {0}, up = {0};

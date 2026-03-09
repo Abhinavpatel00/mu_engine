@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MODE=${1:-debug}
+MODE=${1:-release}
 
 if [ "$MODE" = "debug" ]; then
     SLANG_FLAGS="-g -O0 -line-directive-mode standard"
