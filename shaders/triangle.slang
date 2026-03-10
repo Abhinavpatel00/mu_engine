@@ -13,16 +13,16 @@ static const uint VOXEL_CHUNK_SIZE = 128;
 
 struct Push
 {
-    uint64_t face_ptr;
-    uint     face_count;
-    float    aspect;
-    float3   cam_pos;    // camera world position
-    uint     pad1;       // alignment
-    float3   cam_dir;    // camera forward (normalized)
-    uint     pad2;
-    float4x4 view_proj;
-    uint     texture_id;
-    uint     sampler_id;
+  uint64_t face_ptr;
+  uint     face_count;
+  float    aspect;
+  float3   cam_pos;  // camera world position
+  uint     pad1;     // alignment
+  float3   cam_dir;  // camera forward (normalized)
+  uint     pad2;
+  float4x4 view_proj;
+  uint     texture_id;
+  uint     sampler_id;
 };
 // struct VSOutput
 // {
@@ -161,29 +161,25 @@ Push push;
 //
 struct VSOutput
 {
-    float4 position : SV_Position;
+  float4 position : SV_Position;
 };
 
 [shader("vertex")]
-VSOutput vs_main(uint vertexID : SV_VertexID)
+VSOutput vs_main(uint vertexID: SV_VertexID)
 {
-    VSOutput o;
+  VSOutput o;
 
-  float3 verts[3] =
-    {
-        float3( 0.0, 0.0, 0.0),
-        float3( 1.0, 0.0, 0.0),
-        float3( 0.0, 1.0, 0.0)
-    };
+  float3 verts[3] = { float3(0.0, 0.0, 0.0), float3(1.0, 0.0, 0.0), float3(0.0, 1.0, 0.0) };
 
-    float3 world = verts[vertexID];
+  float3 world = verts[vertexID];
 
-    o.position = mul(push.view_proj, float4(world,1.0));
-    return o;
+  o.position = mul(push.view_proj, float4(world, 1.0));
+  return o;
 }
 
 [shader("fragment")]
-float4 fs_main() : SV_Target0
+float4 fs_main()
+    : SV_Target0
 {
-    return float4(1,0,0,1);
+  return float4(1, 0, 0, 1);
 }
