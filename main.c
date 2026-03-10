@@ -21,9 +21,8 @@
 #include "external/tracy/public/tracy/TracyC.h"
 
 static bool voxel_debug = true;
-
 static bool take_screenshot = true;
-#define VALIDATION true
+#define VALIDATION false
 #define KB(x) ((x) * 1024ULL)
 #define MB(x) ((x) * 1024ULL * 1024ULL)
 #define GB(x) ((x) * 1024ULL * 1024ULL * 1024ULL)
@@ -81,205 +80,7 @@ typedef struct
     float uv[2];
 } Vertex;
 
-static void spv_to_slang(const char* spv, char* out)
-{
-    const char* name = strrchr(spv, '/');
-    name             = name ? name + 1 : spv;
 
-    char tmp[256];
-    strcpy(tmp, name);
-
-    char* stage = strstr(tmp, ".vert");
-    if(!stage)
-        stage = strstr(tmp, ".frag");
-    if(!stage)
-        stage = strstr(tmp, ".comp");
-
-    if(stage)
-        *stage = '\0';
-
-    sprintf(out, "shaders/%s.slang", tmp);
-}
-
-static const char* path_basename(const char* path)
-{
-    const char* slash = strrchr(path, '/');
-    return slash ? slash + 1 : path;
-}
-
-static bool shader_change_matches_spv(const char* changed, const char* spv)
-{
-    if(!changed || !spv)
-        return false;
-
-    char slang[256];
-    spv_to_slang(spv, slang);
-
-    if(strstr(changed, slang))
-        return true;
-
-    const char* changed_name = path_basename(changed);
-    const char* slang_name   = path_basename(slang);
-
-    return strcmp(changed_name, slang_name) == 0;
-}
-
-
-typedef enum PipelineType
-{
-    PIPELINE_TYPE_GRAPHICS,
-    PIPELINE_TYPE_COMPUTE
-} PipelineType;
-
-typedef struct PipelineEntry
-{
-    PipelineType type;
-
-    union
-    {
-        GraphicsPipelineConfig graphics;
-
-        struct
-        {
-            const char* path;
-        } compute;
-    };
-
-    bool dirty;
-
-} PipelineEntry;
-
-typedef struct RendererPipelines
-{
-    VkPipeline    pipelines[MAX_PIPELINES];
-    PipelineEntry entries[MAX_PIPELINES];
-    uint32_t      count;
-} RendererPipelines;
-
-static RendererPipelines render_pipelines;
-static uint32_t          current_pipeline_build;
-
-/* --------------------------------------------------------- */
-
-PipelineID create_graphics_pipeline_cache(Renderer* r, GraphicsPipelineConfig* cfg)
-{
-    u32 id;
-    flow_id_pool_create_id(&pipeline_id_pool, &id);
-
-    if(id >= MAX_PIPELINES)
-    {
-        printf("Pipeline overflow\n");
-        debug_break();
-    }
-
-    PipelineEntry* e = &render_pipelines.entries[id];
-
-    e->type     = PIPELINE_TYPE_GRAPHICS;
-    e->graphics = *cfg;
-    e->dirty    = false;
-
-    VkPipeline p = create_graphics_pipeline(r, cfg);
-
-    render_pipelines.pipelines[id] = p;
-
-    current_pipeline_build++;
-    render_pipelines.count++;
-    return id;
-}
-
-PipelineID create_compute_pipeline_cache(Renderer* r, const char* path)
-{
-    u32 id;
-    flow_id_pool_create_id(&pipeline_id_pool, &id);
-
-    if(id >= MAX_PIPELINES)
-    {
-        printf("Pipeline overflow\n");
-        debug_break();
-    }
-
-    PipelineEntry* e = &render_pipelines.entries[id];
-
-    e->type         = PIPELINE_TYPE_COMPUTE;
-    e->compute.path = path;
-    e->dirty        = false;
-
-    VkPipeline p = create_compute_pipeline(r, path);
-
-    render_pipelines.pipelines[id] = p;
-
-    current_pipeline_build++;
-
-    render_pipelines.count++;
-    return id;
-}
-
-/* --------------------------------------------------------- */
-
-void mark_pipelines_dirty(const char* changed)
-{
-    for(uint32_t i = 0; i < render_pipelines.count; i++)
-    {
-        PipelineEntry* e = &render_pipelines.entries[i];
-
-        if(e->type != PIPELINE_TYPE_GRAPHICS && e->type != PIPELINE_TYPE_COMPUTE)
-            continue;
-
-        bool matches = false;
-
-        if(e->type == PIPELINE_TYPE_GRAPHICS)
-        {
-            matches = shader_change_matches_spv(changed, e->graphics.vert_path)
-                      || shader_change_matches_spv(changed, e->graphics.frag_path);
-        }
-        else
-        {
-            matches = shader_change_matches_spv(changed, e->compute.path);
-        }
-
-        if(matches)
-            e->dirty = true;
-    }
-}
-
-/* --------------------------------------------------------- */
-
-void rebuild_dirty_pipelines(Renderer* r)
-{
-    bool any_dirty = false;
-
-    for(int i = 0; i < render_pipelines.count; i++)
-        if(render_pipelines.entries[i].dirty)
-            any_dirty = true;
-
-    if(!any_dirty)
-        return;
-
-    vkDeviceWaitIdle(r->device);
-
-    for(int i = 0; i < render_pipelines.count; i++)
-    {
-        PipelineEntry* e = &render_pipelines.entries[i];
-
-        if(!e->dirty)
-            continue;
-
-        e->dirty = false;
-
-        vkDestroyPipeline(r->device, render_pipelines.pipelines[i], NULL);
-
-        if(e->type == PIPELINE_TYPE_GRAPHICS)
-        {
-            render_pipelines.pipelines[i] = create_graphics_pipeline(r, &e->graphics);
-        }
-        else
-        {
-            render_pipelines.pipelines[i] = create_compute_pipeline(r, e->compute.path);
-        }
-
-        printf("Pipeline %d hot reloaded\n", i);
-    }
-}
 
 static volatile bool shader_changed = false;
 static char          changed_shader[256];
@@ -319,9 +120,16 @@ typedef struct
 
 static TextureCacheEntry voxel_texture_cache[MAX_TEXTURES];
 uint32_t                 voxel_texture_cache_count = 0;
+
+struct PackedFace
+{
+    uint data0;
+    uint data1;
+};
+
+
 int main()
 {
-    current_pipeline_build = 0;
     VK_CHECK(volkInitialize());
     if(!is_instance_extension_supported("VK_KHR_wayland_surface"))
         glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
@@ -378,9 +186,9 @@ int main()
             cfg.color_formats          = &renderer.hdr_color[1].format;
             cfg.depth_test_enable      = false;
             cfg.depth_write_enable     = false;
-            pipelines.fullscreen       = create_graphics_pipeline_cache(&renderer, &cfg);
+            pipelines.fullscreen       = pipeline_create_graphics(&renderer, &cfg);
         }
-        pipelines.postprocess = create_compute_pipeline_cache(&renderer, "compiledshaders/postprocess.comp.spv");
+        pipelines.postprocess = pipeline_create_compute(&renderer, "compiledshaders/postprocess.comp.spv");
         {
             GraphicsPipelineConfig cfg = pipeline_config_default();
             cfg.vert_path              = "compiledshaders/triangle.vert.spv";
@@ -390,7 +198,7 @@ int main()
             cfg.depth_format           = renderer.depth[1].format;
             cfg.polygon_mode           = VK_POLYGON_MODE_FILL;
 
-            pipelines.triangle = create_graphics_pipeline_cache(&renderer, &cfg);
+            pipelines.triangle = pipeline_create_graphics(&renderer, &cfg);
         }
         {
             GraphicsPipelineConfig cfg = pipeline_config_default();
@@ -399,7 +207,7 @@ int main()
             cfg.color_attachment_count = 1;
             cfg.color_formats          = &renderer.smaa_edges[1].format;
 
-            pipelines.smaa_edge = create_graphics_pipeline_cache(&renderer, &cfg);
+            pipelines.smaa_edge = pipeline_create_graphics(&renderer, &cfg);
         }
 
         {
@@ -409,7 +217,7 @@ int main()
             cfg.color_attachment_count = 1;
             cfg.color_formats          = &renderer.smaa_weights[1].format;
 
-            pipelines.smaa_weight = create_graphics_pipeline_cache(&renderer, &cfg);
+            pipelines.smaa_weight = pipeline_create_graphics(&renderer, &cfg);
         }
 
         {
@@ -419,7 +227,7 @@ int main()
             cfg.color_attachment_count = 1;
             cfg.color_formats          = &renderer.ldr_color[0].format;
 
-            pipelines.smaa_blend = create_graphics_pipeline_cache(&renderer, &cfg);
+            pipelines.smaa_blend = pipeline_create_graphics(&renderer, &cfg);
         }
         {
 
@@ -444,7 +252,7 @@ int main()
                                                                  .write_mask   = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
                                                                                | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT};
 
-            pipelines.beam = create_graphics_pipeline_cache(&renderer, &beam);
+            pipelines.beam = pipeline_create_graphics(&renderer, &beam);
 
             // Blending
             // Use additive blending.
@@ -570,8 +378,8 @@ int main()
     );
 
 
-    //  dmon_init();
-    //    dmon_watch("shaders", watch_cb, DMON_WATCHFLAGS_RECURSIVE, NULL);
+     dmon_init();
+       dmon_watch("shaders", watch_cb, DMON_WATCHFLAGS_RECURSIVE, NULL);
 
     uint32_t pp_frame_counter = 0;
     while(!glfwWindowShouldClose(renderer.window))
@@ -586,9 +394,9 @@ int main()
 
             system("./compileslang.sh");
 
-            mark_pipelines_dirty(changed_shader);
+            pipeline_mark_dirty(changed_shader);
         }
-        rebuild_dirty_pipelines(&renderer);
+        pipeline_rebuild(&renderer);
         TracyCZoneEnd(hot_reload_zone);
 
         TracyCZoneN(frame_start_zone, "frame_start", 1);
@@ -703,7 +511,7 @@ int main()
             vkCmdBeginRendering(cmd, &rendering);
             GPU_SCOPE(frame_prof, cmd, "Main Pass", VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT)
             {
-                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[pipelines.triangle]);
+                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.triangle]);
                 vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
 
                 Push push = {0};
@@ -750,7 +558,7 @@ int main()
                               VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_READ_BIT);
 
 
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, render_pipelines.pipelines[pipelines.postprocess]);
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, g_render_pipelines.pipelines[pipelines.postprocess]);
 
             PostPush pp_push        = {0};
             pp_push.src_texture_id  = renderer.hdr_color[renderer.swapchain.current_image].bindless_index;
@@ -787,7 +595,7 @@ int main()
 
             vkCmdBeginRendering(cmd, &rendering);
 
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[pipelines.smaa_edge]);
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.smaa_edge]);
 
             vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
 
@@ -821,7 +629,7 @@ int main()
 
             vkCmdBeginRendering(cmd, &rendering);
 
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[pipelines.smaa_weight]);
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.smaa_weight]);
 
 
             vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
@@ -858,7 +666,7 @@ int main()
 
             vkCmdBeginRendering(cmd, &rendering);
 
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, render_pipelines.pipelines[pipelines.smaa_blend]);
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.smaa_blend]);
 
 
             vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);

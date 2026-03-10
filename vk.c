@@ -24,20 +24,56 @@
 // But arrays need full struct size, so forward declarations don't work.
 
 
+flow_id_pool      pipeline_id_pool                = {0};
+flow_id_pool      texture_pool                    = {0};
+flow_id_pool      sampler_pool                    = {0};
+Texture           textures[MAX_BINDLESS_TEXTURES] = {0};  // reference by textureid
+VkSampler         samplers[MAX_BINDLESS_SAMPLERS] = {0};  // reference by samplerid
+RendererPipelines g_render_pipelines              = {0};
 
 
+static void spv_to_slang(const char* spv, char* out)
+{
+    const char* name = strrchr(spv, '/');
+    name             = name ? name + 1 : spv;
 
-flow_id_pool pipeline_id_pool = {0};
-flow_id_pool    texture_pool;
-flow_id_pool    sampler_pool;
-Texture         textures[MAX_BINDLESS_TEXTURES];  // reference by textureid
-VkSampler       samplers[MAX_BINDLESS_SAMPLERS];  // reference by samplerid
+    char tmp[256];
+    strcpy(tmp, name);
 
+    char* stage = strstr(tmp, ".vert");
+    if(!stage)
+        stage = strstr(tmp, ".frag");
+    if(!stage)
+        stage = strstr(tmp, ".comp");
 
+    if(stage)
+        *stage = '\0';
 
+    sprintf(out, "shaders/%s.slang", tmp);
+}
 
+static const char* path_basename(const char* path)
+{
+    const char* slash = strrchr(path, '/');
+    return slash ? slash + 1 : path;
+}
 
+static bool shader_change_matches_spv(const char* changed, const char* spv)
+{
+    if(!changed || !spv)
+        return false;
 
+    char slang[256];
+    spv_to_slang(spv, slang);
+
+    if(strstr(changed, slang))
+        return true;
+
+    const char* changed_name = path_basename(changed);
+    const char* slang_name   = path_basename(slang);
+
+    return strcmp(changed_name, slang_name) == 0;
+}
 bool is_instance_extension_supported(const char* extension_name)
 {
     uint32_t extensionCount = 0;
@@ -1170,7 +1206,7 @@ void renderer_create(Renderer* r, RendererDesc* desc)
 
     flow_id_pool_init(&sampler_pool, MAX_BINDLESS_SAMPLERS);
 
-    flow_id_pool_init(&pipeline_id_pool , MAX_PIPELINES);
+    flow_id_pool_init(&pipeline_id_pool, MAX_PIPELINES);
     vk_cmd_create_pool(r->device, r->graphics_queue_index, true, false, &r->one_time_gfx_pool);
 
     int fb_w, fb_h;
@@ -1378,9 +1414,9 @@ void renderer_create(Renderer* r, RendererDesc* desc)
 
                                    .format = VK_FORMAT_R8G8B8A8_UNORM,
 
-                                   .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|
+                                   .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
 
-					   VK_IMAGE_USAGE_STORAGE_BIT |       // compute writes tonemap result
+                                            VK_IMAGE_USAGE_STORAGE_BIT |       // compute writes tonemap result
                                             VK_IMAGE_USAGE_TRANSFER_SRC_BIT |  // copy → swapchain
                                             VK_IMAGE_USAGE_TRANSFER_DST_BIT |  // optional clears
                                             VK_IMAGE_USAGE_SAMPLED_BIT,        // future post effects
@@ -1416,8 +1452,8 @@ void renderer_create(Renderer* r, RendererDesc* desc)
                                          .mip_count  = 1,
                                          .debug_name = "smaa_weights"};
     imgui_init(r->window, r->instance.instance, r->physical_device, r->device, r->graphics_queue_index,
-               r->graphics_queue, r->imgui_pool, r->swapchain.image_count, r->swapchain.image_count, VK_FORMAT_B8G8R8A8_SRGB,
-               depth_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+               r->graphics_queue, r->imgui_pool, r->swapchain.image_count, r->swapchain.image_count,
+               VK_FORMAT_B8G8R8A8_SRGB, depth_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 
     {
 
@@ -2313,8 +2349,8 @@ static VkShaderModule create_shader_module(VkDevice device, const void* code, si
 
 VkPipeline create_graphics_pipeline(Renderer* renderer, const GraphicsPipelineConfig* cfg)
 {
-    
-    
+
+
     void*  vs_code = NULL;
     size_t vs_size = 0;
 
@@ -3223,7 +3259,7 @@ internal uint32_t rt_compute_mip_count(uint32_t w, uint32_t h)
 
 bool rt_create(Renderer* r, RenderTarget* rt, const RenderTargetSpec* spec)
 {
- 
+
     if(!r || !rt || !spec || spec->width == 0 || spec->height == 0)
         return false;
 
@@ -3500,4 +3536,150 @@ void renderer_record_screenshot(Renderer* r, VkCommandBuffer cmd)
 
     vkCmdCopyImageToBuffer(cmd, r->swapchain.images[r->swapchain.current_image], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                            r->readback_buffer.buffer, 1, &region);
+}
+
+
+PipelineID pipeline_create_compute(Renderer* r, const char* path)
+{
+
+
+    u32 id;
+    flow_id_pool_create_id(&pipeline_id_pool, &id);
+
+    if(id >= MAX_PIPELINES)
+    {
+        printf("Pipeline overflow\n");
+        debug_break();
+    }
+
+    PipelineEntry* e = &g_render_pipelines.entries[id];
+
+    e->type         = PIPELINE_TYPE_COMPUTE;
+    e->compute.path = path;
+    e->dirty        = false;
+
+    VkPipeline p = create_compute_pipeline(r, path);
+
+    g_render_pipelines.pipelines[id] = p;
+
+
+    g_render_pipelines.count++;
+    return id;
+}
+PipelineID pipeline_create_graphics(Renderer* r, GraphicsPipelineConfig* cfg)
+{
+    u32 id;
+    flow_id_pool_create_id(&pipeline_id_pool, &id);
+
+    PipelineEntry* e = &g_render_pipelines.entries[id];
+
+    e->type     = PIPELINE_TYPE_GRAPHICS;
+    e->graphics = *cfg;
+    e->dirty    = false;
+
+    g_render_pipelines.pipelines[id] = create_graphics_pipeline(r, cfg);
+
+    g_render_pipelines.count++;
+
+    return id;
+}
+
+VkPipeline pipeline_get(PipelineID id)
+{
+    return g_render_pipelines.pipelines[id];
+}
+void pipeline_rebuild(Renderer* r)
+{
+    bool any_dirty = false;
+
+    for(int i = 0; i < g_render_pipelines.count; i++)
+        if(g_render_pipelines.entries[i].dirty)
+            any_dirty = true;
+
+    if(!any_dirty)
+        return;
+
+    vkDeviceWaitIdle(r->device);
+
+    for(int i = 0; i < g_render_pipelines.count; i++)
+    {
+        PipelineEntry* e = &g_render_pipelines.entries[i];
+
+        if(!e->dirty)
+            continue;
+
+        e->dirty = false;
+
+        vkDestroyPipeline(r->device, g_render_pipelines.pipelines[i], NULL);
+
+        if(e->type == PIPELINE_TYPE_GRAPHICS)
+            g_render_pipelines.pipelines[i] = create_graphics_pipeline(r, &e->graphics);
+        else
+            g_render_pipelines.pipelines[i] = create_compute_pipeline(r, e->compute.path);
+
+        printf("Pipeline %d hot reloaded\n", i);
+    }
+}
+
+void pipeline_mark_dirty(const char* changed)
+{
+    for(uint32_t i = 0; i < g_render_pipelines.count; i++)
+    {
+        PipelineEntry* e = &g_render_pipelines.entries[i];
+
+        if(e->type != PIPELINE_TYPE_GRAPHICS && e->type != PIPELINE_TYPE_COMPUTE)
+            continue;
+
+        bool matches = false;
+
+        if(e->type == PIPELINE_TYPE_GRAPHICS)
+        {
+            matches = shader_change_matches_spv(changed, e->graphics.vert_path)
+                      || shader_change_matches_spv(changed, e->graphics.frag_path);
+        }
+        else
+        {
+            matches = shader_change_matches_spv(changed, e->compute.path);
+        }
+
+        if(matches)
+            e->dirty = true;
+    }
+}
+bool sampler_create(Renderer* r, const VkSamplerCreateInfo* ci, uint32_t* out_sampler_id)
+{
+    if(!r || !ci || !out_sampler_id)
+        return false;
+
+    VkSampler sampler = VK_NULL_HANDLE;
+
+    VkResult res = vkCreateSampler(r->device, ci, NULL, &sampler);
+    if(res != VK_SUCCESS)
+        return false;
+
+    uint32_t id;
+    if(!flow_id_pool_create_id(&sampler_pool, &id))
+    {
+        vkDestroySampler(r->device, sampler, NULL);
+        return false;
+    }
+
+    samplers[id] = sampler;
+
+    *out_sampler_id = id;
+
+    VkDescriptorImageInfo sampler_info = {.sampler = samplers[id]};
+
+    VkWriteDescriptorSet write = {.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+
+                                  .dstSet          = r->bindless_system.set,
+                                  .dstBinding      = BINDLESS_SAMPLER_BINDING,
+                                  .dstArrayElement = id,
+
+                                  .descriptorCount = 1,
+                                  .descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER,
+                                  .pImageInfo      = &sampler_info};
+
+    vkUpdateDescriptorSets(r->device, 1, &write, 0, NULL);
+    return true;
 }

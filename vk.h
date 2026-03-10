@@ -69,6 +69,9 @@ typedef struct VkPhysicalDeviceShaderNonSemanticInfoFeaturesKHR
 #define MAX_BINDLESS_MATERIALS 65536
 #define MAX_BINDLESS_TRANSFORMS 65536
 
+
+typedef uint32_t       TextureID;
+
 typedef struct
 {
     VkImage       image;
@@ -84,16 +87,6 @@ typedef struct
 
     bool valid;
 } Texture;
-
-
-extern flow_id_pool    pipeline_id_pool;
-typedef uint32_t       PipelineID;
-typedef uint32_t       TextureID;
-extern flow_id_pool    texture_pool;
-extern flow_id_pool    sampler_pool;
-extern Texture         textures[MAX_BINDLESS_TEXTURES];  // reference by textureid
-extern VkSampler       samplers[MAX_BINDLESS_SAMPLERS];  // reference by samplerid
-
 
 typedef struct
 {
@@ -1175,46 +1168,70 @@ static FLOW_INLINE void submit_frame(Renderer* r)
 }
 
 
-FORCE_INLINE bool sampler_create(Renderer* r, const VkSamplerCreateInfo* ci, uint32_t* out_sampler_id)
-{
-    if(!r || !ci || !out_sampler_id)
-        return false;
+bool sampler_create(Renderer* r, const VkSamplerCreateInfo* ci, uint32_t* out_sampler_id);
 
-    VkSampler sampler = VK_NULL_HANDLE;
-
-    VkResult res = vkCreateSampler(r->device, ci, NULL, &sampler);
-    if(res != VK_SUCCESS)
-        return false;
-
-    uint32_t id;
-    if(!flow_id_pool_create_id(&sampler_pool, &id))
-    {
-        vkDestroySampler(r->device, sampler, NULL);
-        return false;
-    }
-
-    samplers[id] = sampler;
-
-    *out_sampler_id = id;
-
-    VkDescriptorImageInfo sampler_info = {.sampler = samplers[id]};
-
-    VkWriteDescriptorSet write = {.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-
-                                  .dstSet          = r->bindless_system.set,
-                                  .dstBinding      = BINDLESS_SAMPLER_BINDING,
-                                  .dstArrayElement = id,
-
-                                  .descriptorCount = 1,
-                                  .descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER,
-                                  .pImageInfo      = &sampler_info};
-
-    vkUpdateDescriptorSets(r->device, 1, &write, 0, NULL);
-    return true;
-}
 
 
 void renderer_record_screenshot(Renderer* r, VkCommandBuffer cmd);
 
 
 void renderer_save_screenshot(Renderer* r);
+
+typedef enum PipelineType
+{
+    PIPELINE_TYPE_GRAPHICS,
+    PIPELINE_TYPE_COMPUTE
+} PipelineType;
+
+typedef struct PipelineEntry
+{
+    PipelineType type;
+
+    union
+    {
+        GraphicsPipelineConfig graphics;
+
+        struct
+        {
+            const char* path;
+        } compute;
+    };
+
+    bool dirty;
+
+} PipelineEntry;
+
+typedef struct RendererPipelines
+{
+    VkPipeline    pipelines[MAX_PIPELINES];
+    PipelineEntry entries[MAX_PIPELINES];
+    uint32_t      count;
+} RendererPipelines;
+
+
+
+
+typedef uint32_t       PipelineID;
+extern flow_id_pool    texture_pool;
+extern flow_id_pool    sampler_pool;
+extern Texture         textures[MAX_BINDLESS_TEXTURES];  // reference by textureid
+extern VkSampler       samplers[MAX_BINDLESS_SAMPLERS];  // reference by samplerid
+extern RendererPipelines g_render_pipelines  ;
+
+PipelineID pipeline_create_graphics(Renderer* r, GraphicsPipelineConfig* cfg);
+PipelineID pipeline_create_compute(Renderer* r, const char* path);
+
+VkPipeline pipeline_get(PipelineID id);
+
+void pipeline_mark_dirty(const char* changed_shader);
+void pipeline_rebuild(Renderer* r);
+
+
+
+
+
+
+
+
+
+
