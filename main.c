@@ -20,7 +20,7 @@
 #include "external/dmon/dmon.h"
 #include "external/tracy/public/tracy/TracyC.h"
 
-static bool voxel_debug = true;
+static bool voxel_debug     = true;
 static bool take_screenshot = true;
 #define VALIDATION false
 #define KB(x) ((x) * 1024ULL)
@@ -52,10 +52,12 @@ may be just cast a ray from mouse pointer to screen and if it matches then activ
 
 and also there should be save position to file option for that light so that     we can them just load it from from when editing isnt enabled and dmon watches for file changes anyway
  }
+ 
 
 
 
-   */
+
+*/
 typedef struct
 {
     uint32_t fullscreen;
@@ -81,10 +83,9 @@ typedef struct
 } Vertex;
 
 
-
 static volatile bool shader_changed = false;
 static char          changed_shader[256];
-static void watch_cb(dmon_watch_id id, dmon_action action, const char* root, const char* filepath, const char* oldfilepath, void* user)
+static void inline watch_cb(dmon_watch_id id, dmon_action action, const char* root, const char* filepath, const char* oldfilepath, void* user)
 {
     if(action == DMON_ACTION_MODIFY || action == DMON_ACTION_CREATE)
     {
@@ -96,36 +97,38 @@ static void watch_cb(dmon_watch_id id, dmon_action action, const char* root, con
     }
 }
 
+/* voxel part starts  */
 
-typedef struct
-{
-    uint32_t data0;
-    uint32_t data1;
-} PackedFace;
+// instance data (packed)
+//         │
+//         ▼
+// vertex shader
+//         │
+//         ├─ unpack bits
+//         ├─ build face quad
+//         ├─ rotate by normal
+//         └─ add chunk position
 
 typedef struct
 {
     VoxelType type;
 } Voxel;
 
-typedef struct
+// 31   26   21   16   13   10   7        0
+// +----+----+----+----+----+----+-------------------+
+// | x  | y  | z  | n  | h  | w  |material/texture id|
+// +----+----+----+----+----+----+-------------------+
+//  5b   5b   5b   3b   4b   4b      6b
+//
+//
+static inline uint32_t pack_voxel_face(uint32_t x, uint32_t y, uint32_t z, uint32_t normal, uint32_t height, uint32_t width, uint32_t material)
 {
-    const char* path;
-    TextureID   id;
-} TextureCacheEntry;
+    return ((x & 31) << 27) | ((y & 31) << 22) | ((z & 31) << 17) | ((normal & 7) << 14) | ((height & 15) << 10)
+           | ((width & 15) << 6) | ((material & 63));
+}
 
 
-
-#define MAX_TEXTURES 2222
-
-static TextureCacheEntry voxel_texture_cache[MAX_TEXTURES];
-uint32_t                 voxel_texture_cache_count = 0;
-
-struct PackedFace
-{
-    uint data0;
-    uint data1;
-};
+/* voxel part ends  */
 
 
 int main()
@@ -273,30 +276,98 @@ int main()
         {
         }
     }
+    /*
+    CPU
+ │
+ ▼
+UPLOAD BUFFER (mapped)
+ ├── draw commands
+ ├── counts
+ └── staging data
+        │
+        │ vkCmdCopyBuffer
+        ▼
+GPU BUFFER (device local)
+ ├── packed voxel faces
+ ├── instance arrays
+ └── chunk data
 
-    BufferPool pool = {0};
-    buffer_pool_init(&renderer, &pool, MB(256),
-                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
+
+ CPU pool (mapped)
+ ├─ indirect draw commands
+ ├─ draw counts
+ └─ temporary upload data
+
+STAGING pool
+ └─ big uploads (voxel faces, meshes)
+
+GPU pool (device local)
+ ├─ packed voxel faces
+ ├─ instance arrays
+ └─ chunk data
+ */
+
+
+    BufferPool cpu_pool = {0};
+
+    BufferPool gpu_pool = {0};
+
+    BufferPool staging_pool = {0};
+
+    buffer_pool_init(&renderer, &cpu_pool, MB(64),
+                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                      VMA_MEMORY_USAGE_AUTO,
                      VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT, 2048);
+    buffer_pool_init(&renderer, &gpu_pool, MB(512),
+                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                     VMA_MEMORY_USAGE_GPU_ONLY, 0, 2048);
+    buffer_pool_init(&renderer, &staging_pool, MB(128), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO,
+                     VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT, 2048);
 
-    VkBufferDeviceAddressInfo addrInfo = {.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO, .buffer = pool.buffer};
-    VkDeviceAddress           base_addr = vkGetBufferDeviceAddress(renderer.device, &addrInfo);
+    VkBufferDeviceAddressInfo addrInfo = {.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO, .buffer = gpu_pool.buffer};
+    VkDeviceAddress base_shader_addr = vkGetBufferDeviceAddress(renderer.device, &addrInfo);
 
-    TextureID   tex_id         = load_texture(&renderer, "/home/lk/myprojects/flowgame/data/PNG/Tiles/greystone.png");
-    BufferSlice indirect_slice = buffer_pool_alloc(&pool, sizeof(VkDrawIndirectCommand), 16);
-    BufferSlice count_slice    = buffer_pool_alloc(&pool, sizeof(uint32_t), 4);
+    TextureID tex_id = load_texture(&renderer, "/home/lk/myprojects/flowgame/data/PNG/Tiles/greystone.png");
+
+    /* buffer slices start  */
+
+    BufferSlice indirect_slice = buffer_pool_alloc(&cpu_pool, sizeof(VkDrawIndirectCommand), 16);
+
+    BufferSlice count_slice = buffer_pool_alloc(&cpu_pool, sizeof(uint32_t), 4);
+    /* initialise voxel face storage then fill it with data and upload on gpu */
+    uint32_t* faces = NULL;
+
+    for(uint32_t x = 0; x < 10; x++)
+        for(uint32_t y = 0; y < 1; y++)
+            for(uint32_t z = 0; z < 10; z++)
+            {
+                uint32_t packed = pack_voxel_face(x, y, z, 0, 1, 1, 1);
+
+                arrput(faces, packed);
+            }
+    uint32_t    voxel_face_count = arrlen(faces);
+    BufferSlice cpu_faces        = buffer_pool_alloc(&cpu_pool, voxel_face_count * sizeof(uint32_t), 4);
+
+    uint32_t* cpu_face_data = cpu_faces.mapped;
+    memcpy(cpu_faces.mapped, faces, voxel_face_count * sizeof(uint32_t));
+
+
+    BufferSlice gpu_faces = buffer_pool_alloc(&gpu_pool, voxel_face_count * sizeof(uint32_t), 16);
+    /* buffer slices ends  */
+
     VkDrawIndirectCommand* cpu_indirect = (VkDrawIndirectCommand*)indirect_slice.mapped;
     uint32_t*              cpu_count    = (uint32_t*)count_slice.mapped;
 
+
     // describe ONE draw call
-    cpu_indirect[0].vertexCount   = 3;
-    cpu_indirect[0].instanceCount = 1;
+    cpu_indirect[0].vertexCount   = 6;
+    cpu_indirect[0].instanceCount = voxel_face_count;
     cpu_indirect[0].firstVertex   = 0;
     cpu_indirect[0].firstInstance = 0;
 
     // number of draws
     *cpu_count = 1;
+#if 0
 #define MAX_LIGHT_BEAM 64
     BufferSlice     light_beam = buffer_pool_alloc(&pool, MAX_LIGHT_BEAM * sizeof(LightBeam), 16);
     LightBeam*      cpu_beams  = (LightBeam*)light_beam.mapped;
@@ -321,7 +392,7 @@ int main()
             };
         }
     }
-
+#endif
     /* device address */
 
     Camera cam = {
@@ -347,6 +418,9 @@ int main()
          face_ptr=0, face_count=8, aspect=12, pad0=16, pad1=20, pad2=24, pad3=28,
          view_proj=32, texture_id=96, sampler_id=100 */
     // may be all push constant can be defined in one header that both gpu and cpu share
+
+    VkDeviceAddress face_pointer = base_shader_addr + gpu_faces.offset;
+
     PUSH_CONSTANT(Push, VkDeviceAddress face_ptr;  //8
                   uint  face_count;                //5
                   float aspect;                    //4
@@ -378,8 +452,8 @@ int main()
     );
 
 
-     dmon_init();
-       dmon_watch("shaders", watch_cb, DMON_WATCHFLAGS_RECURSIVE, NULL);
+    dmon_init();
+    dmon_watch("shaders", watch_cb, DMON_WATCHFLAGS_RECURSIVE, NULL);
 
     uint32_t pp_frame_counter = 0;
     while(!glfwWindowShouldClose(renderer.window))
@@ -391,7 +465,7 @@ int main()
         if(shader_changed)
         {
             shader_changed = false;
-
+printf("hello");
             system("./compileslang.sh");
 
             pipeline_mark_dirty(changed_shader);
@@ -506,6 +580,10 @@ int main()
             igRender();
         }
         TracyCZoneEnd(imgui_zone);
+
+        VkBufferCopy copy = {.srcOffset = cpu_faces.offset, .dstOffset = gpu_faces.offset, .size = voxel_face_count * sizeof(uint32_t)};
+
+        vkCmdCopyBuffer(cmd, cpu_faces.buffer, gpu_faces.buffer, 1, &copy);
         gpu_profiler_begin_frame(frame_prof, cmd);
         {
             vkCmdBeginRendering(cmd, &rendering);
@@ -519,7 +597,8 @@ int main()
                 push.aspect     = (float)renderer.swapchain.extent.width / (float)renderer.swapchain.extent.height;
                 push.texture_id = tex_id;
                 push.sampler_id = renderer.default_samplers.samplers[SAMPLER_LINEAR_CLAMP];
-
+                push.face_ptr   = face_pointer;
+                push.face_count = voxel_face_count;
 
                 glm_vec3_copy(cam.cam_dir, push.cam_dir);
                 glm_vec3_copy(cam.position, push.cam_pos);

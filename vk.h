@@ -1033,7 +1033,7 @@ static FLOW_INLINE void frame_start(Renderer* renderer, Camera* cam)
 
     mat4 m;
     glm_mat4_copy(cam->view_proj, m);
-
+// asthough its not hard to derive i got reference          https://fgiesen.wordpress.com/2012/08/31/frustum-planes-from-the-projection-matrix/
     renderer->frustum.planes[LeftPlane][0] = m[0][3] + m[0][0];
     renderer->frustum.planes[LeftPlane][1] = m[1][3] + m[1][0];
     renderer->frustum.planes[LeftPlane][2] = m[2][3] + m[2][0];

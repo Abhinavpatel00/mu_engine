@@ -1,3 +1,24 @@
+
+
+
+
+[ player action ]
+        │
+        ▼
+[ voxel array update ]
+        │
+        ▼
+[ chunk flagged dirty ]
+        │
+        ▼
+[ greedy mesher runs ]
+        │
+        ▼
+[ new mesh uploaded ]
+
+
+
+
 -skip faces between two voxel 
 -if faces with same texture are just forming a kind of plane then combine the triangles(cant do in real time may be)
 - so normals of each triangle or quad need not to be stored it can just bit in 3 bits  because only 6 normals are possible in voxel
