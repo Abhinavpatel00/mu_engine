@@ -22,6 +22,7 @@
 
 static bool voxel_debug     = true;
 static bool take_screenshot = true;
+static bool wireframe_mode  = false;
 #define VALIDATION false
 #define KB(x) ((x) * 1024ULL)
 #define MB(x) ((x) * 1024ULL * 1024ULL)
@@ -62,7 +63,10 @@ typedef struct
 {
     uint32_t fullscreen;
     uint32_t postprocess;
+
     uint32_t triangle;
+
+    uint32_t triangle_wireframe;
     uint32_t smaa_edge;
     uint32_t smaa_weight;
     uint32_t smaa_blend;
@@ -203,6 +207,19 @@ int main()
 
             pipelines.triangle = pipeline_create_graphics(&renderer, &cfg);
         }
+        {
+            GraphicsPipelineConfig cfg = pipeline_config_default();
+            cfg.vert_path              = "compiledshaders/triangle.vert.spv";
+            cfg.frag_path              = "compiledshaders/triangle.frag.spv";
+            cfg.color_attachment_count = 1;
+            cfg.color_formats          = &renderer.hdr_color[1].format;
+            cfg.depth_format           = renderer.depth[1].format;
+            cfg.polygon_mode           = VK_POLYGON_MODE_LINE;
+
+            pipelines.triangle_wireframe = pipeline_create_graphics(&renderer, &cfg);
+        }
+
+
         {
             GraphicsPipelineConfig cfg = pipeline_config_default();
             cfg.vert_path              = "compiledshaders/smaa_edge.vert.spv";
@@ -465,7 +482,7 @@ GPU pool (device local)
         if(shader_changed)
         {
             shader_changed = false;
-printf("hello");
+            printf("hello");
             system("./compileslang.sh");
 
             pipeline_mark_dirty(changed_shader);
@@ -589,7 +606,33 @@ printf("hello");
             vkCmdBeginRendering(cmd, &rendering);
             GPU_SCOPE(frame_prof, cmd, "Main Pass", VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT)
             {
-                vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.triangle]);
+
+
+                static int prev_space = GLFW_RELEASE;
+
+                int space = glfwGetKey(renderer.window, GLFW_KEY_SPACE);
+
+                if(space == GLFW_PRESS && prev_space == GLFW_RELEASE)
+                {
+                    wireframe_mode = !wireframe_mode;
+                }
+
+                prev_space = space;
+
+                // prev_space = (wireframe_mode ^= (space = glfwGetKey(renderer.window, GLFW_KEY_SPACE)) == GLFW_PRESS && prev_space == GLFW_RELEASE, space);
+
+                if(!wireframe_mode)
+                {
+                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.triangle]);
+                }
+                else
+                {
+
+                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                      g_render_pipelines.pipelines[pipelines.triangle_wireframe]);
+                };
+
+
                 vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
 
                 Push push = {0};
