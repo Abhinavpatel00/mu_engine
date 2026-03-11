@@ -53,19 +53,13 @@ may be just cast a ray from mouse pointer to screen and if it matches then activ
 
 and also there should be save position to file option for that light so that     we can them just load it from from when editing isnt enabled and dmon watches for file changes anyway
  }
- 
-
-
-
 
 */
 typedef struct
 {
     uint32_t fullscreen;
     uint32_t postprocess;
-
     uint32_t triangle;
-
     uint32_t triangle_wireframe;
     uint32_t smaa_edge;
     uint32_t smaa_weight;
@@ -204,18 +198,18 @@ int main()
             cfg.color_formats          = &renderer.hdr_color[1].format;
             cfg.depth_format           = renderer.depth[1].format;
             cfg.polygon_mode           = VK_POLYGON_MODE_FILL;
-
-            pipelines.triangle = pipeline_create_graphics(&renderer, &cfg);
+            cfg.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+            pipelines.triangle         = pipeline_create_graphics(&renderer, &cfg);
         }
         {
-            GraphicsPipelineConfig cfg = pipeline_config_default();
-            cfg.vert_path              = "compiledshaders/triangle.vert.spv";
-            cfg.frag_path              = "compiledshaders/triangle.frag.spv";
-            cfg.color_attachment_count = 1;
-            cfg.color_formats          = &renderer.hdr_color[1].format;
-            cfg.depth_format           = renderer.depth[1].format;
-            cfg.polygon_mode           = VK_POLYGON_MODE_LINE;
-
+            GraphicsPipelineConfig cfg   = pipeline_config_default();
+            cfg.vert_path                = "compiledshaders/triangle.vert.spv";
+            cfg.frag_path                = "compiledshaders/triangle.frag.spv";
+            cfg.color_attachment_count   = 1;
+            cfg.color_formats            = &renderer.hdr_color[1].format;
+            cfg.depth_format             = renderer.depth[1].format;
+            cfg.polygon_mode             = VK_POLYGON_MODE_LINE;
+            cfg.topology                 = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
             pipelines.triangle_wireframe = pipeline_create_graphics(&renderer, &cfg);
         }
 
@@ -352,14 +346,15 @@ GPU pool (device local)
 
     BufferSlice count_slice = buffer_pool_alloc(&cpu_pool, sizeof(uint32_t), 4);
     /* initialise voxel face storage then fill it with data and upload on gpu */
-    uint32_t* faces = NULL;
-
-    for(uint32_t x = 0; x < 10; x++)
+    uint32_t* faces  = NULL;
+    uint32_t  normal = 0;
+    for(uint32_t x = 0; x < 1; x++)
         for(uint32_t y = 0; y < 1; y++)
-            for(uint32_t z = 0; z < 10; z++)
+            for(uint32_t z = 0; z < 1; z++)
             {
-                uint32_t packed = pack_voxel_face(x, y, z, 0, 1, 1, 1);
-
+                normal          = normal % 6;
+                uint32_t packed = pack_voxel_face(x, y, z, normal, 1, 1, 1);
+                normal++;
                 arrput(faces, packed);
             }
     uint32_t    voxel_face_count = arrlen(faces);
@@ -377,7 +372,7 @@ GPU pool (device local)
 
 
     // describe ONE draw call
-    cpu_indirect[0].vertexCount   = 6;
+    cpu_indirect[0].vertexCount   = 4;
     cpu_indirect[0].instanceCount = voxel_face_count;
     cpu_indirect[0].firstVertex   = 0;
     cpu_indirect[0].firstInstance = 0;

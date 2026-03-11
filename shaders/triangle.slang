@@ -23,16 +23,16 @@ struct Push
   uint     texture_id;
   uint     sampler_id;
 };
-static const float2 quadVerts[6] =
+
+static const float2 quadVerts[4] =
 {
     float2(0,0),
     float2(1,0),
     float2(0,1),
-
-    float2(0,1),
-    float2(1,0),
     float2(1,1)
 };
+
+
 static const float3 normal_table[6] =
 {
     float3(0, 1, 0),
@@ -70,11 +70,6 @@ uint instanceID : SV_InstanceID
   VSOutput o;
 uint *faces =(uint*)push.face_ptr;
 uint face =faces[instanceID];
-  float3 verts[3] = { float3(0.0, 0.0, 0.0), float3(1.0, 0.0, 0.0), float3(0.0, 1.0, 0.0) };
-
-  float3 world = verts[vertexID];
-
-
     uint x = (face >> 27) & 31;
     uint y = (face >> 22) & 31;
     uint z = (face >> 17) & 31;
@@ -115,5 +110,7 @@ input
 {
 Texture2D tex=textures[push.texture_id];
 SamplerState samp = samplers[push.sampler_id];
-  return tex.Sample(samp,input.uv);
+float3 color = tex.Sample(samp,input.uv).rgb;
+return float4(color,1.0);
+
 }
