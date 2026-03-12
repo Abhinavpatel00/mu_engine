@@ -793,9 +793,10 @@ typedef struct
 TextureID create_texture(Renderer* r, const TextureCreateDesc* desc);
 void      destroy_texture(Renderer* r, TextureID id);
 
+
 TextureID load_texture(Renderer* r, const char* path);
 
-
+TextureID load_texture_id_in_range(Renderer* r, const char* path,uint32_t max_id);
 typedef struct
 {
     VkFilter mag_filter;

@@ -20,6 +20,8 @@
 #include "external/dmon/dmon.h"
 #include "external/tracy/public/tracy/TracyC.h"
 
+#define RUN_ONCE_N(name) \
+for (static bool name = true; name; name = false)
 static bool voxel_debug     = true;
 static bool take_screenshot = true;
 static bool wireframe_mode  = false;
@@ -29,6 +31,61 @@ static bool wireframe_mode  = false;
 #define GB(x) ((x) * 1024ULL * 1024ULL * 1024ULL)
 #define PAD(name, size) uint8_t name[(size)]
 // imp gpu validation shows false positives may be bacause of data races
+
+#define PRINT_FIELD(type, field) \
+    printf("%-20s offset = %3zu  align = %2zu  size = %2zu\n", \
+           #field, offsetof(type, field), _Alignof(((type*)0)->field), sizeof(((type*)0)->field))
+
+#define PRINT_STRUCT(type) \
+    printf("\nSTRUCT %-20s size = %zu  align = %zu\n\n", \
+           #type, sizeof(type), _Alignof(type));
+
+static inline size_t flow_ravel_index(const size_t* coord, const size_t* strides, size_t ndim)
+{
+    size_t index = 0;
+
+    for(size_t i = 0; i < ndim; i++)
+        index += coord[i] * strides[i];
+
+    return index;
+}
+
+
+static inline void flow_unravel_index(size_t index, const size_t* dims, size_t ndim, size_t* coord)
+{
+    for(int i = ndim - 1; i >= 0; i--)
+    {
+        coord[i] = index % dims[i];
+        index /= dims[i];
+    }
+}
+
+static GPUMaterial gpu_materials[VOXEL_COUNT];
+void               voxel_materials_init(Renderer* r)
+{
+
+
+    for(size_t i = 0; i < VOXEL_COUNT; i++)
+    {
+        VoxelMaterial* src = &voxel_materials[i];
+        GPUMaterial*   dst = &gpu_materials[i];
+
+        dst->tex_side   = 0;
+        dst->tex_top    = 0;
+        dst->tex_bottom = 0;
+
+        if(src->face_tex[TEX_SIDE])
+            dst->tex_side = load_texture(r, src->face_tex[TEX_SIDE]);
+
+        if(src->face_tex[TEX_TOP])
+            dst->tex_top = load_texture(r, src->face_tex[TEX_TOP]);
+
+        if(src->face_tex[TEX_BOTTOM])
+            dst->tex_bottom = load_texture(r, src->face_tex[TEX_BOTTOM]);
+    }
+}
+
+
 typedef struct
 {
     vec3  position;
@@ -70,8 +127,7 @@ typedef struct
 static EnginePipelines pipelines;
 
 
-static const VoxelType terrain_voxels[] = {
-    STONE, GRASS, DIRT, SAND, GRAVEL, CLAY,
+static const VoxelType terrain_voxels[] = {VOXEL_STONE, VOXEL_GRASS
 
 };
 typedef struct
@@ -107,11 +163,6 @@ static void inline watch_cb(dmon_watch_id id, dmon_action action, const char* ro
 //         ├─ rotate by normal
 //         └─ add chunk position
 
-typedef struct
-{
-    VoxelType type;
-} Voxel;
-
 // 31   26   21   16   13   10   7        0
 // +----+----+----+----+----+----+-------------------+
 // | x  | y  | z  | n  | h  | w  |material/texture id|
@@ -125,6 +176,48 @@ static inline uint32_t pack_voxel_face(uint32_t x, uint32_t y, uint32_t z, uint3
            | ((width & 15) << 6) | ((material & 63));
 }
 
+
+#define CHUNK_SIZE 32
+#define CHUNK_AREA (CHUNK_SIZE * CHUNK_SIZE)
+#define CHUNK_VOLUME (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE)
+
+#define FLOW_FOR_3D(x, y, z, sx, sy, sz)                                                                               \
+    for(size_t z = 0; z < (sz); z++)                                                                                   \
+        for(size_t y = 0; y < (sy); y++)                                                                               \
+            for(size_t x = 0; x < (sx); x++)
+
+static FORCE_INLINE int voxel_index(int x, int y, int z)
+{
+    return x + y * CHUNK_SIZE + z * CHUNK_AREA;
+}
+
+static const int voxel_neighbors[6][3] = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+
+void generate_chunk(Voxel* chunk)
+{
+    for(int z = 0; z < CHUNK_SIZE; z++)
+        for(int x = 0; x < CHUNK_SIZE; x++)
+        {
+            float wx = x;
+            float wz = z;
+
+            float h = stb_perlin_noise3(wx * 0.05f, 0, wz * 0.05f, 0, 0, 0);
+
+            int height = (int)((h * 0.5f + 0.5f) * 20) + 10;
+
+            for(int y = 0; y < CHUNK_SIZE; y++)
+            {
+                int idx = voxel_index(x, y, z);
+
+                if(y < height - 1)
+                    chunk[idx].type = VOXEL_STONE;
+                else if(y == height - 1)
+                    chunk[idx].type = VOXEL_GRASS;
+                else
+                    chunk[idx].type = VOXEL_AIR;
+            }
+        }
+}
 
 /* voxel part ends  */
 
@@ -346,17 +439,59 @@ GPU pool (device local)
 
     BufferSlice count_slice = buffer_pool_alloc(&cpu_pool, sizeof(uint32_t), 4);
     /* initialise voxel face storage then fill it with data and upload on gpu */
-    uint32_t* faces  = NULL;
-    uint32_t  normal = 0;
-    for(uint32_t x = 0; x < 1; x++)
-        for(uint32_t y = 0; y < 1; y++)
-            for(uint32_t z = 0; z < 1; z++)
+
+
+    voxel_materials_init(&renderer);
+    BufferSlice mat_staging = buffer_pool_alloc(&staging_pool, sizeof(gpu_materials), 16);
+
+    memcpy(mat_staging.mapped, gpu_materials, sizeof(gpu_materials));
+    BufferSlice material_slice = buffer_pool_alloc(&gpu_pool, sizeof(gpu_materials), 16);
+
+
+
+    static Voxel chunk[CHUNK_VOLUME];
+
+    uint32_t* faces = NULL;
+
+    generate_chunk(chunk);
+    FLOW_FOR_3D(x, y, z, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE)
+    {
+        size_t idx = voxel_index(x, y, z);
+
+        VoxelType type = chunk[idx].type;
+
+        if(type == VOXEL_AIR)
+            continue;
+
+        for(int n = 0; n < 6; n++)
+        {
+            int nx = x + voxel_neighbors[n][0];
+            int ny = y + voxel_neighbors[n][1];
+            int nz = z + voxel_neighbors[n][2];
+
+            bool visible = false;
+
+            if(nx < 0 || ny < 0 || nz < 0 || nx >= CHUNK_SIZE || ny >= CHUNK_SIZE || nz >= CHUNK_SIZE)
             {
-                normal          = normal % 6;
-                uint32_t packed = pack_voxel_face(x, y, z, normal, 1, 1, 1);
-                normal++;
+                visible = true;
+            }
+            else
+            {
+                int nidx = voxel_index(nx, ny, nz);
+
+                if(chunk[nidx].type == VOXEL_AIR)
+                    visible = true;
+            }
+
+            if(visible)
+            {
+                uint32_t packed = pack_voxel_face(x, y, z, n, 1, 1, type);
+
                 arrput(faces, packed);
             }
+        }
+    }
+
     uint32_t    voxel_face_count = arrlen(faces);
     BufferSlice cpu_faces        = buffer_pool_alloc(&cpu_pool, voxel_face_count * sizeof(uint32_t), 4);
 
@@ -431,15 +566,19 @@ GPU pool (device local)
          view_proj=32, texture_id=96, sampler_id=100 */
     // may be all push constant can be defined in one header that both gpu and cpu share
 
-    VkDeviceAddress face_pointer = base_shader_addr + gpu_faces.offset;
 
-    PUSH_CONSTANT(Push, VkDeviceAddress face_ptr;  //8
-                  uint  face_count;                //5
-                  float aspect;                    //4
-                  vec3  cam_pos;                   // camera world position
-                  uint  pad1;                      // alignment
-                  vec3  cam_dir;                   // camera forward (normalized)
-                  uint  pad2;
+    VkDeviceAddress face_pointer     = base_shader_addr + gpu_faces.offset;
+    VkDeviceAddress material_pointer = base_shader_addr + material_slice.offset;
+
+    PUSH_CONSTANT(Push, VkDeviceAddress face_ptr;            //8
+                  VkDeviceAddress mat_ptr; uint face_count;  //
+                  float                         aspect;      //4
+
+    float _pad0[2];             // 24 → 32
+		  vec3                          cam_pos;     // camera world position
+                  uint                          pad1;        // alignment
+                  vec3                          cam_dir;     // camera forward (normalized)
+                  uint                          pad2;
 
                   float view_proj[4][4]; uint texture_id; uint sampler_id;
 
@@ -462,7 +601,6 @@ GPU pool (device local)
     PUSH_CONSTANT(Lightbeampush, VkDeviceAddress beam_ptr; uint64_t pad; float view_proj[4][4]; uint texture_id; uint sampler_id;
 
     );
-
 
     dmon_init();
     dmon_watch("shaders", watch_cb, DMON_WATCHFLAGS_RECURSIVE, NULL);
@@ -593,9 +731,23 @@ GPU pool (device local)
         }
         TracyCZoneEnd(imgui_zone);
 
-        VkBufferCopy copy = {.srcOffset = cpu_faces.offset, .dstOffset = gpu_faces.offset, .size = voxel_face_count * sizeof(uint32_t)};
 
-        vkCmdCopyBuffer(cmd, cpu_faces.buffer, gpu_faces.buffer, 1, &copy);
+        RUN_ONCE
+        {
+            {
+                VkBufferCopy copy = {.srcOffset = cpu_faces.offset,
+                                     .dstOffset = gpu_faces.offset,
+                                     .size      = voxel_face_count * sizeof(uint32_t)};
+
+                vkCmdCopyBuffer(cmd, cpu_faces.buffer, gpu_faces.buffer, 1, &copy);
+            }
+            {
+                VkBufferCopy mat_copy = {.srcOffset = mat_staging.offset, .dstOffset = material_slice.offset, .size = sizeof(gpu_materials)};
+
+                vkCmdCopyBuffer(cmd, mat_staging.buffer, material_slice.buffer, 1, &mat_copy);
+            }
+        }
+
         gpu_profiler_begin_frame(frame_prof, cmd);
         {
             vkCmdBeginRendering(cmd, &rendering);
@@ -634,10 +786,10 @@ GPU pool (device local)
 
                 push.aspect     = (float)renderer.swapchain.extent.width / (float)renderer.swapchain.extent.height;
                 push.texture_id = tex_id;
-                push.sampler_id = renderer.default_samplers.samplers[SAMPLER_LINEAR_CLAMP];
+                push.sampler_id = renderer.default_samplers.samplers[SAMPLER_LINEAR_WRAP_ANISO];
                 push.face_ptr   = face_pointer;
                 push.face_count = voxel_face_count;
-
+                push.mat_ptr    = material_pointer;
                 glm_vec3_copy(cam.cam_dir, push.cam_dir);
                 glm_vec3_copy(cam.position, push.cam_pos);
                 glm_mat4_copy(cam.view_proj, push.view_proj);  // this one was already correct
@@ -871,10 +1023,25 @@ GPU pool (device local)
 
 
     printf(" renderer size is %zu", sizeof(Renderer));
-    printf("Push size = %zu\n", alignof(Camera));
+    printf("Push size = %zu\n", sizeof(Push));
     printf("Push size = %zu\n", alignof(Push));
     printf("view_proj offset = %zu\n", offsetof(Push, view_proj));
     printf(" pushis %zu    ", alignof(Push));
+ PRINT_STRUCT(Push);
+
+    PRINT_FIELD(Push, face_ptr);
+    PRINT_FIELD(Push, mat_ptr);
+    PRINT_FIELD(Push, face_count);
+    PRINT_FIELD(Push, aspect);
+    PRINT_FIELD(Push, cam_pos);
+    PRINT_FIELD(Push, pad1);
+    PRINT_FIELD(Push, cam_dir);
+    PRINT_FIELD(Push, pad2);
+    PRINT_FIELD(Push, view_proj);
+    PRINT_FIELD(Push, texture_id);
+    PRINT_FIELD(Push, sampler_id);
+
+
     //    ANALYZE_STRUCT(ImageState);
     //renderer_destroy(&renderer);
     return 0;
