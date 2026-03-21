@@ -197,7 +197,7 @@ barrier_flush(cmd, &batch);
 
 ## Practical notes
 
-- Keep `MAX_BATCHED_IMAGE_BARRIERS` conservative and assert on overflow.
+- Keep `MAX_BATCHED_IMAGE_BARRIERS` conservative and assert on overmu.
 - Use tracked-state wrappers for correctness and dedup.
 - Prefer one `barrier_flush` per pass boundary, not per image.
 - Keep buffer and image barriers separate arrays if you later batch both kinds.

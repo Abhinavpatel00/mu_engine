@@ -1589,7 +1589,7 @@ static unsigned encodeLZ77(uivector* out, Hash* hash,
         }
       }
     }
-    if(length >= 3 && offset > windowsize) ERROR_BREAK(86 /*too big (or overflown negative) offset*/);
+    if(length >= 3 && offset > windowsize) ERROR_BREAK(86 /*too big (or overmun negative) offset*/);
 
     /*encode it as length/distance pair or literal value*/
     if(length < 3) /*only lengths of 3 or higher are supported as length/distance pair*/
@@ -2074,7 +2074,7 @@ static unsigned update_adler32(unsigned adler, const unsigned char* data, unsign
 
   while(len > 0)
   {
-    /*at least 5550 sums can be done before the sums overflow, saving a lot of module divisions*/
+    /*at least 5550 sums can be done before the sums overmu, saving a lot of module divisions*/
     unsigned amount = len > 5550 ? 5550 : len;
     len -= amount;
     while(amount > 0)
@@ -2473,7 +2473,7 @@ unsigned lodepng_chunk_append(unsigned char** out, size_t* outlength, const unsi
   unsigned total_chunk_length = lodepng_chunk_length(chunk) + 12;
   unsigned char *chunk_start, *new_buffer;
   size_t new_length = (*outlength) + total_chunk_length;
-  if(new_length < total_chunk_length || new_length < (*outlength)) return 77; /*integer overflow happened*/
+  if(new_length < total_chunk_length || new_length < (*outlength)) return 77; /*integer overmu happened*/
 
   new_buffer = (unsigned char*)lodepng_realloc(*out, new_length);
   if(!new_buffer) return 83; /*alloc fail*/
@@ -2492,7 +2492,7 @@ unsigned lodepng_chunk_create(unsigned char** out, size_t* outlength, unsigned l
   unsigned i;
   unsigned char *chunk, *new_buffer;
   size_t new_length = (*outlength) + length + 12;
-  if(new_length < length + 12 || new_length < (*outlength)) return 77; /*integer overflow happened*/
+  if(new_length < length + 12 || new_length < (*outlength)) return 77; /*integer overmu happened*/
   new_buffer = (unsigned char*)lodepng_realloc(*out, new_length);
   if(!new_buffer) return 83; /*alloc fail*/
   (*out) = new_buffer;
@@ -4460,9 +4460,9 @@ static void decodeGeneric(unsigned char** out, unsigned* w, unsigned* h,
 
   numpixels = *w * *h;
 
-  /*multiplication overflow*/
+  /*multiplication overmu*/
   if(*h != 0 && numpixels / *h != *w) CERROR_RETURN(state->error, 92);
-  /*multiplication overflow possible further below. Allows up to 2^31-1 pixel
+  /*multiplication overmu possible further below. Allows up to 2^31-1 pixel
   bytes with 16-bit RGBA, the rest is room for filter bytes.*/
   if(numpixels > 268435455) CERROR_RETURN(state->error, 92);
 
@@ -5893,7 +5893,7 @@ const char* lodepng_error_text(unsigned code)
     /*length could be wrong, or data chopped off*/
     case 75: return "no null termination char found while decoding text chunk";
     case 76: return "iTXt chunk too short to contain required bytes";
-    case 77: return "integer overflow in buffer size";
+    case 77: return "integer overmu in buffer size";
     case 78: return "failed to open file for reading"; /*file doesn't exist or couldn't be opened for reading*/
     case 79: return "failed to open file for writing";
     case 80: return "tried creating a tree of 0 symbols";

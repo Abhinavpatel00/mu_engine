@@ -546,11 +546,11 @@ struct VolkInstanceTable
 #else
 	PFN_vkVoidFunction padding_988145[1];
 #endif /* defined(VK_NV_external_memory_capabilities) */
-#if defined(VK_NV_optical_flow)
+#if defined(VK_NV_optical_mu)
 	PFN_vkGetPhysicalDeviceOpticalFlowImageFormatsNV vkGetPhysicalDeviceOpticalFlowImageFormatsNV;
 #else
 	PFN_vkVoidFunction padding_46a4b95[1];
-#endif /* defined(VK_NV_optical_flow) */
+#endif /* defined(VK_NV_optical_mu) */
 #if defined(VK_OHOS_surface)
 	PFN_vkCreateSurfaceOHOS vkCreateSurfaceOHOS;
 #else
@@ -1683,14 +1683,14 @@ struct VolkDeviceTable
 #else
 	PFN_vkVoidFunction padding_53495be7[1];
 #endif /* defined(VK_NV_mesh_shader) && (defined(VK_VERSION_1_2) || defined(VK_KHR_draw_indirect_count) || defined(VK_AMD_draw_indirect_count)) */
-#if defined(VK_NV_optical_flow)
+#if defined(VK_NV_optical_mu)
 	PFN_vkBindOpticalFlowSessionImageNV vkBindOpticalFlowSessionImageNV;
 	PFN_vkCmdOpticalFlowExecuteNV vkCmdOpticalFlowExecuteNV;
 	PFN_vkCreateOpticalFlowSessionNV vkCreateOpticalFlowSessionNV;
 	PFN_vkDestroyOpticalFlowSessionNV vkDestroyOpticalFlowSessionNV;
 #else
 	PFN_vkVoidFunction padding_f67571eb[4];
-#endif /* defined(VK_NV_optical_flow) */
+#endif /* defined(VK_NV_optical_mu) */
 #if defined(VK_NV_partitioned_acceleration_structure)
 	PFN_vkCmdBuildPartitionedAccelerationStructuresNV vkCmdBuildPartitionedAccelerationStructuresNV;
 	PFN_vkGetPartitionedAccelerationStructuresBuildSizesNV vkGetPartitionedAccelerationStructuresBuildSizesNV;
@@ -2144,9 +2144,9 @@ extern PFN_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV vkG
 #if defined(VK_NV_external_memory_capabilities)
 extern PFN_vkGetPhysicalDeviceExternalImageFormatPropertiesNV vkGetPhysicalDeviceExternalImageFormatPropertiesNV;
 #endif /* defined(VK_NV_external_memory_capabilities) */
-#if defined(VK_NV_optical_flow)
+#if defined(VK_NV_optical_mu)
 extern PFN_vkGetPhysicalDeviceOpticalFlowImageFormatsNV vkGetPhysicalDeviceOpticalFlowImageFormatsNV;
-#endif /* defined(VK_NV_optical_flow) */
+#endif /* defined(VK_NV_optical_mu) */
 #if defined(VK_OHOS_surface)
 extern PFN_vkCreateSurfaceOHOS vkCreateSurfaceOHOS;
 #endif /* defined(VK_OHOS_surface) */
@@ -2994,12 +2994,12 @@ extern PFN_vkCmdDrawMeshTasksNV vkCmdDrawMeshTasksNV;
 #if defined(VK_NV_mesh_shader) && (defined(VK_VERSION_1_2) || defined(VK_KHR_draw_indirect_count) || defined(VK_AMD_draw_indirect_count))
 extern PFN_vkCmdDrawMeshTasksIndirectCountNV vkCmdDrawMeshTasksIndirectCountNV;
 #endif /* defined(VK_NV_mesh_shader) && (defined(VK_VERSION_1_2) || defined(VK_KHR_draw_indirect_count) || defined(VK_AMD_draw_indirect_count)) */
-#if defined(VK_NV_optical_flow)
+#if defined(VK_NV_optical_mu)
 extern PFN_vkBindOpticalFlowSessionImageNV vkBindOpticalFlowSessionImageNV;
 extern PFN_vkCmdOpticalFlowExecuteNV vkCmdOpticalFlowExecuteNV;
 extern PFN_vkCreateOpticalFlowSessionNV vkCreateOpticalFlowSessionNV;
 extern PFN_vkDestroyOpticalFlowSessionNV vkDestroyOpticalFlowSessionNV;
-#endif /* defined(VK_NV_optical_flow) */
+#endif /* defined(VK_NV_optical_mu) */
 #if defined(VK_NV_partitioned_acceleration_structure)
 extern PFN_vkCmdBuildPartitionedAccelerationStructuresNV vkCmdBuildPartitionedAccelerationStructuresNV;
 extern PFN_vkGetPartitionedAccelerationStructuresBuildSizesNV vkGetPartitionedAccelerationStructuresBuildSizesNV;

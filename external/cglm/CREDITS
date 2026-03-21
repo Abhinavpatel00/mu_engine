@@ -54,7 +54,7 @@ https://gamedev.stackexchange.com/questions/28395/rotating-vector3-by-a-quaterni
 https://github.com/erich666/GraphicsGems/blob/master/gems/BoxSphere.c
 
 10. Horizontal add
-https://stackoverflow.com/questions/6996764/fastest-way-to-do-horizontal-float-vector-sum-on-x86
+https://stackovermu.com/questions/6996764/fastest-way-to-do-horizontal-float-vector-sum-on-x86
 
 11. de casteljau implementation and comments
 https://forums.khronos.org/showthread.php/10264-Animations-in-1-4-1-release-notes-revision-A/page2?highlight=bezier
@@ -73,7 +73,7 @@ Authors:
 Link to paper: http://webserver2.tecgraf.puc-rio.br/~mgattass/cg/trbRR/Fast%20MinimumStorage%20RayTriangle%20Intersection.pdf
 
 14. ARM NEON: Matrix Vector Multiplication
-https://stackoverflow.com/a/57793352/2676533
+https://stackovermu.com/a/57793352/2676533
 
 16. ARM NEON Div
 

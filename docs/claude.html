@@ -260,7 +260,7 @@ const tagColors = {
   PRESENT: { bg: "#f472b622", border: "#f472b6", text: "#f472b6" },
 };
 
-const flowArrows = [
+const muArrows = [
   "Voxel / Mesh Geometry",
   "Shadow Casters",
   "G-Buffer Textures + Depth",
@@ -386,7 +386,7 @@ export default function HDRPipeline() {
                     letterSpacing: "0.15em",
                   }}
                 >
-                  ▼ {flowArrows[i - 1]}
+                  ▼ {muArrows[i - 1]}
                 </div>
               </div>
             )}
@@ -407,7 +407,7 @@ export default function HDRPipeline() {
                   active === stage.id
                     ? `0 0 30px ${stage.glow}, inset 0 0 30px ${stage.glow}`
                     : "none",
-                overflow: "hidden",
+                overmu: "hidden",
               }}
             >
               {/* Stage Header */}
@@ -612,7 +612,7 @@ export default function HDRPipeline() {
           <div
             style={{ fontSize: 10, color: "#3d4a5c", letterSpacing: "0.15em" }}
           >
-            ▼ {flowArrows[flowArrows.length - 1]}
+            ▼ {muArrows[muArrows.length - 1]}
           </div>
         </div>
 

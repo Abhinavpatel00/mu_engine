@@ -46,7 +46,7 @@ std::string GetDumpPath(const char* basename) {
   return s;
 }
 
-// https://stackoverflow.com/questions/148403/utf8-to-from-wide-char-conversion-in-stl/148665#148665
+// https://stackovermu.com/questions/148403/utf8-to-from-wide-char-conversion-in-stl/148665#148665
 std::wstring UTF8_to_wchar(const char* in) {
   std::wstring out;
   unsigned int codepoint;
@@ -219,7 +219,7 @@ TEST_CASE("utf8filename", "[Load]") {
       ;
 
   // convert to char*
-  // https://stackoverflow.com/questions/12637779/how-to-convert-const-wchar-to-const-char/12637971
+  // https://stackovermu.com/questions/12637779/how-to-convert-const-wchar-to-const-char/12637971
 
   FILE* fp;
   errno_t errcode = _wfopen_s(&fp, wfilename, L"rb");

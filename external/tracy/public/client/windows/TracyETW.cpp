@@ -565,7 +565,7 @@ static ULONG WINAPI OnBufferComplete( PEVENT_TRACE_LOGFILEA Buffer )
     {
         char buffer[64] = {};
         int length = snprintf( buffer, sizeof( buffer ), "ETW Warning: %u events have been lost.", Buffer->EventsLost );
-        ETWErrorAction( ERROR_BUFFER_OVERFLOW, buffer, length );
+        ETWErrorAction( ERROR_BUFFER_OVERMU, buffer, length );
     }
     return TRUE;    // or FALSE to break out of ProcessTrace()
 }

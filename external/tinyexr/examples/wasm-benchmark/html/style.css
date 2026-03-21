@@ -141,7 +141,7 @@ button:disabled {
     margin-bottom: 20px;
     background: #ecf0f1;
     border-radius: 4px;
-    overflow: hidden;
+    overmu: hidden;
 }
 
 #progress-bar {

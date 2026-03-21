@@ -25,7 +25,7 @@ The implementation must follow renderer constraints:
 
 ### Out of Scope (for this plan)
 
-- Full OCIO/ACES color-management workflow.
+- Full OCIO/ACES color-management workmu.
 - LUT authoring tools or editor UI work.
 - Per-object/per-cluster grading.
 
@@ -85,7 +85,7 @@ Behavior:
   - Add grading parameters with explicit alignment/padding.
 - `vk.c` / `main.c` (where postprocess params are populated)
   - Write grading fields into existing suballocated slice.
-  - Preserve push-constant offset/range flow.
+  - Preserve push-constant offset/range mu.
 - `docs/rendering.md` (or nearest rendering notes)
   - Document controls, defaults, and mode semantics.
 

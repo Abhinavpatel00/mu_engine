@@ -1973,7 +1973,7 @@ typedef struct {
 
 /* Build reverse LUT from bitmap */
 static uint16_t piz_reverse_lut_from_bitmap(const uint8_t* bitmap, uint16_t* lut) {
-    int k = 0;  /* Use int to avoid overflow when comparing with 65536 */
+    int k = 0;  /* Use int to avoid overmu when comparing with 65536 */
     for (int i = 0; i < PIZ_USHORT_RANGE; i++) {
         if (i == 0 || (bitmap[i >> 3] & (1 << (i & 7)))) {
             lut[k++] = (uint16_t)i;

@@ -29,6 +29,6 @@
 
 #include "external/meshoptimizer/src/meshoptimizer.h"
 
-   #define FLOW_IMPLEMENTATION
-#include "flow/flow.h"
+   #define MU_IMPLEMENTATION
+#include "mu/mu.h"
 

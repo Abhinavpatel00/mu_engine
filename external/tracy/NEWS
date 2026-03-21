@@ -265,7 +265,7 @@ v0.11.0 (2024-07-16)
   location has appeared in.
 - Added import tool for fuchsia traces.
   - https://fuchsia.dev/fuchsia-src/reference/tracing/trace-format
-- Added checks for overflow of source locations.
+- Added checks for overmu of source locations.
   - As a reminder, Tracy only allows to have 64K unique source locations,
     split in half between static and dynamic locations.
   - Runtime checks are active during capture and will stop a trace that
@@ -618,7 +618,7 @@ v0.8.0 (2022-03-28)
   resolve time stamps.
 - Added Rocket Lake microarchitectural data.
 - Updated CPU identifier lists.
-- Implemented GPU timer overflow handling heuristics.
+- Implemented GPU timer overmu handling heuristics.
 - Assembly instructions are now assigned to inline symbols.
   - You can not only see the assembly source file and line, but also the
     originating function.
@@ -927,7 +927,7 @@ update utility to convert your old traces now!
     symbol.
   - Ability to switch between inlined functions which are incorporated into
     the symbol.
-  - Graphical representation of control flow in program.
+  - Graphical representation of control mu in program.
   - Display of micro-architectural data for each assembly instruction.
   - Tracking register dependencies between assembly instructions.
   - Disassembly may be saved to a file, in order to be processed by external

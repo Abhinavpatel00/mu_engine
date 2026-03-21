@@ -198,7 +198,7 @@ Advanced data uploading</h1>
 <div class="line">VkMemoryPropertyFlags memPropFlags;</div>
 <div class="line"><a class="code hl_function" href="group__group__alloc.html#ga571e87dd38e552249b56b1b0b982fad1">vmaGetAllocationMemoryProperties</a>(allocator, alloc, &amp;memPropFlags);</div>
 <div class="line"> </div>
-<div class="line"><span class="keywordflow">if</span>(memPropFlags &amp; VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)</div>
+<div class="line"><span class="keywordmu">if</span>(memPropFlags &amp; VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)</div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// The Allocation ended up in a mappable memory.</span></div>
 <div class="line">    <span class="comment">// Calling vmaCopyMemoryToAllocation() does vmaMapMemory(), memcpy(), vmaUnmapMemory(), and vmaFlushAllocation().</span></div>
@@ -218,7 +218,7 @@ Advanced data uploading</h1>
 <div class="line">    vkCmdPipelineBarrier(cmdBuf, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,</div>
 <div class="line">        0, 0, <span class="keyword">nullptr</span>, 1, &amp;bufMemBarrier, 0, <span class="keyword">nullptr</span>);</div>
 <div class="line">}</div>
-<div class="line"><span class="keywordflow">else</span></div>
+<div class="line"><span class="keywordmu">else</span></div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Allocation ended up in a non-mappable memory - a transfer using a staging buffer is required.</span></div>
 <div class="line">    VkBufferCreateInfo stagingBufCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };</div>

@@ -232,7 +232,7 @@ BMK_runOutcome_t BMK_benchTimedFn(BMK_timedFnState_t* cont,
             } else {
                 /* previous run was too short : blindly increase workload by x multiplier */
                 const unsigned multiplier = 10;
-                assert(cont->nbLoops < ((unsigned)-1) / multiplier);  /* avoid overflow */
+                assert(cont->nbLoops < ((unsigned)-1) / multiplier);  /* avoid overmu */
                 cont->nbLoops *= multiplier;
             }
 

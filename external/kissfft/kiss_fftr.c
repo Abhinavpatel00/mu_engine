@@ -88,8 +88,8 @@ void kiss_fftr(kiss_fftr_cfg st,const kiss_fft_scalar *timedata,kiss_fft_cpx *fr
     tdc.r = st->tmpbuf[0].r;
     tdc.i = st->tmpbuf[0].i;
     C_FIXDIV(tdc,2);
-    CHECK_OVERFLOW_OP(tdc.r ,+, tdc.i);
-    CHECK_OVERFLOW_OP(tdc.r ,-, tdc.i);
+    CHECK_OVERMU_OP(tdc.r ,+, tdc.i);
+    CHECK_OVERMU_OP(tdc.r ,-, tdc.i);
     freqdata[0].r = tdc.r + tdc.i;
     freqdata[ncfft].r = tdc.r - tdc.i;
 #ifdef USE_SIMD

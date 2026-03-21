@@ -723,8 +723,8 @@ struct GpuCtxData
     int64_t calibratedCpuTime;
     double calibrationMod;
     int64_t lastGpuTime;
-    uint64_t overflow;
-    uint32_t overflowMul;
+    uint64_t overmu;
+    uint32_t overmuMul;
     StringIdx name;
     unordered_flat_map<uint64_t, GpuCtxThreadData> threadData;
     unordered_flat_map<int64_t, StringIdx> noteNames;

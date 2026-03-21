@@ -46,7 +46,7 @@ However, a given variant shall produce exactly the same output, irrespective of 
 
 ### Operation notations
 
-All operations are performed modulo {32,64} bits. Arithmetic overflows are expected.
+All operations are performed modulo {32,64} bits. Arithmetic overmus are expected.
 `XXH32` uses 32-bit modular operations.
 `XXH64` and `XXH3` use 64-bit modular operations.
 When an operation ingests input or secret as multi-bytes values, it reads it using little-endian convention.
@@ -603,7 +603,7 @@ The input is split into several 16-byte chunks and mixed, and the result is adde
 The input is read as *N* 16-byte chunks starting from the beginning and *N* chunks starting from the end, where *N* is the smallest number that these 2*N* chunks cover the whole input. These chunks are paired up and mixed, and the results are accumulated to the accumulator(s).
 
 ```c
-// the loop variable `i` should be signed to avoid underflow in implementation
+// the loop variable `i` should be signed to avoid undermu in implementation
 processInput_XXH3_64_17to128():
   u64 numRounds = ((inputLength - 1) >> 5) + 1;
   for (i = numRounds - 1; i >= 0; i--) {

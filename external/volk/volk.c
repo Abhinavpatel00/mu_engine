@@ -446,9 +446,9 @@ static void volkGenLoadInstance(void* context, PFN_vkVoidFunction (*load)(void*,
 #if defined(VK_NV_external_memory_capabilities)
 	vkGetPhysicalDeviceExternalImageFormatPropertiesNV = (PFN_vkGetPhysicalDeviceExternalImageFormatPropertiesNV)load(context, "vkGetPhysicalDeviceExternalImageFormatPropertiesNV");
 #endif /* defined(VK_NV_external_memory_capabilities) */
-#if defined(VK_NV_optical_flow)
+#if defined(VK_NV_optical_mu)
 	vkGetPhysicalDeviceOpticalFlowImageFormatsNV = (PFN_vkGetPhysicalDeviceOpticalFlowImageFormatsNV)load(context, "vkGetPhysicalDeviceOpticalFlowImageFormatsNV");
-#endif /* defined(VK_NV_optical_flow) */
+#endif /* defined(VK_NV_optical_mu) */
 #if defined(VK_OHOS_surface)
 	vkCreateSurfaceOHOS = (PFN_vkCreateSurfaceOHOS)load(context, "vkCreateSurfaceOHOS");
 #endif /* defined(VK_OHOS_surface) */
@@ -1298,12 +1298,12 @@ static void volkGenLoadDevice(void* context, PFN_vkVoidFunction (*load)(void*, c
 #if defined(VK_NV_mesh_shader) && (defined(VK_VERSION_1_2) || defined(VK_KHR_draw_indirect_count) || defined(VK_AMD_draw_indirect_count))
 	vkCmdDrawMeshTasksIndirectCountNV = (PFN_vkCmdDrawMeshTasksIndirectCountNV)load(context, "vkCmdDrawMeshTasksIndirectCountNV");
 #endif /* defined(VK_NV_mesh_shader) && (defined(VK_VERSION_1_2) || defined(VK_KHR_draw_indirect_count) || defined(VK_AMD_draw_indirect_count)) */
-#if defined(VK_NV_optical_flow)
+#if defined(VK_NV_optical_mu)
 	vkBindOpticalFlowSessionImageNV = (PFN_vkBindOpticalFlowSessionImageNV)load(context, "vkBindOpticalFlowSessionImageNV");
 	vkCmdOpticalFlowExecuteNV = (PFN_vkCmdOpticalFlowExecuteNV)load(context, "vkCmdOpticalFlowExecuteNV");
 	vkCreateOpticalFlowSessionNV = (PFN_vkCreateOpticalFlowSessionNV)load(context, "vkCreateOpticalFlowSessionNV");
 	vkDestroyOpticalFlowSessionNV = (PFN_vkDestroyOpticalFlowSessionNV)load(context, "vkDestroyOpticalFlowSessionNV");
-#endif /* defined(VK_NV_optical_flow) */
+#endif /* defined(VK_NV_optical_mu) */
 #if defined(VK_NV_partitioned_acceleration_structure)
 	vkCmdBuildPartitionedAccelerationStructuresNV = (PFN_vkCmdBuildPartitionedAccelerationStructuresNV)load(context, "vkCmdBuildPartitionedAccelerationStructuresNV");
 	vkGetPartitionedAccelerationStructuresBuildSizesNV = (PFN_vkGetPartitionedAccelerationStructuresBuildSizesNV)load(context, "vkGetPartitionedAccelerationStructuresBuildSizesNV");
@@ -1682,9 +1682,9 @@ static void volkGenLoadInstanceTable(struct VolkInstanceTable* table, void* cont
 #if defined(VK_NV_external_memory_capabilities)
 	table->vkGetPhysicalDeviceExternalImageFormatPropertiesNV = (PFN_vkGetPhysicalDeviceExternalImageFormatPropertiesNV)load(context, "vkGetPhysicalDeviceExternalImageFormatPropertiesNV");
 #endif /* defined(VK_NV_external_memory_capabilities) */
-#if defined(VK_NV_optical_flow)
+#if defined(VK_NV_optical_mu)
 	table->vkGetPhysicalDeviceOpticalFlowImageFormatsNV = (PFN_vkGetPhysicalDeviceOpticalFlowImageFormatsNV)load(context, "vkGetPhysicalDeviceOpticalFlowImageFormatsNV");
-#endif /* defined(VK_NV_optical_flow) */
+#endif /* defined(VK_NV_optical_mu) */
 #if defined(VK_OHOS_surface)
 	table->vkCreateSurfaceOHOS = (PFN_vkCreateSurfaceOHOS)load(context, "vkCreateSurfaceOHOS");
 #endif /* defined(VK_OHOS_surface) */
@@ -2534,12 +2534,12 @@ static void volkGenLoadDeviceTable(struct VolkDeviceTable* table, void* context,
 #if defined(VK_NV_mesh_shader) && (defined(VK_VERSION_1_2) || defined(VK_KHR_draw_indirect_count) || defined(VK_AMD_draw_indirect_count))
 	table->vkCmdDrawMeshTasksIndirectCountNV = (PFN_vkCmdDrawMeshTasksIndirectCountNV)load(context, "vkCmdDrawMeshTasksIndirectCountNV");
 #endif /* defined(VK_NV_mesh_shader) && (defined(VK_VERSION_1_2) || defined(VK_KHR_draw_indirect_count) || defined(VK_AMD_draw_indirect_count)) */
-#if defined(VK_NV_optical_flow)
+#if defined(VK_NV_optical_mu)
 	table->vkBindOpticalFlowSessionImageNV = (PFN_vkBindOpticalFlowSessionImageNV)load(context, "vkBindOpticalFlowSessionImageNV");
 	table->vkCmdOpticalFlowExecuteNV = (PFN_vkCmdOpticalFlowExecuteNV)load(context, "vkCmdOpticalFlowExecuteNV");
 	table->vkCreateOpticalFlowSessionNV = (PFN_vkCreateOpticalFlowSessionNV)load(context, "vkCreateOpticalFlowSessionNV");
 	table->vkDestroyOpticalFlowSessionNV = (PFN_vkDestroyOpticalFlowSessionNV)load(context, "vkDestroyOpticalFlowSessionNV");
-#endif /* defined(VK_NV_optical_flow) */
+#endif /* defined(VK_NV_optical_mu) */
 #if defined(VK_NV_partitioned_acceleration_structure)
 	table->vkCmdBuildPartitionedAccelerationStructuresNV = (PFN_vkCmdBuildPartitionedAccelerationStructuresNV)load(context, "vkCmdBuildPartitionedAccelerationStructuresNV");
 	table->vkGetPartitionedAccelerationStructuresBuildSizesNV = (PFN_vkGetPartitionedAccelerationStructuresBuildSizesNV)load(context, "vkGetPartitionedAccelerationStructuresBuildSizesNV");
@@ -3734,13 +3734,13 @@ PFN_vkCmdDrawMeshTasksNV vkCmdDrawMeshTasksNV;
 #if defined(VK_NV_mesh_shader) && (defined(VK_VERSION_1_2) || defined(VK_KHR_draw_indirect_count) || defined(VK_AMD_draw_indirect_count))
 PFN_vkCmdDrawMeshTasksIndirectCountNV vkCmdDrawMeshTasksIndirectCountNV;
 #endif /* defined(VK_NV_mesh_shader) && (defined(VK_VERSION_1_2) || defined(VK_KHR_draw_indirect_count) || defined(VK_AMD_draw_indirect_count)) */
-#if defined(VK_NV_optical_flow)
+#if defined(VK_NV_optical_mu)
 PFN_vkBindOpticalFlowSessionImageNV vkBindOpticalFlowSessionImageNV;
 PFN_vkCmdOpticalFlowExecuteNV vkCmdOpticalFlowExecuteNV;
 PFN_vkCreateOpticalFlowSessionNV vkCreateOpticalFlowSessionNV;
 PFN_vkDestroyOpticalFlowSessionNV vkDestroyOpticalFlowSessionNV;
 PFN_vkGetPhysicalDeviceOpticalFlowImageFormatsNV vkGetPhysicalDeviceOpticalFlowImageFormatsNV;
-#endif /* defined(VK_NV_optical_flow) */
+#endif /* defined(VK_NV_optical_mu) */
 #if defined(VK_NV_partitioned_acceleration_structure)
 PFN_vkCmdBuildPartitionedAccelerationStructuresNV vkCmdBuildPartitionedAccelerationStructuresNV;
 PFN_vkGetPartitionedAccelerationStructuresBuildSizesNV vkGetPartitionedAccelerationStructuresBuildSizesNV;

@@ -839,7 +839,7 @@ void X11OpenGLWindow::pumpMessage()
 #if 0
                      unsigned short is_retriggered = 0;
 ///filter out keyboard repeat
-//see http://stackoverflow.com/questions/2100654/ignore-auto-repeat-in-x11-applications
+//see http://stackovermu.com/questions/2100654/ignore-auto-repeat-in-x11-applications
                      if (MyXEventsQueued(m_data->m_dpy, QueuedAfterReading))
                        {
                          XEvent nev;

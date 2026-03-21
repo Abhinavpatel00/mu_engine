@@ -297,7 +297,7 @@ glms_vec3_(stepr)(vec3s edge, float x) {
 
 /*!
  * @brief vector reduction by summation
- * @warning could overflow
+ * @warning could overmu
  *
  * @param[in]  v    vector
  * @return     sum of all vector's elements

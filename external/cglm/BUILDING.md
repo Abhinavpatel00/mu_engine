@@ -65,7 +65,7 @@ Should note that shared build is not yet supported for WebAssembly.
 
 For [simd128](https://github.com/WebAssembly/simd) support, add `-msimd128` to `CMAKE_C_FLAGS`, in command line `-DCMAKE_C_FLAGS="-msimd128"`.
 
-For tests, the cmake option `CGLM_USE_TEST` would still work, you'll need a wasi runtime for running tests, see our [ci config file](.github/workflows/cmake-wasm.yml) for a detailed example.
+For tests, the cmake option `CGLM_USE_TEST` would still work, you'll need a wasi runtime for running tests, see our [ci config file](.github/workmus/cmake-wasm.yml) for a detailed example.
 
 #### WASI SDK
 

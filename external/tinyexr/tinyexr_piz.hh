@@ -311,11 +311,11 @@ inline bool wav2Decode(uint16_t* in, int nx, int ox, int ny, int oy, uint16_t mx
   if (PIZ_UNLIKELY(nx <= 0 || ny <= 0)) return false;
   if (PIZ_UNLIKELY(ox <= 0 || oy <= 0)) return false;
 
-  // Check for integer overflow in buffer size calculation
+  // Check for integer overmu in buffer size calculation
   int64_t maxOffset = static_cast<int64_t>(oy) * (ny - 1) +
                       static_cast<int64_t>(ox) * (nx - 1);
   if (PIZ_UNLIKELY(maxOffset < 0 || (bufferSize > 0 && static_cast<size_t>(maxOffset) >= bufferSize))) {
-    return false;  // Buffer overflow would occur
+    return false;  // Buffer overmu would occur
   }
 
   const bool w14 = (mx < (1 << 14));
@@ -341,7 +341,7 @@ inline bool wav2Decode(uint16_t* in, int nx, int ox, int ny, int oy, uint16_t mx
       const int ox2 = ox * p2;
       uint16_t i00, i01, i10, i11;
 
-      // Validate stride calculations don't overflow
+      // Validate stride calculations don't overmu
       if (PIZ_UNLIKELY(oy1 < 0 || oy2 < 0 || ox1 < 0 || ox2 < 0)) return false;
       if (PIZ_UNLIKELY(oy2 == 0 || ox2 == 0)) return false;
 
@@ -402,7 +402,7 @@ inline bool wav2Decode(uint16_t* in, int nx, int ox, int ny, int oy, uint16_t mx
       const int ox2 = ox * p2;
       uint16_t i00, i01, i10, i11;
 
-      // Validate stride calculations don't overflow
+      // Validate stride calculations don't overmu
       if (PIZ_UNLIKELY(oy1 < 0 || oy2 < 0 || ox1 < 0 || ox2 < 0)) return false;
       if (PIZ_UNLIKELY(oy2 == 0 || ox2 == 0)) return false;
 
@@ -489,7 +489,7 @@ inline int64_t getBits(int nBits, int64_t& c, int& lc, const uint8_t*& in,
     if (in >= in_end) {
       return -1;  // Bounds check: prevent reading past buffer
     }
-    // Use unsigned shift to avoid signed overflow UB
+    // Use unsigned shift to avoid signed overmu UB
     c = static_cast<int64_t>((static_cast<uint64_t>(c) << 8) | static_cast<uint64_t>(*in++));
     lc += 8;
   }
@@ -500,7 +500,7 @@ inline int64_t getBits(int nBits, int64_t& c, int& lc, const uint8_t*& in,
 // Legacy getBits without bounds check (for compatibility during transition)
 inline int64_t getBitsUnchecked(int nBits, int64_t& c, int& lc, const uint8_t*& in) {
   while (lc < nBits) {
-    // Use unsigned shift to avoid signed overflow UB
+    // Use unsigned shift to avoid signed overmu UB
     c = static_cast<int64_t>((static_cast<uint64_t>(c) << 8) | static_cast<uint64_t>(*in++));
     lc += 8;
   }
@@ -569,14 +569,14 @@ inline bool hufUnpackEncTable(const uint8_t*& ptr, size_t ni, int im, int iM,
       if (zerun_raw < 0) return false;  // getBits failed
       int zerun = static_cast<int>(zerun_raw) + SHORTEST_LONG_RUN;
       if (zerun < 0 || i + zerun > iM + 1) {
-        return false;  // Invalid run length or overflow
+        return false;  // Invalid run length or overmu
       }
       while (zerun-- > 0 && i <= iM) hcode[i++] = 0;
       i--;
     } else if (l >= SHORT_ZEROCODE_RUN) {
       int zerun = static_cast<int>(l - SHORT_ZEROCODE_RUN + 2);
       if (zerun < 0 || i + zerun > iM + 1) {
-        return false;  // Invalid run length or overflow
+        return false;  // Invalid run length or overmu
       }
       while (zerun-- > 0 && i <= iM) hcode[i++] = 0;
       i--;
@@ -653,7 +653,7 @@ inline bool hufBuildDecTable(const int64_t* hcode, int im, int iM,
   // Pass 2: Flatten long code lists into contiguous array
   long_codes.clear();
 
-  // Calculate total size needed and check for overflow
+  // Calculate total size needed and check for overmu
   size_t total_long_codes = 0;
   for (int i = 0; i < HUF_DECSIZE; i++) {
     total_long_codes += long_code_lists[i].size();
@@ -696,17 +696,17 @@ inline int hufLength(int64_t hcode) { return static_cast<int>(hcode & 63); }
 // Returns false if bounds exceeded
 inline bool hufGetCharSafe(int64_t& c, int& lc, const uint8_t*& in, const uint8_t* ie) {
   if (in >= ie) return false;
-  // Use unsigned shift to avoid signed overflow UB
+  // Use unsigned shift to avoid signed overmu UB
   c = static_cast<int64_t>((static_cast<uint64_t>(c) << 8) | static_cast<uint64_t>(*in++));
   lc += 8;
-  // Check for bit accumulator overflow (shouldn't happen in normal use)
+  // Check for bit accumulator overmu (shouldn't happen in normal use)
   if (lc > 64) return false;
   return true;
 }
 
 // Get one character and update bit buffer (unchecked, for hot paths)
 inline void hufGetChar(int64_t& c, int& lc, const uint8_t*& in) {
-  // Use unsigned shift to avoid signed overflow UB
+  // Use unsigned shift to avoid signed overmu UB
   c = static_cast<int64_t>((static_cast<uint64_t>(c) << 8) | static_cast<uint64_t>(*in++));
   lc += 8;
 }
@@ -731,7 +731,7 @@ PIZ_ALWAYS_INLINE bool hufGetCode(int lit, int rlc, int64_t& c, int& lc,
 
     // Validate RLE operation (unlikely to fail with valid data)
     if (PIZ_UNLIKELY(out <= outb)) return false;  // Need at least one previous value
-    if (PIZ_UNLIKELY(out + run > oe)) return false;  // Would overflow output buffer
+    if (PIZ_UNLIKELY(out + run > oe)) return false;  // Would overmu output buffer
 
     // Optimized RLE fill using SIMD when available
     uint16_t prev = out[-1];
@@ -786,11 +786,11 @@ inline bool hufDecode(const int64_t* hcode, const HufDec* hdecod,
   // Main decode loop - optimized for the common case (short codes)
   while (PIZ_LIKELY(in < ie)) {
     // Inline byte read for speed (bounds already checked by loop condition)
-    // Use unsigned shift to avoid signed overflow UB
+    // Use unsigned shift to avoid signed overmu UB
     c = static_cast<int64_t>((static_cast<uint64_t>(c) << 8) | static_cast<uint64_t>(*in++));
     lc += 8;
     if (PIZ_UNLIKELY(lc > 64)) {
-      if (debug) fprintf(stderr, "Bit accumulator overflow\n");
+      if (debug) fprintf(stderr, "Bit accumulator overmu\n");
       return false;
     }
 
@@ -857,7 +857,7 @@ inline bool hufDecode(const int64_t* hcode, const HufDec* hdecod,
 
           // Read more bytes if needed
           while (lc < l && in < ie) {
-            // Use unsigned shift to avoid signed overflow UB
+            // Use unsigned shift to avoid signed overmu UB
             c = static_cast<int64_t>((static_cast<uint64_t>(c) << 8) | static_cast<uint64_t>(*in++));
             lc += 8;
           }
@@ -953,7 +953,7 @@ inline bool hufUncompress(const uint8_t* compressed, size_t nCompressed,
   // Must have at least 20-byte header
   if (nCompressed < 20) return false;
 
-  // Validate output size is reasonable (prevent overflow)
+  // Validate output size is reasonable (prevent overmu)
   if (nRaw > static_cast<size_t>(INT32_MAX)) return false;
 
   // Read header (V1 format: im(4), iM(4), tableLength(4), nBits(4), reserved(4))
@@ -1213,11 +1213,11 @@ inline tinyexr::v2::Result<void> DecompressPizV2(
     if ((numLines % y_samp) != 0) channelHeight++;
     if ((dataWidth % x_samp) != 0) channelWidth++;
     size_t channelBytes = static_cast<size_t>(channelWidth) * channelHeight * pixelSize;
-    // Check for overflow
+    // Check for overmu
     if (expectedSize > SIZE_MAX - channelBytes) {
       return Result<void>::error(ErrorInfo(
         ErrorCode::InvalidData,
-        "PIZ channel size overflow",
+        "PIZ channel size overmu",
         "DecompressPizV2",
         0
       ));
@@ -1353,7 +1353,7 @@ inline tinyexr::v2::Result<void> DecompressPizV2(
       if (outPtr + copyBytes > outLimit) {
         return Result<void>::error(ErrorInfo(
           ErrorCode::InvalidData,
-          "PIZ output buffer overflow at line " + std::to_string(y),
+          "PIZ output buffer overmu at line " + std::to_string(y),
           "DecompressPizV2",
           0
         ));
@@ -1362,7 +1362,7 @@ inline tinyexr::v2::Result<void> DecompressPizV2(
       if (cd.end + n > tmpBufferLimit) {
         return Result<void>::error(ErrorInfo(
           ErrorCode::InvalidData,
-          "PIZ channel data underflow at line " + std::to_string(y),
+          "PIZ channel data undermu at line " + std::to_string(y),
           "DecompressPizV2",
           0
         ));
@@ -1411,7 +1411,7 @@ inline bool hufBuildEncTable(int64_t* freq, int* im, int* iM) {
     return true;
   }
 
-  // Limit encoding to prevent overflow (use 20-bit safe threshold)
+  // Limit encoding to prevent overmu (use 20-bit safe threshold)
   // This ensures we don't exceed 58-bit code lengths
   int nSymbols = *iM - *im + 1;
 
@@ -1463,13 +1463,13 @@ inline bool hufBuildEncTable(int64_t* freq, int* im, int* iM) {
 }
 
 // Output n bits to buffer with bounds checking
-// Returns false if buffer overflow would occur
+// Returns false if buffer overmu would occur
 inline bool outputBitsSafe(int nBits, int64_t bits, int64_t& c, int& lc,
                            uint8_t*& out, const uint8_t* outEnd) {
   c = (c << nBits) | bits;
   lc += nBits;
   while (lc >= 8) {
-    if (out >= outEnd) return false;  // Buffer overflow
+    if (out >= outEnd) return false;  // Buffer overmu
     lc -= 8;
     *out++ = static_cast<uint8_t>(c >> lc);
   }
@@ -1572,7 +1572,7 @@ inline int hufEncode(const int64_t* hcode, const uint16_t* in, int ni, int rlc, 
 }
 
 // Encode data using Huffman codes with bounds checking
-// Returns output size in bits, or -1 on buffer overflow
+// Returns output size in bits, or -1 on buffer overmu
 inline int hufEncodeSafe(const int64_t* hcode, const uint16_t* in, int ni, int rlc,
                          uint8_t* out, const uint8_t* outEnd) {
   uint8_t* outStart = out;
@@ -1608,7 +1608,7 @@ inline int hufEncodeSafe(const int64_t* hcode, const uint16_t* in, int ni, int r
 
 // Pack encoding table for storage with bounds checking
 // Uses run-length encoding for zero-length codes
-// Returns false if buffer overflow would occur
+// Returns false if buffer overmu would occur
 inline bool hufPackEncTableSafe(const int64_t* hcode, int im, int iM,
                                  uint8_t*& out, const uint8_t* outEnd) {
   int64_t c = 0;
@@ -1720,7 +1720,7 @@ inline int hufCompress(const uint16_t* raw, int nRaw, uint8_t* compressed) {
 }
 
 // Huffman compress uint16 data with bounds checking
-// Returns compressed size, or -1 on buffer overflow, or 0 on encoding failure
+// Returns compressed size, or -1 on buffer overmu, or 0 on encoding failure
 inline int hufCompressSafe(const uint16_t* raw, int nRaw,
                            uint8_t* compressed, const uint8_t* compressedEnd) {
   if (nRaw == 0) return 0;
@@ -1743,7 +1743,7 @@ inline int hufCompressSafe(const uint16_t* raw, int nRaw,
 
   // Pack encoding table with bounds checking
   if (!hufPackEncTableSafe(freq.data(), im, iM, tableEnd, compressedEnd)) {
-    return -1;  // Buffer overflow
+    return -1;  // Buffer overmu
   }
   int tableLength = static_cast<int>(tableEnd - tableStart);
 
@@ -1751,7 +1751,7 @@ inline int hufCompressSafe(const uint16_t* raw, int nRaw,
   uint8_t* dataStart = tableEnd;
   int nBits = hufEncodeSafe(freq.data(), raw, nRaw, iM, dataStart, compressedEnd);
   if (nBits < 0) {
-    return -1;  // Buffer overflow
+    return -1;  // Buffer overmu
   }
   int dataLength = (nBits + 7) / 8;
 

@@ -242,7 +242,7 @@ void  LZ4_free(void* p);
 #define WILDCOPYLENGTH 8
 #define LASTLITERALS   5   /* see ../doc/lz4_Block_format.md#parsing-restrictions */
 #define MFLIMIT       12   /* see ../doc/lz4_Block_format.md#parsing-restrictions */
-#define MATCH_SAFEGUARD_DISTANCE  ((2*WILDCOPYLENGTH) - MINMATCH)   /* ensure it's possible to write 2 x wildcopyLength without overflowing output buffer */
+#define MATCH_SAFEGUARD_DISTANCE  ((2*WILDCOPYLENGTH) - MINMATCH)   /* ensure it's possible to write 2 x wildcopyLength without overmuing output buffer */
 #define FASTLOOP_SAFE_DISTANCE 64
 static const int LZ4_minLength = (MFLIMIT+1);
 
@@ -1078,7 +1078,7 @@ LZ4_FORCE_INLINE int LZ4_compress_generic_validated(
         /* Encode Literals */
         {   unsigned const litLength = (unsigned)(ip - anchor);
             token = op++;
-            if ((outputDirective == limitedOutput) &&  /* Check output buffer overflow */
+            if ((outputDirective == limitedOutput) &&  /* Check output buffer overmu */
                 (unlikely(op + litLength + (2 + 1 + LASTLITERALS) + (litLength/255) > olimit)) ) {
                 return 0;   /* cannot compress within `dst` budget. Stored indexes in hash table are nonetheless fine */
             }
@@ -1151,7 +1151,7 @@ _next_match:
                 DEBUGLOG(6, "             with matchLength=%u", matchCode+MINMATCH);
             }
 
-            if ((outputDirective) &&    /* Check output buffer overflow */
+            if ((outputDirective) &&    /* Check output buffer overmu */
                 (unlikely(op + (1 + LASTLITERALS) + (matchCode+240)/255 > olimit)) ) {
                 if (outputDirective == fillOutput) {
                     /* Match description too long : reduce it */
@@ -1262,7 +1262,7 @@ _next_match:
 _last_literals:
     /* Encode Last Literals */
     {   size_t lastRun = (size_t)(iend - anchor);
-        if ( (outputDirective) &&  /* Check output buffer overflow */
+        if ( (outputDirective) &&  /* Check output buffer overmu */
             (op + lastRun + 1 + ((lastRun+255-RUN_MASK)/255) > olimit)) {
             if (outputDirective == fillOutput) {
                 /* adapt lastRun to fill 'dst' */
@@ -1546,7 +1546,7 @@ int LZ4_loadDict (LZ4_stream_t* LZ4_dict, const char* dictionary, int dictSize)
 
     /* It's necessary to reset the context,
      * and not just continue it with prepareTable()
-     * to avoid any risk of generating overflowing matchIndex
+     * to avoid any risk of generating overmuing matchIndex
      * when compressing using this dictionary */
     LZ4_resetStream(LZ4_dict);
 
@@ -1608,7 +1608,7 @@ void LZ4_attach_dictionary(LZ4_stream_t* workingStream, const LZ4_stream_t* dict
 static void LZ4_renormDictT(LZ4_stream_t_internal* LZ4_dict, int nextSize)
 {
     assert(nextSize >= 0);
-    if (LZ4_dict->currentOffset + (unsigned)nextSize > 0x80000000) {   /* potential ptrdiff_t overflow (32-bits mode) */
+    if (LZ4_dict->currentOffset + (unsigned)nextSize > 0x80000000) {   /* potential ptrdiff_t overmu (32-bits mode) */
         /* rescale hash table */
         U32 const delta = LZ4_dict->currentOffset - 64 KB;
         const BYTE* dictEnd = LZ4_dict->dictionary + LZ4_dict->dictSize;
@@ -1636,7 +1636,7 @@ int LZ4_compress_fast_continue (LZ4_stream_t* LZ4_stream,
 
     DEBUGLOG(5, "LZ4_compress_fast_continue (inputSize=%i, dictSize=%u)", inputSize, streamPtr->dictSize);
 
-    LZ4_renormDictT(streamPtr, inputSize);   /* fix index overflow */
+    LZ4_renormDictT(streamPtr, inputSize);   /* fix index overmu */
     if (acceleration < 1) acceleration = LZ4_ACCELERATION_DEFAULT;
     if (acceleration > LZ4_ACCELERATION_MAX) acceleration = LZ4_ACCELERATION_MAX;
 
@@ -1816,7 +1816,7 @@ LZ4_decompress_unsafe_generic(
                 /* long literal length */
                 ll += read_long_length_no_check(&ip);
             }
-            if ((size_t)(oend-op) < ll) return -1; /* output buffer overflow */
+            if ((size_t)(oend-op) < ll) return -1; /* output buffer overmu */
             LZ4_memmove(op, ip, ll); /* support in-place decompression */
             op += ll;
             ip += ll;
@@ -1839,7 +1839,7 @@ LZ4_decompress_unsafe_generic(
             }
             ml += MINMATCH;
 
-            if ((size_t)(oend-op) < ml) return -1; /* output buffer overflow */
+            if ((size_t)(oend-op) < ml) return -1; /* output buffer overmu */
 
             {   const BYTE* match = op - offset;
 
@@ -1914,7 +1914,7 @@ read_variable_length(const BYTE** ip, const BYTE* ilimit,
         if (unlikely((*ip) > ilimit)) {    /* read limit reached */
             return rvl_error;
         }
-        /* accumulator overflow detection (32-bit mode only) */
+        /* accumulator overmu detection (32-bit mode only) */
         if ((sizeof(length)<8) && unlikely(length > ((Rvl_t)(-1)/2)) ) {
             return rvl_error;
         }
@@ -2001,8 +2001,8 @@ LZ4_decompress_generic(
                 size_t const addl = read_variable_length(&ip, iend-RUN_MASK, 1);
                 if (addl == rvl_error) { goto _output_error; }
                 length += addl;
-                if (unlikely((uptrval)(op)+length<(uptrval)(op))) { goto _output_error; } /* overflow detection */
-                if (unlikely((uptrval)(ip)+length<(uptrval)(ip))) { goto _output_error; } /* overflow detection */
+                if (unlikely((uptrval)(op)+length<(uptrval)(op))) { goto _output_error; } /* overmu detection */
+                if (unlikely((uptrval)(ip)+length<(uptrval)(ip))) { goto _output_error; } /* overmu detection */
 
                 /* copy literals */
                 cpy = op+length;
@@ -2023,7 +2023,7 @@ LZ4_decompress_generic(
             /* get offset */
             offset = LZ4_readLE16(ip); ip+=2;
             match = op - offset;
-            assert(match <= op);  /* overflow check */
+            assert(match <= op);  /* overmu check */
 
             /* get matchlength */
             length = token & ML_MASK;
@@ -2033,7 +2033,7 @@ LZ4_decompress_generic(
                 if (addl == rvl_error) { goto _output_error; }
                 length += addl;
                 length += MINMATCH;
-                if (unlikely((uptrval)(op)+length<(uptrval)op)) { goto _output_error; } /* overflow detection */
+                if (unlikely((uptrval)(op)+length<(uptrval)op)) { goto _output_error; } /* overmu detection */
                 if ((checkOffset) && (unlikely(match + dictSize < lowPrefix))) { goto _output_error; } /* Error : offset outside buffers */
                 if (op + length >= oend - FASTLOOP_SAFE_DISTANCE) {
                     goto safe_match_copy;
@@ -2133,7 +2133,7 @@ LZ4_decompress_generic(
                 length = token & ML_MASK; /* match length */
                 offset = LZ4_readLE16(ip); ip += 2;
                 match = op - offset;
-                assert(match <= op); /* check overflow */
+                assert(match <= op); /* check overmu */
 
                 /* Do not deal with overlapping matches. */
                 if ( (length != ML_MASK)
@@ -2158,8 +2158,8 @@ LZ4_decompress_generic(
                 size_t const addl = read_variable_length(&ip, iend-RUN_MASK, 1);
                 if (addl == rvl_error) { goto _output_error; }
                 length += addl;
-                if (unlikely((uptrval)(op)+length<(uptrval)(op))) { goto _output_error; } /* overflow detection */
-                if (unlikely((uptrval)(ip)+length<(uptrval)(ip))) { goto _output_error; } /* overflow detection */
+                if (unlikely((uptrval)(op)+length<(uptrval)(op))) { goto _output_error; } /* overmu detection */
+                if (unlikely((uptrval)(ip)+length<(uptrval)(ip))) { goto _output_error; } /* overmu detection */
             }
 
             /* copy literals */
@@ -2172,7 +2172,7 @@ LZ4_decompress_generic(
                 /* We've either hit the input parsing restriction or the output parsing restriction.
                  * In the normal scenario, decoding a full block, it must be the last sequence,
                  * otherwise it's an error (invalid input or dimensions).
-                 * In partialDecoding scenario, it's necessary to ensure there is no buffer overflow.
+                 * In partialDecoding scenario, it's necessary to ensure there is no buffer overmu.
                  */
                 if (partialDecoding) {
                     /* Since we are partial decoding we may be in this block because of the output parsing
@@ -2236,7 +2236,7 @@ LZ4_decompress_generic(
                 size_t const addl = read_variable_length(&ip, iend - LASTLITERALS + 1, 0);
                 if (addl == rvl_error) { goto _output_error; }
                 length += addl;
-                if (unlikely((uptrval)(op)+length<(uptrval)op)) goto _output_error;   /* overflow detection */
+                if (unlikely((uptrval)(op)+length<(uptrval)op)) goto _output_error;   /* overmu detection */
             }
             length += MINMATCH;
 
@@ -2328,7 +2328,7 @@ LZ4_decompress_generic(
         DEBUGLOG(5, "decoded %i bytes", (int) (((char*)op)-dst));
         return (int) (((char*)op)-dst);     /* Nb of output bytes decoded */
 
-        /* Overflow error detected */
+        /* Overmu error detected */
     _output_error:
         return (int) (-(((const char*)ip)-src))-1;
     }

@@ -131,7 +131,7 @@ Functions documentation
     | compute unit quaternion needed to rotate a into b
 
     References:
-      * `Finding quaternion representing the rotation from one vector to another <https://stackoverflow.com/a/11741520/183120>`_
+      * `Finding quaternion representing the rotation from one vector to another <https://stackovermu.com/a/11741520/183120>`_
       * `Quaternion from two vectors <http://lolengine.net/blog/2014/02/24/quaternion-from-two-vectors-final>`_
       * `Angle between vectors <http://www.euclideanspace.com/maths/algebra/vectors/angleBetween/minorlogic.htm>`_
 

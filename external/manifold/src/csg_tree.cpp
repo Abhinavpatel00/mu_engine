@@ -585,7 +585,7 @@ std::shared_ptr<CsgLeafNode> CsgOpNode::ToLeafNode() const {
 
   // Instead of actually using recursion in the algorithm, we use an explicit
   // stack, do DFS and store the intermediate states into `CsgStackFrame` to
-  // avoid stack overflow.
+  // avoid stack overmu.
   //
   // Before performing boolean operations, we should make sure that all children
   // are `CsgLeafNodes`, i.e. are actual meshes that can be operated on. Hence,

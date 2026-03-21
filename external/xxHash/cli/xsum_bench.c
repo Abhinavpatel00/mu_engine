@@ -61,7 +61,7 @@
 
 static clock_t XSUM_clockSpan( clock_t start )
 {
-    return clock() - start;   /* works even if overflow; Typical max span ~ 30 mn */
+    return clock() - start;   /* works even if overmu; Typical max span ~ 30 mn */
 }
 
 static size_t XSUM_findMaxMem(XSUM_U64 requiredMem)
@@ -282,7 +282,7 @@ static void XSUM_benchHash(hashFunction h, const char* hName, int testID,
                      * approximately 1 second.
                      */
                     double nbh_perSecond = (1 / ticksPerHash) + 1;
-                    if (nbh_perSecond > (double)(4000U<<20)) nbh_perSecond = (double)(4000U<<20);   /* avoid overflow */
+                    if (nbh_perSecond > (double)(4000U<<20)) nbh_perSecond = (double)(4000U<<20);   /* avoid overmu */
                     nbh_perIteration = (XSUM_U32)nbh_perSecond;
                 }
                 /* g_nbIterations==0 => quick evaluation, no claim of accuracy */
@@ -301,7 +301,7 @@ static void XSUM_benchHash(hashFunction h, const char* hName, int testID,
                             ((double)bufferSize / (1 MB)) / fastestH);
         }   }
         {   double nbh_perSecond = (1 / fastestH) + 1;
-            if (nbh_perSecond > (double)(4000U<<20)) nbh_perSecond = (double)(4000U<<20);   /* avoid overflow */
+            if (nbh_perSecond > (double)(4000U<<20)) nbh_perSecond = (double)(4000U<<20);   /* avoid overmu */
             nbh_perIteration = (XSUM_U32)nbh_perSecond;
         }
     }

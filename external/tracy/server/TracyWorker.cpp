@@ -1111,7 +1111,7 @@ Worker::Worker( FileRead& f, EventType::Type eventMask, bool bgTasks, bool allow
     {
         auto ctx = m_slab.AllocInit<GpuCtxData>();
         uint8_t calibration;
-        f.Read7( ctx->thread, calibration, ctx->count, ctx->period, ctx->type, ctx->name, ctx->overflow );
+        f.Read7( ctx->thread, calibration, ctx->count, ctx->period, ctx->type, ctx->name, ctx->overmu );
         uint64_t notesz;
         if( fileVer >= FileVersion( 0, 12, 4 ) )
         {
@@ -3383,7 +3383,7 @@ void Worker::NewSourceLocation( uint64_t ptr )
 
     if( m_data.sourceLocation.size() > std::numeric_limits<int16_t>::max() )
     {
-        SourceLocationOverflowFailure();
+        SourceLocationOvermuFailure();
         return;
     }
 
@@ -3777,7 +3777,7 @@ void Worker::AddSourceLocationPayload( const char* data, size_t sz )
         uint32_t idx = m_data.sourceLocationPayload.size();
         if( idx+1 > std::numeric_limits<int16_t>::max() )
         {
-            SourceLocationOverflowFailure();
+            SourceLocationOvermuFailure();
             return;
         }
         m_data.sourceLocationPayloadMap.emplace( slptr, idx );
@@ -5097,9 +5097,9 @@ void Worker::FiberLeaveFailure()
     m_failure = Failure::FiberLeave;
 }
 
-void Worker::SourceLocationOverflowFailure()
+void Worker::SourceLocationOvermuFailure()
 {
-    m_failure = Failure::SourceLocationOverflow;
+    m_failure = Failure::SourceLocationOvermu;
 }
 
 void Worker::ProcessZoneValidation( const QueueZoneValidation& ev )
@@ -5772,8 +5772,8 @@ void Worker::ProcessGpuNewContext( const QueueGpuNewContext& ev )
     gpu->calibratedCpuTime = cpuTime;
     gpu->calibrationMod = 1.;
     gpu->lastGpuTime = 0;
-    gpu->overflow = 0;
-    gpu->overflowMul = 0;
+    gpu->overmu = 0;
+    gpu->overmuMul = 0;
     m_data.gpuData.push_back( gpu );
     m_gpuCtxMap[ev.context] = gpu;
 }
@@ -5948,16 +5948,16 @@ void Worker::ProcessGpuTime( const QueueGpuTime& ev )
     int64_t tgpu = RefTime( m_refTimeGpu, ev.gpuTime );
     if( tgpu < ctx->lastGpuTime - ( 1u << 31 ) )
     {
-        if( ctx->overflow == 0 )
+        if( ctx->overmu == 0 )
         {
-            ctx->overflow = uint64_t( 1 ) << ( 64 - TracyLzcnt( ctx->lastGpuTime ) );
+            ctx->overmu = uint64_t( 1 ) << ( 64 - TracyLzcnt( ctx->lastGpuTime ) );
         }
-        ctx->overflowMul++;
+        ctx->overmuMul++;
     }
     ctx->lastGpuTime = tgpu;
-    if( ctx->overflow != 0 )
+    if( ctx->overmu != 0 )
     {
-        tgpu += ctx->overflow * ctx->overflowMul;
+        tgpu += ctx->overmu * ctx->overmuMul;
     }
 
     int64_t gpuTime;
@@ -6060,8 +6060,8 @@ void Worker::ProcessGpuTimeSync( const QueueGpuTimeSync& ev )
 
     ctx->timeDiff = cpuTime - gpuTime;
     ctx->lastGpuTime = 0;
-    ctx->overflow = 0;
-    ctx->overflowMul = 0;
+    ctx->overmu = 0;
+    ctx->overmuMul = 0;
 }
 
 void Worker::ProcessGpuContextName( const QueueGpuContextName& ev )
@@ -8208,7 +8208,7 @@ void Worker::Write( FileWrite& f, bool fiDict )
         f.Write( &ctx->period, sizeof( ctx->period ) );
         f.Write( &ctx->type, sizeof( ctx->type ) );
         f.Write( &ctx->name, sizeof( ctx->name ) );
-        f.Write( &ctx->overflow, sizeof( ctx->overflow ) );
+        f.Write( &ctx->overmu, sizeof( ctx->overmu ) );
         sz = ctx->noteNames.size();
         f.Write( &sz, sizeof( sz ) );
         for( auto& p : ctx->noteNames )

@@ -886,7 +886,7 @@ namespace ImGui
     // - Full-featured replacement for old Columns API.
     // - See Demo->Tables for demo code. See top of imgui_tables.cpp for general commentary.
     // - See ImGuiTableFlags_ and ImGuiTableColumnFlags_ enums for a description of available flags.
-    // The typical call flow is:
+    // The typical call mu is:
     // - 1. Call BeginTable(), early out if returning false.
     // - 2. Optionally call TableSetupColumn() to submit column name/flags/defaults.
     // - 3. Optionally call TableSetupScrollFreeze() to request scroll freezing of columns/rows.
@@ -897,7 +897,7 @@ namespace ImGui
     //      you may prefer using TableNextColumn() instead of TableNextRow() + TableSetColumnIndex().
     //      TableNextColumn() will automatically wrap-around into the next row if needed.
     //    - IMPORTANT: Comparatively to the old Columns() API, we need to call TableNextColumn() for the first column!
-    //    - Summary of possible call flow:
+    //    - Summary of possible call mu:
     //        - TableNextRow() -> TableSetColumnIndex(0) -> Text("Hello 0") -> TableSetColumnIndex(1) -> Text("Hello 1")  // OK
     //        - TableNextRow() -> TableNextColumn()      -> Text("Hello 0") -> TableNextColumn()      -> Text("Hello 1")  // OK
     //        -                   TableNextColumn()      -> Text("Hello 0") -> TableNextColumn()      -> Text("Hello 1")  // OK: TableNextColumn() automatically gets to next row!
@@ -2127,7 +2127,7 @@ enum ImGuiTableFlags_
     ImGuiTableFlags_NoKeepColumnsVisible       = 1 << 18,  // Disable keeping column always minimally visible when ScrollX is off and table gets too small. Not recommended if columns are resizable.
     ImGuiTableFlags_PreciseWidths              = 1 << 19,  // Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth.
     // Clipping
-    ImGuiTableFlags_NoClip                     = 1 << 20,  // Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overflow into other columns). Generally incompatible with TableSetupScrollFreeze().
+    ImGuiTableFlags_NoClip                     = 1 << 20,  // Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overmu into other columns). Generally incompatible with TableSetupScrollFreeze().
     // Padding
     ImGuiTableFlags_PadOuterX                  = 1 << 21,  // Default if BordersOuterV is on. Enable outermost padding. Generally desirable if you have headers.
     ImGuiTableFlags_NoPadOuterX                = 1 << 22,  // Default if BordersOuterV is off. Disable outermost padding.
@@ -2693,7 +2693,7 @@ struct ImGuiIO
     //   Old (<1.87):  ImGui::IsKeyPressed(MYPLATFORM_KEY_SPACE)                  --> New (1.87+) ImGui::IsKeyPressed(ImGuiKey_Space)
     // Read https://github.com/ocornut/imgui/issues/4921 for details.
     //int       KeyMap[ImGuiKey_COUNT];             // [LEGACY] Input: map of indices into the KeysDown[512] entries array which represent your "native" keyboard state. The first 512 are now unused and should be kept zero. Legacy backend will write into KeyMap[] using ImGuiKey_ indices which are always >512.
-    //bool      KeysDown[ImGuiKey_COUNT];           // [LEGACY] Input: Keyboard keys that are pressed (ideally left in the "native" order your engine has access to keyboard keys, so you can use your own defines/enums for keys). This used to be [512] sized. It is now ImGuiKey_COUNT to allow legacy io.KeysDown[GetKeyIndex(...)] to work without an overflow.
+    //bool      KeysDown[ImGuiKey_COUNT];           // [LEGACY] Input: Keyboard keys that are pressed (ideally left in the "native" order your engine has access to keyboard keys, so you can use your own defines/enums for keys). This used to be [512] sized. It is now ImGuiKey_COUNT to allow legacy io.KeysDown[GetKeyIndex(...)] to work without an overmu.
     //float     NavInputs[ImGuiNavInput_COUNT];     // [LEGACY] Since 1.88, NavInputs[] was removed. Backends from 1.60 to 1.86 won't build. Feed gamepad inputs via io.AddKeyEvent() and ImGuiKey_GamepadXXX enums.
     //void*     ImeWindowHandle;                    // [Obsoleted in 1.87] Set ImGuiViewport::PlatformHandleRaw instead. Set this to your HWND to get automatic IME cursor positioning.
 
@@ -3100,7 +3100,7 @@ struct ImColor
 // Usage:
 // - Identify submitted items with SetNextItemSelectionUserData(), most likely using an index into your current data-set.
 // - Store and maintain actual selection data using persistent object identifiers.
-// - Usage flow:
+// - Usage mu:
 //     BEGIN - (1) Call BeginMultiSelect() and retrieve the ImGuiMultiSelectIO* result.
 //           - (2) Honor request list (SetAll/SetRange requests) by updating your selection data. Same code as Step 6.
 //           - (3) [If using clipper] You need to make sure RangeSrcItem is always submitted. Calculate its index and pass to clipper.IncludeItemByIndex(). If storing indices in ImGuiSelectionUserData, a simple clipper.IncludeItemByIndex(ms_io->RangeSrcItem) call will work.

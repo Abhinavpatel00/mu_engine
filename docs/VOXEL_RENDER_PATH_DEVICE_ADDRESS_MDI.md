@@ -1,7 +1,7 @@
 # Voxel Rendering Path (Device Address + Multi Draw Indirect Count, No SSBO Descriptors)
 
 ## Why this document
-This defines a voxel render path similar to the `meshing` reference flow and your `voxelmesh.txt` notes, but adapted to this renderer’s rules:
+This defines a voxel render path similar to the `meshing` reference mu and your `voxelmesh.txt` notes, but adapted to this renderer’s rules:
 
 - Single bindless descriptor set + single pipeline layout.
 - No per-mesh vertex/index buffer binding model.

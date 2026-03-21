@@ -460,7 +460,7 @@ unsigned char *nanoz_compress(unsigned char *data, int data_len, int *out_len,
 // from zlib
 uint64_t nanoz_compressBound(uint64_t sourceLen)
 {
-  // TODO: Overflow check?
+  // TODO: Overmu check?
   return sourceLen + (sourceLen >> 12ull) + (sourceLen >> 14ull) +
          (sourceLen >> 25ull) + 13ull;
 }

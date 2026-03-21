@@ -3,7 +3,7 @@
 //
 // HISTORY
 //
-//   v0.94              Fix integer overflow issues
+//   v0.94              Fix integer overmu issues
 //   v0.93  2020-02-02  Write useful exit() value from main()
 //   v0.92  2019-02-25  Fix warning
 //   v0.91  2010-02-27  Fix euclidean division by INT_MIN for non-truncating C
@@ -33,14 +33,14 @@
 // program that tests the implementation. Run it with no arguments
 // and any output indicates an error; run it with any argument and
 // it will also print the test results. Define STB_DIVIDE_TEST_64
-// to a 64-bit integer type to avoid overflows in the result-checking
+// to a 64-bit integer type to avoid overmus in the result-checking
 // which give false negatives.
 //
 // ABOUT
 //
 // This file provides three different consistent divide/mod pairs
 // implemented on top of arbitrary C/C++ division, including correct
-// handling of overflow of intermediate calculations:
+// handling of overmu of intermediate calculations:
 //
 //     trunc:   a/b truncates to 0,           a%b has same sign as a
 //     floor:   a/b truncates to -inf,        a%b has same sign as b
@@ -150,10 +150,10 @@ int stb_div_trunc(int v1, int v2)
    return v1/v2;
    #else
    if (v1 >= 0 && v2 <= 0)
-      return -stb__div(-v1,v2);  // both negative to avoid overflow
+      return -stb__div(-v1,v2);  // both negative to avoid overmu
    if (v1 <= 0 && v2 >= 0)
       if (v1 != INT_MIN)
-         return -stb__div(v1,-v2);    // both negative to avoid overflow
+         return -stb__div(v1,-v2);    // both negative to avoid overmu
       else
          return -stb__div(v1+v2,-v2)-1; // push v1 away from wrap point
    else
@@ -167,18 +167,18 @@ int stb_div_floor(int v1, int v2)
    return v1/v2;
    #else
    if (v1 >= 0 && v2 < 0) {
-      if (v2 + 1 >= INT_MIN + v1) // check if increasing v1's magnitude overflows
+      if (v2 + 1 >= INT_MIN + v1) // check if increasing v1's magnitude overmus
          return -stb__div((v2+1)-v1,v2); // nope, so just compute it
       else
          return -stb__div(-v1,v2) + ((-v1)%v2 ? -1 : 0);
    }
    if (v1 < 0 && v2 >= 0) {
       if (v1 != INT_MIN) {
-         if (v1 + 1 >= INT_MIN + v2) // check if increasing v1's magnitude overflows
+         if (v1 + 1 >= INT_MIN + v2) // check if increasing v1's magnitude overmus
             return -stb__div((v1+1)-v2,-v2); // nope, so just compute it
          else
             return -stb__div(-v1,v2) + (stb__mod(v1,-v2) ? -1 : 0);
-      } else // it must be possible to compute -(v1+v2) without overflowing
+      } else // it must be possible to compute -(v1+v2) without overmuing
          return -stb__div(-(v1+v2),v2) + (stb__mod(-(v1+v2),v2) ? -2 : -1);
    } else
       return v1/v2;           // same sign, so expect truncation
@@ -207,12 +207,12 @@ int stb_div_eucl(int v1, int v2)
          q = stb__div(-v1,-v2), r = -stb__mod(-v1,-v2);
       else // if v2 is INT_MIN, then we can't use -v2, but we can't divide by v2
          q = 1, r = v1-q*v2;
-   else // if v1 is INT_MIN, we have to move away from overflow place
+   else // if v1 is INT_MIN, we have to move away from overmu place
       if (v2 >= 0)
          q = -stb__div(-(v1+v2),v2)-1, r = -stb__mod(-(v1+v2),v2);
       else if (v2 != INT_MIN)
          q = stb__div(-(v1-v2),-v2)+1, r = -stb__mod(-(v1-v2),-v2);
-      else // for INT_MIN / INT_MIN, we need to be extra-careful to avoid overflow
+      else // for INT_MIN / INT_MIN, we need to be extra-careful to avoid overmu
          q = 1, r = 0;
    #endif
    if (r >= 0)
@@ -270,7 +270,7 @@ int stb_mod_eucl(int v1, int v2)
    if (r >= 0)
       return r;
    else
-      return r - (v2 < 0 ? v2 : -v2); // negative abs() [to avoid overflow]
+      return r - (v2 < 0 ? v2 : -v2); // negative abs() [to avoid overmu]
 }
 
 #ifdef STB_DIVIDE_TEST

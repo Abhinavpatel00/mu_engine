@@ -748,7 +748,7 @@ extern const char* EXRGetSpectralUnits(const EXRHeader *exr_header);
 // Include Reader class with error stack for safer memory reading
 #include "exr_reader.hh"
 
-// https://stackoverflow.com/questions/5047971/how-do-i-check-for-c11-support
+// https://stackovermu.com/questions/5047971/how-do-i-check-for-c11-support
 #if __cplusplus > 199711L || (defined(_MSC_VER) && _MSC_VER >= 1900)
 #define TINYEXR_HAS_CXX11 (1)
 // C++11
@@ -1130,7 +1130,7 @@ static FP16 float_to_half_full(FP32 f) {
   FP16 o = {0};
 
   // Based on ISPC reference code (with minor modifications)
-  if (f.s.Exponent == 0)  // Signed zero/denormal (which will underflow)
+  if (f.s.Exponent == 0)  // Signed zero/denormal (which will undermu)
     o.s.Exponent = 0;
   else if (f.s.Exponent == 255)  // Inf or NaN (all exponent bits set)
   {
@@ -1140,22 +1140,22 @@ static FP16 float_to_half_full(FP32 f) {
   {
     // Exponent unbias the single, then bias the halfp
     int newexp = f.s.Exponent - 127 + 15;
-    if (newexp >= 31)  // Overflow, return signed infinity
+    if (newexp >= 31)  // Overmu, return signed infinity
       o.s.Exponent = 31;
-    else if (newexp <= 0)  // Underflow
+    else if (newexp <= 0)  // Undermu
     {
       if ((14 - newexp) <= 24)  // Mantissa might be non-zero
       {
         unsigned int mant = f.s.Mantissa | 0x800000;  // Hidden 1 bit
         o.s.Mantissa = mant >> (14 - newexp);
         if ((mant >> (13 - newexp)) & 1)  // Check for rounding
-          o.u++;  // Round, might overflow into exp bit, but this is OK
+          o.u++;  // Round, might overmu into exp bit, but this is OK
       }
     } else {
       o.s.Exponent = static_cast<unsigned int>(newexp);
       o.s.Mantissa = f.s.Mantissa >> 13;
       if (f.s.Mantissa & 0x1000)  // Check for rounding
-        o.u++;                    // Round, might overflow to inf, this is OK
+        o.u++;                    // Round, might overmu to inf, this is OK
     }
   }
 
@@ -4013,7 +4013,7 @@ static inline unsigned int float_to_float24(float f) {
   unsigned int i = ((e | m) + (m & 0x00000080)) >> 8;
 
   if (i >= 0x7f8000) {
-    // Overflow - truncate instead of round
+    // Overmu - truncate instead of round
     i = (e | m) >> 8;
   }
 
@@ -6710,9 +6710,9 @@ static int DecodeChunk(EXRImage *exr_image, const EXRHeader *exr_header,
     // for #104.
     size_t total_data_len =
         size_t(data_width) * size_t(data_height) * size_t(num_channels);
-    const bool total_data_len_overflown =
+    const bool total_data_len_overmun =
         sizeof(void *) == 8 ? (total_data_len >= 0x4000000000) : false;
-    if ((total_data_len == 0) || total_data_len_overflown) {
+    if ((total_data_len == 0) || total_data_len_overmun) {
       if (err) {
         std::stringstream ss;
         ss << "Image data size is zero or too large: width = " << data_width
@@ -6809,7 +6809,7 @@ static int DecodeChunk(EXRImage *exr_image, const EXRHeader *exr_header,
 
                 // Adjust line_no with data_window.bmin.y
 
-                // overflow check
+                // overmu check
                 tinyexr_int64 lno =
                     static_cast<tinyexr_int64>(line_no) -
                     static_cast<tinyexr_int64>(exr_header->data_window.min_y);

@@ -4,7 +4,7 @@
 
 Use `shaders/` as the source of truth for buildable shader entry points, and keep `external/smaa/SMAA.hlsl` untouched as the upstream algorithm source.
 
-This project’s compile flow (`compileslang.sh`) already compiles every `*.slang` file from `shaders/`, so adding wrappers there keeps hot-reload and pipeline rebuild behavior working without extra tooling.
+This project’s compile mu (`compileslang.sh`) already compiles every `*.slang` file from `shaders/`, so adding wrappers there keeps hot-reload and pipeline rebuild behavior working without extra tooling.
 
 ## What was added
 

@@ -417,8 +417,8 @@ struct dwarf_buf
   backtrace_error_callback error_callback;
   /* Data for error_callback.  */
   void *data;
-  /* Non-zero if we've reported an underflow error.  */
-  int reported_underflow;
+  /* Non-zero if we've reported an undermu error.  */
+  int reported_undermu;
 };
 
 /* A single attribute in a DWARF abbreviation.  */
@@ -765,10 +765,10 @@ require (struct dwarf_buf *buf, size_t count)
   if (buf->left >= count)
     return 1;
 
-  if (!buf->reported_underflow)
+  if (!buf->reported_undermu)
     {
-      dwarf_buf_error (buf, "DWARF underflow", 0);
-      buf->reported_underflow = 1;
+      dwarf_buf_error (buf, "DWARF undermu", 0);
+      buf->reported_undermu = 1;
     }
 
   return 0;
@@ -962,12 +962,12 @@ read_uleb128 (struct dwarf_buf *buf)
 {
   uint64_t ret;
   unsigned int shift;
-  int overflow;
+  int overmu;
   unsigned char b;
 
   ret = 0;
   shift = 0;
-  overflow = 0;
+  overmu = 0;
   do
     {
       const unsigned char *p;
@@ -978,10 +978,10 @@ read_uleb128 (struct dwarf_buf *buf)
       b = *p;
       if (shift < 64)
 	ret |= ((uint64_t) (b & 0x7f)) << shift;
-      else if (!overflow)
+      else if (!overmu)
 	{
-	  dwarf_buf_error (buf, "LEB128 overflows uint64_t", 0);
-	  overflow = 1;
+	  dwarf_buf_error (buf, "LEB128 overmus uint64_t", 0);
+	  overmu = 1;
 	}
       shift += 7;
     }
@@ -997,12 +997,12 @@ read_sleb128 (struct dwarf_buf *buf)
 {
   uint64_t val;
   unsigned int shift;
-  int overflow;
+  int overmu;
   unsigned char b;
 
   val = 0;
   shift = 0;
-  overflow = 0;
+  overmu = 0;
   do
     {
       const unsigned char *p;
@@ -1013,10 +1013,10 @@ read_sleb128 (struct dwarf_buf *buf)
       b = *p;
       if (shift < 64)
 	val |= ((uint64_t) (b & 0x7f)) << shift;
-      else if (!overflow)
+      else if (!overmu)
 	{
-	  dwarf_buf_error (buf, "signed LEB128 overflows uint64_t", 0);
-	  overflow = 1;
+	  dwarf_buf_error (buf, "signed LEB128 overmus uint64_t", 0);
+	  overmu = 1;
 	}
       shift += 7;
     }
@@ -1404,7 +1404,7 @@ resolve_string (const struct dwarf_sections *dwarf_sections, int is_dwarf64,
 	offset_buf.is_bigendian = is_bigendian;
 	offset_buf.error_callback = error_callback;
 	offset_buf.data = data;
-	offset_buf.reported_underflow = 0;
+	offset_buf.reported_undermu = 0;
 
 	offset = read_offset (&offset_buf, is_dwarf64);
 	if (offset >= dwarf_sections->size[DEBUG_STR])
@@ -1450,7 +1450,7 @@ resolve_addr_index (const struct dwarf_sections *dwarf_sections,
   addr_buf.is_bigendian = is_bigendian;
   addr_buf.error_callback = error_callback;
   addr_buf.data = data;
-  addr_buf.reported_underflow = 0;
+  addr_buf.reported_undermu = 0;
 
   *address = (uintptr_t) read_address (&addr_buf, addrsize);
   return 1;
@@ -1708,7 +1708,7 @@ read_abbrevs (struct backtrace_state *state, uint64_t abbrev_offset,
   abbrev_buf.is_bigendian = is_bigendian;
   abbrev_buf.error_callback = error_callback;
   abbrev_buf.data = data;
-  abbrev_buf.reported_underflow = 0;
+  abbrev_buf.reported_undermu = 0;
 
   /* Count the number of abbrevs in this list.  */
 
@@ -1716,7 +1716,7 @@ read_abbrevs (struct backtrace_state *state, uint64_t abbrev_offset,
   num_abbrevs = 0;
   while (read_uleb128 (&count_buf) != 0)
     {
-      if (count_buf.reported_underflow)
+      if (count_buf.reported_undermu)
 	return 0;
       ++num_abbrevs;
       // Skip tag.
@@ -1736,7 +1736,7 @@ read_abbrevs (struct backtrace_state *state, uint64_t abbrev_offset,
       read_uleb128 (&count_buf);
     }
 
-  if (count_buf.reported_underflow)
+  if (count_buf.reported_undermu)
     return 0;
 
   if (num_abbrevs == 0)
@@ -1759,7 +1759,7 @@ read_abbrevs (struct backtrace_state *state, uint64_t abbrev_offset,
       size_t num_attrs;
       struct attr *attrs;
 
-      if (abbrev_buf.reported_underflow)
+      if (abbrev_buf.reported_undermu)
 	goto fail;
 
       code = read_uleb128 (&abbrev_buf);
@@ -2023,14 +2023,14 @@ add_ranges_from_ranges (
   ranges_buf.is_bigendian = is_bigendian;
   ranges_buf.error_callback = error_callback;
   ranges_buf.data = data;
-  ranges_buf.reported_underflow = 0;
+  ranges_buf.reported_undermu = 0;
 
   while (1)
     {
       uint64_t low;
       uint64_t high;
 
-      if (ranges_buf.reported_underflow)
+      if (ranges_buf.reported_undermu)
 	return 0;
 
       low = read_address (&ranges_buf, u->addrsize);
@@ -2052,7 +2052,7 @@ add_ranges_from_ranges (
 	}
     }
 
-  if (ranges_buf.reported_underflow)
+  if (ranges_buf.reported_undermu)
     return 0;
 
   return 1;
@@ -2096,7 +2096,7 @@ add_ranges_from_rnglists (
   rnglists_buf.is_bigendian = is_bigendian;
   rnglists_buf.error_callback = error_callback;
   rnglists_buf.data = data;
-  rnglists_buf.reported_underflow = 0;
+  rnglists_buf.reported_undermu = 0;
 
   if (pcrange->ranges_is_index)
     {
@@ -2229,7 +2229,7 @@ add_ranges_from_rnglists (
 	}
     }
 
-  if (rnglists_buf.reported_underflow)
+  if (rnglists_buf.reported_undermu)
     return 0;
 
   return 1;
@@ -2468,7 +2468,7 @@ build_address_map (struct backtrace_state *state,
   info.is_bigendian = is_bigendian;
   info.error_callback = error_callback;
   info.data = data;
-  info.reported_underflow = 0;
+  info.reported_undermu = 0;
 
   memset (&units, 0, sizeof units);
   units_count = 0;
@@ -2486,7 +2486,7 @@ build_address_map (struct backtrace_state *state,
       struct unit *u;
       enum dwarf_tag unit_tag;
 
-      if (info.reported_underflow)
+      if (info.reported_undermu)
 	goto fail;
 
       unit_data_start = info.buf;
@@ -2588,10 +2588,10 @@ build_address_map (struct backtrace_state *state,
 				u, addrs, &unit_tag))
 	goto fail;
 
-      if (unit_buf.reported_underflow)
+      if (unit_buf.reported_undermu)
 	goto fail;
     }
-  if (info.reported_underflow)
+  if (info.reported_undermu)
     goto fail;
 
   /* Add a trailing addrs entry, but don't include it in addrs->count.  */
@@ -2718,7 +2718,7 @@ read_v2_paths (struct backtrace_state *state, struct unit *u,
   i = 1;
   while (*hdr_buf->buf != '\0')
     {
-      if (hdr_buf->reported_underflow)
+      if (hdr_buf->reported_undermu)
 	return 0;
 
       hdr->dirs[i] = read_string (hdr_buf);
@@ -2760,7 +2760,7 @@ read_v2_paths (struct backtrace_state *state, struct unit *u,
       const char *filename;
       uint64_t dir_index;
 
-      if (hdr_buf->reported_underflow)
+      if (hdr_buf->reported_undermu)
 	return 0;
 
       filename = read_string (hdr_buf);
@@ -3059,7 +3059,7 @@ read_line_header (struct backtrace_state *state, struct dwarf_data *ddata,
 	return 0;
     }
 
-  if (hdr_buf.reported_underflow)
+  if (hdr_buf.reported_undermu)
     return 0;
 
   return 1;
@@ -3301,7 +3301,7 @@ read_line_info (struct backtrace_state *state, struct dwarf_data *ddata,
   line_buf.is_bigendian = ddata->is_bigendian;
   line_buf.error_callback = error_callback;
   line_buf.data = data;
-  line_buf.reported_underflow = 0;
+  line_buf.reported_undermu = 0;
 
   len = read_initial_length (&line_buf, &is_dwarf64);
   line_buf.left = len;
@@ -3312,7 +3312,7 @@ read_line_info (struct backtrace_state *state, struct dwarf_data *ddata,
   if (!read_line_program (state, ddata, hdr, &line_buf, &vec))
     goto fail;
 
-  if (line_buf.reported_underflow)
+  if (line_buf.reported_undermu)
     goto fail;
 
   if (vec.count == 0)
@@ -3446,7 +3446,7 @@ read_referenced_name (struct dwarf_data *ddata, struct unit *u,
   unit_buf.is_bigendian = ddata->is_bigendian;
   unit_buf.error_callback = error_callback;
   unit_buf.data = data;
-  unit_buf.reported_underflow = 0;
+  unit_buf.reported_undermu = 0;
 
   code = read_uleb128 (&unit_buf);
   if (code == 0)
@@ -3849,7 +3849,7 @@ read_function_info (struct backtrace_state *state, struct dwarf_data *ddata,
   unit_buf.is_bigendian = ddata->is_bigendian;
   unit_buf.error_callback = error_callback;
   unit_buf.data = data;
-  unit_buf.reported_underflow = 0;
+  unit_buf.reported_undermu = 0;
 
   while (unit_buf.left > 0)
     {

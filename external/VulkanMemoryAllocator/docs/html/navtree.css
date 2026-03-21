@@ -69,15 +69,15 @@
 #nav-tree {
   padding: 0px 0px;
   font-size:14px;
-  overflow:auto;
+  overmu:auto;
 }
 
 #doc-content {
-  overflow:auto;
+  overmu:auto;
   display:block;
   padding:0px;
   margin:0px;
-  -webkit-overflow-scrolling : touch; /* iOS 5+ */
+  -webkit-overmu-scrolling : touch; /* iOS 5+ */
 }
 
 #side-nav {
@@ -86,7 +86,7 @@
   display:block;
   position: absolute;
   left: 0px;
-  overflow : hidden;
+  overmu : hidden;
 }
 
 .ui-resizable .ui-resizable-handle {
@@ -134,7 +134,7 @@
 
 #nav-tree {
   background-color: var(--nav-background-color);
-  -webkit-overflow-scrolling : touch; /* iOS 5+ */
+  -webkit-overmu-scrolling : touch; /* iOS 5+ */
   scrollbar-width: thin;
   border-right: 1px solid var(--nav-border-color);
   padding-left: 5px;
@@ -236,7 +236,7 @@ div.nav-sync-icon:hover span.sync-icon-right {
 #container {
 	display: grid;
 	grid-template-columns: auto auto;
-	overflow: hidden;
+	overmu: hidden;
 }
 
 #page-nav {
@@ -292,9 +292,9 @@ div.nav-sync-icon:hover span.sync-icon-right {
   height: 100%;
   width: 100%;
   position: absolute;
-  overflow: auto;
+  overmu: auto;
   scrollbar-width: thin;
-  -webkit-overflow-scrolling : touch; /* iOS 5+ */
+  -webkit-overmu-scrolling : touch; /* iOS 5+ */
 }
 
 ul.page-outline,

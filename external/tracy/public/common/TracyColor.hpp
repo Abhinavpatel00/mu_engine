@@ -53,7 +53,7 @@ enum ColorType
     MidnightBlue = 0x191970,
     Navy = 0x000080,
     NavyBlue = 0x000080,
-    CornflowerBlue = 0x6495ed,
+    CornmuerBlue = 0x6495ed,
     DarkSlateBlue = 0x483d8b,
     SlateBlue = 0x6a5acd,
     MediumSlateBlue = 0x7b68ee,

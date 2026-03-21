@@ -1,4 +1,4 @@
-﻿// Provides a C++11 implementation of a multi-producer, multi-consumer lock-free queue.
+// Provides a C++11 implementation of a multi-producer, multi-consumer lock-free queue.
 // An overview, including benchmark results, is provided here:
 //     http://moodycamel.com/blog/2014/a-fast-general-purpose-lock-free-queue-for-c++
 // The full design is also described in excruciating detail at:
@@ -422,7 +422,7 @@ public:
 	static const std::uint32_t EXPLICIT_CONSUMER_CONSUMPTION_QUOTA_BEFORE_ROTATE = static_cast<std::uint32_t>(Traits::EXPLICIT_CONSUMER_CONSUMPTION_QUOTA_BEFORE_ROTATE);
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable: 4307)		// + integral constant overflow (that's what the ternary expression is for!)
+#pragma warning(disable: 4307)		// + integral constant overmu (that's what the ternary expression is for!)
 #pragma warning(disable: 4309)		// static_cast: Truncation of constant value
 #endif
 	static const size_t MAX_SUBQUEUE_SIZE = (details::const_numeric_max<size_t>::value - static_cast<size_t>(Traits::MAX_SUBQUEUE_SIZE) < BLOCK_SIZE) ? details::const_numeric_max<size_t>::value : ((static_cast<size_t>(Traits::MAX_SUBQUEUE_SIZE) + (BLOCK_SIZE - 1)) / BLOCK_SIZE * BLOCK_SIZE);

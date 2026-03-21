@@ -3483,8 +3483,8 @@ static void _sdtx_discard_context_pool(void) {
     - return the resource id
 */
 static uint32_t _sdtx_slot_alloc(_sdtx_pool_t* pool, _sdtx_slot_t* slot, int slot_index) {
-    /* FIXME: add handling for an overflowing generation counter,
-       for now, just overflow (another option is to disable
+    /* FIXME: add handling for an overmuing generation counter,
+       for now, just overmu (another option is to disable
        the slot)
     */
     SOKOL_ASSERT(pool && pool->gen_ctrs);

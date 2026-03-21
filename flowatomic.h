@@ -1,5 +1,5 @@
-#ifndef FLOW_ATOMICS_H
-#define FLOW_ATOMICS_H
+#ifndef MU_ATOMICS_H
+#define MU_ATOMICS_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -9,11 +9,11 @@
    ============================================================ */
 
 #if defined(_MSC_VER)
-    #define FLOW_COMPILER_MSVC 1
+    #define MU_COMPILER_MSVC 1
     #include <intrin.h>
     #include <windows.h>
 #else
-    #define FLOW_COMPILER_GCC 1
+    #define MU_COMPILER_GCC 1
 #endif
 
 /* ============================================================
@@ -43,39 +43,39 @@
    - relies on x86 TSO for correctness
    ============================================================ */
 
-typedef volatile ALIGNAS(4)        uint32_t  flow_atomic32_t;
-typedef volatile ALIGNAS(8)        uint64_t  flow_atomic64_t;
-typedef volatile ALIGNAS(PTR_SIZE) uintptr_t flow_atomicptr_t;
+typedef volatile ALIGNAS(4)        uint32_t  mu_atomic32_t;
+typedef volatile ALIGNAS(8)        uint64_t  mu_atomic64_t;
+typedef volatile ALIGNAS(PTR_SIZE) uintptr_t mu_atomicptr_t;
 
 /* ============================================================
    Compiler memory barriers (NOT CPU fences)
    ============================================================ */
 
-#if FLOW_COMPILER_MSVC
-    #define flow_memorybarrier_acquire() _ReadWriteBarrier()
-    #define flow_memorybarrier_release() _ReadWriteBarrier()
+#if MU_COMPILER_MSVC
+    #define mu_memorybarrier_acquire() _ReadWriteBarrier()
+    #define mu_memorybarrier_release() _ReadWriteBarrier()
 #else
-    #define flow_memorybarrier_acquire() __asm__ __volatile__("" ::: "memory")
-    #define flow_memorybarrier_release() __asm__ __volatile__("" ::: "memory")
+    #define mu_memorybarrier_acquire() __asm__ __volatile__("" ::: "memory")
+    #define mu_memorybarrier_release() __asm__ __volatile__("" ::: "memory")
 #endif
 
 /* ============================================================
    32-bit atomics (relaxed)
    ============================================================ */
 
-#if FLOW_COMPILER_MSVC
+#if MU_COMPILER_MSVC
 
-#define flow_atomic32_load_relaxed(p)        (*(p))
-#define flow_atomic32_store_relaxed(p, v)    (uint32_t)InterlockedExchange((volatile long*)(p), (long)(v))
-#define flow_atomic32_add_relaxed(p, v)      (uint32_t)InterlockedExchangeAdd((volatile long*)(p), (long)(v))
-#define flow_atomic32_cas_relaxed(p,c,n)     (uint32_t)InterlockedCompareExchange((volatile long*)(p),(long)(n),(long)(c))
+#define mu_atomic32_load_relaxed(p)        (*(p))
+#define mu_atomic32_store_relaxed(p, v)    (uint32_t)InterlockedExchange((volatile long*)(p), (long)(v))
+#define mu_atomic32_add_relaxed(p, v)      (uint32_t)InterlockedExchangeAdd((volatile long*)(p), (long)(v))
+#define mu_atomic32_cas_relaxed(p,c,n)     (uint32_t)InterlockedCompareExchange((volatile long*)(p),(long)(n),(long)(c))
 
 #else
 
-#define flow_atomic32_load_relaxed(p)        (*(p))
-#define flow_atomic32_store_relaxed(p, v)    __sync_lock_test_and_set((p),(v))
-#define flow_atomic32_add_relaxed(p, v)      __sync_fetch_and_add((p),(v))
-#define flow_atomic32_cas_relaxed(p,c,n)     __sync_val_compare_and_swap((p),(c),(n))
+#define mu_atomic32_load_relaxed(p)        (*(p))
+#define mu_atomic32_store_relaxed(p, v)    __sync_lock_test_and_set((p),(v))
+#define mu_atomic32_add_relaxed(p, v)      __sync_fetch_and_add((p),(v))
+#define mu_atomic32_cas_relaxed(p,c,n)     __sync_val_compare_and_swap((p),(c),(n))
 
 #endif
 
@@ -83,19 +83,19 @@ typedef volatile ALIGNAS(PTR_SIZE) uintptr_t flow_atomicptr_t;
    64-bit atomics (relaxed)
    ============================================================ */
 
-#if FLOW_COMPILER_MSVC
+#if MU_COMPILER_MSVC
 
-#define flow_atomic64_load_relaxed(p)        (*(p))
-#define flow_atomic64_store_relaxed(p, v)    (uint64_t)InterlockedExchange64((volatile LONG64*)(p),(LONG64)(v))
-#define flow_atomic64_add_relaxed(p, v)      (uint64_t)InterlockedExchangeAdd64((volatile LONG64*)(p),(LONG64)(v))
-#define flow_atomic64_cas_relaxed(p,c,n)     (uint64_t)InterlockedCompareExchange64((volatile LONG64*)(p),(LONG64)(n),(LONG64)(c))
+#define mu_atomic64_load_relaxed(p)        (*(p))
+#define mu_atomic64_store_relaxed(p, v)    (uint64_t)InterlockedExchange64((volatile LONG64*)(p),(LONG64)(v))
+#define mu_atomic64_add_relaxed(p, v)      (uint64_t)InterlockedExchangeAdd64((volatile LONG64*)(p),(LONG64)(v))
+#define mu_atomic64_cas_relaxed(p,c,n)     (uint64_t)InterlockedCompareExchange64((volatile LONG64*)(p),(LONG64)(n),(LONG64)(c))
 
 #else
 
-#define flow_atomic64_load_relaxed(p)        (*(p))
-#define flow_atomic64_store_relaxed(p, v)    __sync_lock_test_and_set((p),(v))
-#define flow_atomic64_add_relaxed(p, v)      __sync_fetch_and_add((p),(v))
-#define flow_atomic64_cas_relaxed(p,c,n)     __sync_val_compare_and_swap((p),(c),(n))
+#define mu_atomic64_load_relaxed(p)        (*(p))
+#define mu_atomic64_store_relaxed(p, v)    __sync_lock_test_and_set((p),(v))
+#define mu_atomic64_add_relaxed(p, v)      __sync_fetch_and_add((p),(v))
+#define mu_atomic64_cas_relaxed(p,c,n)     __sync_val_compare_and_swap((p),(c),(n))
 
 #endif
 
@@ -103,30 +103,30 @@ typedef volatile ALIGNAS(PTR_SIZE) uintptr_t flow_atomicptr_t;
    Acquire / Release helpers
    ============================================================ */
 
-static inline uint32_t flow_atomic32_load_acquire(flow_atomic32_t* p)
+static inline uint32_t mu_atomic32_load_acquire(mu_atomic32_t* p)
 {
-    uint32_t v = flow_atomic32_load_relaxed(p);
-    flow_memorybarrier_acquire();
+    uint32_t v = mu_atomic32_load_relaxed(p);
+    mu_memorybarrier_acquire();
     return v;
 }
 
-static inline uint32_t flow_atomic32_store_release(flow_atomic32_t* p, uint32_t v)
+static inline uint32_t mu_atomic32_store_release(mu_atomic32_t* p, uint32_t v)
 {
-    flow_memorybarrier_release();
-    return flow_atomic32_store_relaxed(p, v);
+    mu_memorybarrier_release();
+    return mu_atomic32_store_relaxed(p, v);
 }
 
-static inline uint64_t flow_atomic64_load_acquire(flow_atomic64_t* p)
+static inline uint64_t mu_atomic64_load_acquire(mu_atomic64_t* p)
 {
-    uint64_t v = flow_atomic64_load_relaxed(p);
-    flow_memorybarrier_acquire();
+    uint64_t v = mu_atomic64_load_relaxed(p);
+    mu_memorybarrier_acquire();
     return v;
 }
 
-static inline uint64_t flow_atomic64_store_release(flow_atomic64_t* p, uint64_t v)
+static inline uint64_t mu_atomic64_store_release(mu_atomic64_t* p, uint64_t v)
 {
-    flow_memorybarrier_release();
-    return flow_atomic64_store_relaxed(p, v);
+    mu_memorybarrier_release();
+    return mu_atomic64_store_relaxed(p, v);
 }
 
 /* ============================================================
@@ -135,20 +135,20 @@ static inline uint64_t flow_atomic64_store_release(flow_atomic64_t* p, uint64_t 
    - Returns previous value
    ============================================================ */
 
-static inline uint32_t flow_atomic32_max_relaxed(flow_atomic32_t* dst, uint32_t val)
+static inline uint32_t mu_atomic32_max_relaxed(mu_atomic32_t* dst, uint32_t val)
 {
     uint32_t cur = val;
     do {
-        cur = flow_atomic32_cas_relaxed(dst, cur, val);
+        cur = mu_atomic32_cas_relaxed(dst, cur, val);
     } while (cur < val);
     return cur;
 }
 
-static inline uint64_t flow_atomic64_max_relaxed(flow_atomic64_t* dst, uint64_t val)
+static inline uint64_t mu_atomic64_max_relaxed(mu_atomic64_t* dst, uint64_t val)
 {
     uint64_t cur = val;
     do {
-        cur = flow_atomic64_cas_relaxed(dst, cur, val);
+        cur = mu_atomic64_cas_relaxed(dst, cur, val);
     } while (cur < val);
     return cur;
 }
@@ -159,24 +159,24 @@ static inline uint64_t flow_atomic64_max_relaxed(flow_atomic64_t* dst, uint64_t 
 
 #if PTR_SIZE == 4
 
-#define flow_atomicptr_load_relaxed   flow_atomic32_load_relaxed
-#define flow_atomicptr_load_acquire   flow_atomic32_load_acquire
-#define flow_atomicptr_store_relaxed  flow_atomic32_store_relaxed
-#define flow_atomicptr_store_release  flow_atomic32_store_release
-#define flow_atomicptr_add_relaxed    flow_atomic32_add_relaxed
-#define flow_atomicptr_cas_relaxed    flow_atomic32_cas_relaxed
-#define flow_atomicptr_max_relaxed    flow_atomic32_max_relaxed
+#define mu_atomicptr_load_relaxed   mu_atomic32_load_relaxed
+#define mu_atomicptr_load_acquire   mu_atomic32_load_acquire
+#define mu_atomicptr_store_relaxed  mu_atomic32_store_relaxed
+#define mu_atomicptr_store_release  mu_atomic32_store_release
+#define mu_atomicptr_add_relaxed    mu_atomic32_add_relaxed
+#define mu_atomicptr_cas_relaxed    mu_atomic32_cas_relaxed
+#define mu_atomicptr_max_relaxed    mu_atomic32_max_relaxed
 
 #elif PTR_SIZE == 8
 
-#define flow_atomicptr_load_relaxed   flow_atomic64_load_relaxed
-#define flow_atomicptr_load_acquire   flow_atomic64_load_acquire
-#define flow_atomicptr_store_relaxed  flow_atomic64_store_relaxed
-#define flow_atomicptr_store_release  flow_atomic64_store_release
-#define flow_atomicptr_add_relaxed    flow_atomic64_add_relaxed
-#define flow_atomicptr_cas_relaxed    flow_atomic64_cas_relaxed
-#define flow_atomicptr_max_relaxed    flow_atomic64_max_relaxed
+#define mu_atomicptr_load_relaxed   mu_atomic64_load_relaxed
+#define mu_atomicptr_load_acquire   mu_atomic64_load_acquire
+#define mu_atomicptr_store_relaxed  mu_atomic64_store_relaxed
+#define mu_atomicptr_store_release  mu_atomic64_store_release
+#define mu_atomicptr_add_relaxed    mu_atomic64_add_relaxed
+#define mu_atomicptr_cas_relaxed    mu_atomic64_cas_relaxed
+#define mu_atomicptr_max_relaxed    mu_atomic64_max_relaxed
 
 #endif
 
-#endif /* FLOW_ATOMICS_H */
+#endif /* MU_ATOMICS_H */

@@ -5,8 +5,8 @@
 </p>
 <br>
 <p align="center">
-    <a href="https://github.com/recp/cglm/actions/workflows/ci.yml">
-        <img src="https://github.com/recp/cglm/actions/workflows/ci.yml/badge.svg"
+    <a href="https://github.com/recp/cglm/actions/workmus/ci.yml">
+        <img src="https://github.com/recp/cglm/actions/workmus/ci.yml/badge.svg"
              alt="Build Status">
     </a>
     <a href="http://cglm.readthedocs.io/en/latest/?badge=latest">

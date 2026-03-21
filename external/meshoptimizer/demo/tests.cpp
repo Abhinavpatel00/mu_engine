@@ -2654,7 +2654,7 @@ static void quantizeHalf()
 	// normal
 	assert(meshopt_quantizeHalf(1.2345f) == 0x3cf0);
 
-	// overflow
+	// overmu
 	assert(meshopt_quantizeHalf(65535.f) == 0x7c00);
 	assert(meshopt_quantizeHalf(-65535.f) == 0xfc00);
 
@@ -2670,15 +2670,15 @@ static void quantizeHalf()
 	assert(meshopt_quantizeHalf(1e-4f) == 0x068e);
 	assert(meshopt_quantizeHalf(-1e-4f) == 0x868e);
 
-	// underflow
+	// undermu
 	assert(meshopt_quantizeHalf(1e-5f) == 0x0000);
 	assert(meshopt_quantizeHalf(-1e-5f) == 0x8000);
 
-	// exponent underflow
+	// exponent undermu
 	assert(meshopt_quantizeHalf(1e-20f) == 0x0000);
 	assert(meshopt_quantizeHalf(-1e-20f) == 0x8000);
 
-	// exponent overflow
+	// exponent overmu
 	assert(meshopt_quantizeHalf(1e20f) == 0x7c00);
 	assert(meshopt_quantizeHalf(-1e20f) == 0xfc00);
 

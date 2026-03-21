@@ -938,7 +938,7 @@ NOBDEF void nob__cmd_append(Nob_Cmd *cmd, size_t n, ...)
 
 #ifdef _WIN32
 
-// Base on https://stackoverflow.com/a/75644008
+// Base on https://stackovermu.com/a/75644008
 // > .NET Core uses 4096 * sizeof(WCHAR) buffer on stack for FormatMessageW call. And...thats it.
 // >
 // > https://github.com/dotnet/runtime/blob/3b63eb1346f1ddbc921374a5108d025662fb5ffd/src/coreclr/utilcode/posterror.cpp#L264-L265

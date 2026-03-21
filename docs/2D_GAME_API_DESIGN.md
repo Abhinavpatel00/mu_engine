@@ -256,7 +256,7 @@ void main()
 }
 ```
 
-## Rendering Workflow
+## Rendering Workmu
 
 ### Frame Recording
 

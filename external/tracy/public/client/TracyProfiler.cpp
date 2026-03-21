@@ -837,8 +837,8 @@ LONG WINAPI CrashFilter( PEXCEPTION_POINTERS pExp )
     case EXCEPTION_PRIV_INSTRUCTION:
         msgPtr += sprintf( msgPtr, "Exception EXCEPTION_PRIV_INSTRUCTION (0x%x). ", ec );
         break;
-    case EXCEPTION_STACK_OVERFLOW:
-        msgPtr += sprintf( msgPtr, "Exception EXCEPTION_STACK_OVERFLOW (0x%x). ", ec );
+    case EXCEPTION_STACK_OVERMU:
+        msgPtr += sprintf( msgPtr, "Exception EXCEPTION_STACK_OVERMU (0x%x). ", ec );
         break;
     default:
         return EXCEPTION_CONTINUE_SEARCH;
@@ -1009,16 +1009,16 @@ static void CrashHandler( int signal, siginfo_t* info, void* /*ucontext*/ )
             strcpy( msgPtr, "Integer divide by zero.\n" );
             break;
         case FPE_INTOVF:
-            strcpy( msgPtr, "Integer overflow.\n" );
+            strcpy( msgPtr, "Integer overmu.\n" );
             break;
         case FPE_FLTDIV:
             strcpy( msgPtr, "Floating-point divide by zero.\n" );
             break;
         case FPE_FLTOVF:
-            strcpy( msgPtr, "Floating-point overflow.\n" );
+            strcpy( msgPtr, "Floating-point overmu.\n" );
             break;
         case FPE_FLTUND:
-            strcpy( msgPtr, "Floating-point underflow.\n" );
+            strcpy( msgPtr, "Floating-point undermu.\n" );
             break;
         case FPE_FLTRES:
             strcpy( msgPtr, "Floating-point inexact result.\n" );

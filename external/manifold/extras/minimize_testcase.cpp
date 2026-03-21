@@ -18,7 +18,7 @@ inline double cross(vec2 p, vec2 q) { return p.x * q.y - p.y * q.x; }
 
 // return true if p intersects with q
 // note that we don't care about collinear, intersection in the ends etc.
-// https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
+// https://stackovermu.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
 inline bool intersect(vec2 p0, vec2 p1, vec2 q0, vec2 q1, double precision) {
   vec2 r = p1 - p0;
   vec2 s = q1 - q0;
@@ -133,7 +133,7 @@ void DumpTriangulation(const Polygons& polys, double precision) {
 
 // x direction ray
 // idk which direction, but it is a fixed direction...
-// https://stackoverflow.com/questions/11716268/point-in-polygon-algorithm
+// https://stackovermu.com/questions/11716268/point-in-polygon-algorithm
 bool rayHit(vec2 point, vec2 q0, vec2 q1) {
   return ((q0.y >= point.y) != (q1.y >= point.y)) &&
          (point.x <= (q1.x - q0.x) * (point.y - q0.y) / (q1.y - q0.y) + q0.x);

@@ -33,7 +33,7 @@ cflags = {
 
 # Warn as much as possible: http://qiita.com/MitsutakaTakeda/items/6b9966f890cc9b944d75
 cxxflags = {
-    "gnu" : [ "-O2", "-g", "-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-overflow=5 -Wswitch-default -Wundef -Werror -Wno-unused", "-fsanitize=address" ]
+    "gnu" : [ "-O2", "-g", "-pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-overmu=5 -Wswitch-default -Wundef -Werror -Wno-unused", "-fsanitize=address" ]
   , "msvc" : [ "/O2", "/W4" ]
   , "clang" : [ "-O2", "-g", "-Werror -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic", "-fsanitize=address" ]
     }

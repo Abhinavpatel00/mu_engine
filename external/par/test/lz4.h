@@ -94,7 +94,7 @@ LZ4_decompress_safe() :
     return : the number of bytes decompressed into destination buffer (necessarily <= maxDecompressedSize)
              If destination buffer is not large enough, decoding will stop and output an error code (<0).
              If the source stream is detected malformed, the function will stop decoding and return a negative result.
-             This function is protected against buffer overflow exploits, including malicious data packets.
+             This function is protected against buffer overmu exploits, including malicious data packets.
              It never writes outside output buffer, nor reads outside input buffer.
 */
 

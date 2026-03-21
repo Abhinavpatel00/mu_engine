@@ -264,7 +264,7 @@ iframe#MSearchResults {
     z-index:10000;
     width: 300px;
     height: 400px;
-    overflow: auto;
+    overmu: auto;
     border-radius: 8px;
     transform: translate(0, 20px);
     animation: ease-out 280ms slideInSearchResults;

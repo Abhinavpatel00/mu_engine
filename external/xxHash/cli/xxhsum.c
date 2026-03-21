@@ -218,7 +218,7 @@ static void XSUM_display_LittleEndian(const void* ptr, size_t length)
 {
     const XSUM_U8* const p = (const XSUM_U8*)ptr;
     size_t idx;
-    for (idx=length-1; idx<length; idx--)    /* intentional underflow to negative to detect end */
+    for (idx=length-1; idx<length; idx--)    /* intentional undermu to negative to detect end */
         XSUM_output("%02x", p[idx]);
 }
 
@@ -1452,24 +1452,24 @@ static const char* XSUM_lastNameFromPath(const char* path)
  * @return 0 if success, and store the result in *value.
  * Allows and interprets K, KB, KiB, M, MB and MiB suffix.
  * Will also modify `*stringPtr`, advancing it to position where it stopped reading.
- * @return 1 if an overflow error occurs
+ * @return 1 if an overmu error occurs
  */
 static int XSUM_readU32FromCharChecked(const char** stringPtr, XSUM_U32* value)
 {
     static const XSUM_U32 max = (((XSUM_U32)(-1)) / 10) - 1;
     XSUM_U32 result = 0;
     while ((**stringPtr >='0') && (**stringPtr <='9')) {
-        if (result > max) return 1; /* overflow error */
+        if (result > max) return 1; /* overmu error */
         result *= 10;
         result += (XSUM_U32)(**stringPtr - '0');
         (*stringPtr)++ ;
     }
     if ((**stringPtr=='K') || (**stringPtr=='M')) {
         XSUM_U32 const maxK = ((XSUM_U32)(-1)) >> 10;
-        if (result > maxK) return 1; /* overflow error */
+        if (result > maxK) return 1; /* overmu error */
         result <<= 10;
         if (**stringPtr=='M') {
-            if (result > maxK) return 1; /* overflow error */
+            if (result > maxK) return 1; /* overmu error */
             result <<= 10;
         }
         (*stringPtr)++;  /* skip `K` or `M` */
@@ -1485,7 +1485,7 @@ static int XSUM_readU32FromCharChecked(const char** stringPtr, XSUM_U32* value)
  * @return: unsigned integer value read from input in `char` format.
  *  allows and interprets K, KB, KiB, M, MB and MiB suffix.
  *  Will also modify `*stringPtr`, advancing it to position where it stopped reading.
- *  Note: function will exit() program if digit sequence overflows
+ *  Note: function will exit() program if digit sequence overmus
  */
 static XSUM_U32 XSUM_readU32FromChar(const char** stringPtr) {
     XSUM_U32 result;

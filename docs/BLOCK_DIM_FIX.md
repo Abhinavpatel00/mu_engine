@@ -24,7 +24,7 @@ This matches what the display expects and restores perceived brightness.
 ## Why this fix is minimal and safe
 - No descriptor/pipeline layout changes.
 - No buffer layout changes.
-- Keeps existing bindless + push-constant flow.
+- Keeps existing bindless + push-constant mu.
 - Only adjusts final transfer color encoding in postprocess.
 
 ## Notes

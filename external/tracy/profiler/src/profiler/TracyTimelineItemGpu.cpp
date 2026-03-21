@@ -115,11 +115,11 @@ void TimelineItemGpu::HeaderTooltip( const char* label ) const
     {
         TextFocused( "Timestamp accuracy:", TimeToString( m_gpu->period ) );
     }
-    if( m_gpu->overflow != 0 )
+    if( m_gpu->overmu != 0 )
     {
         ImGui::Separator();
-        ImGui::TextUnformatted( "GPU timer overflow has been detected." );
-        TextFocused( "Timer resolution:", RealToString( 63 - TracyLzcnt( m_gpu->overflow ) ) );
+        ImGui::TextUnformatted( "GPU timer overmu has been detected." );
+        TextFocused( "Timer resolution:", RealToString( 63 - TracyLzcnt( m_gpu->overmu ) ) );
         ImGui::SameLine();
         TextDisabledUnformatted( "bits" );
     }

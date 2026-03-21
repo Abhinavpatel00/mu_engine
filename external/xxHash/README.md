@@ -16,8 +16,8 @@ Additional tests, which evaluate more thoroughly speed and collision properties 
 
 |Branch      |Status   |
 |------------|---------|
-|release     | [![Build Status](https://github.com/Cyan4973/xxHash/actions/workflows/ci.yml/badge.svg?branch=release)](https://github.com/Cyan4973/xxHash/actions?query=branch%3Arelease+) |
-|dev         | [![Build Status](https://github.com/Cyan4973/xxHash/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/Cyan4973/xxHash/actions?query=branch%3Adev+) |
+|release     | [![Build Status](https://github.com/Cyan4973/xxHash/actions/workmus/ci.yml/badge.svg?branch=release)](https://github.com/Cyan4973/xxHash/actions?query=branch%3Arelease+) |
+|dev         | [![Build Status](https://github.com/Cyan4973/xxHash/actions/workmus/ci.yml/badge.svg?branch=dev)](https://github.com/Cyan4973/xxHash/actions?query=branch%3Adev+) |
 
 
 Benchmarks

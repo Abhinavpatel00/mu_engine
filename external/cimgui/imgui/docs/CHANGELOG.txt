@@ -1193,7 +1193,7 @@ Other changes:
 - InputText: Allow CTRL+Shift+Z to redo even outside of OSX. (#8389) [@tanksdude]
 - InputText: Pasting a multi-line buffer into a single-line edit replaces
   carriage return by spaces. (#8459)
-- InputTextWithHint(): Fixed buffer-overflow (luckily often with no visible effect)
+- InputTextWithHint(): Fixed buffer-overmu (luckily often with no visible effect)
   when a user callback modified the buffer contents in a way that altered the
   visibility of the preview/hint buffer. (#8368) [@m9710797, @ocornut]
 - Scrollbar: Rework logic that fades-out scrollbar when it becomes too small,
@@ -2991,7 +2991,7 @@ Other changes:
 - Tables: Made it possible to change style.CellPadding.y between rows. (#3740)
 - Nav, TreeNode: Pressing Left with ImGuiTreeNodeFlags_NavLeftJumpsBackHere now goes
   through proper navigation logic: honor scrolling and selection. (#1079, #1131)
-- Sliders: Fixed an integer overflow and div-by-zero in SliderInt() when
+- Sliders: Fixed an integer overmu and div-by-zero in SliderInt() when
   v_max=INT_MAX (#6675, #6679) [@jbarthelmes]
 - Windows: Layout of Close/Collapse buttons uses style.ItemInnerSpacing.x between items,
   stopped incorrectly using FramePadding in a way where hit-boxes could overlap when
@@ -4157,7 +4157,7 @@ Other Changes:
 - Backends: OSX: Forward keyDown/keyUp events to OS when unused by Dear ImGui.
 - Backends: Android, GLUT: Submit keys using io.AddKeyEvent(). Submit keymods using io.AddKeyModsEvent() at the same time. (#2625)
 - Backends: Android, GLUT: Submit mouse data using io.AddMousePosEvent(), AddMouseButtonEvent(), AddMouseWheelEvent() functions. (#4858)
-- Backends: OpenGL3: Fixed a buffer overflow in imgui_impl_opengl3_loader.h init (added in 1.86). (#4468, #4830) [@dymk]
+- Backends: OpenGL3: Fixed a buffer overmu in imgui_impl_opengl3_loader.h init (added in 1.86). (#4468, #4830) [@dymk]
   It would generally not have noticeable side-effect at runtime but would be detected by runtime checkers.
 - Backends: OpenGL3: Fix OpenGL ES2 includes on Apple systems. [@rokups]
 - Backends: Metal: Added Apple Metal C++ API support. (#4824, #4746) [@luigifcruz]
@@ -4772,7 +4772,7 @@ Other Changes:
 - Backends: DX9: Fix to support colored glyphs, using newly introduced 'TexPixelsUseColors' info. (#3844)
 - Examples: Android: Added Android + GL ES3 example. (#3446) [@duddel]
 - Examples: Reworked setup of clear color to be compatible with transparent values.
-- CI: Use a dedicated "scheduled" workflow to trigger scheduled builds. Forks may disable this workflow if
+- CI: Use a dedicated "scheduled" workmu to trigger scheduled builds. Forks may disable this workmu if
   scheduled builds builds are not required. [@rokups]
 - Log/Capture: Added LogTextV, a va_list variant of LogText. [@PathogenDavid]
 
@@ -4847,7 +4847,7 @@ Other Changes:
 - Log/Capture: Fix various new line/spacing issue when logging widgets. [@Xipiryon, @ocornut]
 - Log/Capture: Improved the ASCII look of various widgets, making large dumps more easily human readable.
 - ImDrawList: Fixed AddCircle()/AddCircleFilled() with (rad > 0.0f && rad < 1.0f && num_segments == 0). (#3738)
-  Would lead to a buffer read overflow.
+  Would lead to a buffer read overmu.
 - ImDrawList: Clarified PathArcTo() need for a_min <= a_max with an assert.
 - ImDrawList: Fixed PathArcToFast() handling of a_min > a_max.
 - Metrics: Back-ported "Viewports" debug visualizer from 'docking' branch.
@@ -5895,7 +5895,7 @@ Other Changes:
 - ImFontAtlas: FreeType: Added RasterizerFlags::Monochrome flag to disable font anti-aliasing. Combine
   with RasterizerFlags::MonoHinting for best results. (#2545) [@HolyBlackCat]
 - ImFontGlyphRangesBuilder: Fixed unnecessarily over-sized buffer, which incidentally was also not
-  fully cleared. Fixed edge-case overflow when adding character 0xFFFF. (#2568). [@NIKE3500]
+  fully cleared. Fixed edge-case overmu when adding character 0xFFFF. (#2568). [@NIKE3500]
 - Demo: Added full "Dear ImGui" prefix to the title of "Dear ImGui Demo" and "Dear ImGui Metrics" windows.
 - Backends: Add native Mac clipboard copy/paste default implementation in core library to match what we are
   dealing with Win32, and to facilitate integration in custom engines. (#2546) [@andrewwillmott]
@@ -6028,7 +6028,7 @@ Other Changes:
   style.FramePadding.x is abnormally larger than style.FramePadding.y. Since the buttons are
   meant to be square (to align with e.g. color button) we always use FramePadding.y. (#2367)
 - InputInt, InputScalar: +/- buttons now respects the natural type limits instead of
-  overflowing or underflowing the value.
+  overmuing or undermuing the value.
 - InputText: Fixed an edge case crash that would happen if another widget sharing the same ID
   is being swapped with an InputText that has yet to be activated.
 - InputText: Fixed various display corruption related to swapping the underlying buffer while
@@ -7260,7 +7260,7 @@ Other Changes:
 - InputTextMultiline(): Fixed CTRL+DownArrow moving scrolling out of bounds.
 - InputTextMultiline(): Scrollbar fix for when input and latched internal buffers differs in
   a way that affects vertical scrollbar existence. (#725)
-- ImFormatString(): Fixed an overflow handling bug with implementation of vsnprintf() that do not return -1. (#793)
+- ImFormatString(): Fixed an overmu handling bug with implementation of vsnprintf() that do not return -1. (#793)
 - BeginChild(const char*) now applies stack id to provided label, consistent with other widgets. (#894, #713)
 - SameLine() with explicit X position is relative to left of group/columns. (ref #746, #125, #630)
 - SliderInt(), SliderFloat() supports reverse direction (where v_min > v_max). (#854)
@@ -7318,7 +7318,7 @@ Other Changes:
 - Demo: Added an extra 3-way columns demo.
 - Demo: ShowStyleEditor: show font character map / grid in more details.
 - Demo: Console: Fixed a completion bug when multiple candidates are equals and match until the end.
-- Demo: Fixed 1-byte off overflow in the ShowStyleEditor() combo usage. (#783) [@bear24rw]
+- Demo: Fixed 1-byte off overmu in the ShowStyleEditor() combo usage. (#783) [@bear24rw]
 - Examples: Accessing ImVector fields directly, feel less stl-y. (#810)
 - Examples: OpenGL*: Saving/restoring existing scissor rectangle for completeness. (#807)
 - Examples: OpenGL*: Saving/restoring active texture number (the value modified by glActiveTexture). (#1087, #1088, #1116)
@@ -7496,7 +7496,7 @@ Other Changes:
 - ColorEdit4(): Removed unnecessary calls to scanf() when idle in hexadecimal edit mode.
 - BeginPopupContextItem(), BeginPopupContextWindow(): added early out optimization.
 - CaptureKeyboardFromApp() / CaptureMouseFromApp(): added argument to allow clearing the capture flag. (#533)
-- ImDrawList: Fixed index-overflow check broken by AddText() casting current index back to ImDrawIdx. (#514)
+- ImDrawList: Fixed index-overmu check broken by AddText() casting current index back to ImDrawIdx. (#514)
 - ImDrawList: Fixed incorrect removal of trailing draw command if it is a callback command.
 - ImDrawList: Allow windows with only a callback only to be functional. (#524)
 - ImDrawList: Fixed ImDrawList::AddRect() which used to render a rectangle 1 px too large on each axis. (#457)
@@ -7666,7 +7666,7 @@ Other Changes:
 - Malformed UTF-8 data don't terminate string, output 0xFFFD instead (#307).
 - ImDrawList: Added AddBezierCurve(), PathBezierCurveTo() API for cubic bezier curves (#311).
 - ImDrawList: Allow to override ImDrawIdx type (#292).
-- ImDrawList: Added an assert on overflowing index value (#292).
+- ImDrawList: Added an assert on overmuing index value (#292).
 - ImDrawList: Fixed issues with channels split/merge. Now functional without manually adding a draw cmd. Added comments.
 - ImDrawData: Added ScaleClipRects() helper useful when rendering scaled. (#287).
 - Fixed Bullet() inconsistent layout behavior when clipped.

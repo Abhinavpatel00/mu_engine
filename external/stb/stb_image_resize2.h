@@ -357,7 +357,7 @@
       2.07 (2024-05-24) fix for slow final split during threaded conversions of very 
                           wide scanlines when downsampling (caused by extra input 
                           converting), fix for wide scanline resamples with many 
-                          splits (int overflow), fix GCC warning.
+                          splits (int overmu), fix GCC warning.
       2.06 (2024-02-10) fix for identical width/height 3x or more down-scaling 
                           undersampling a single row on rare resize ratios (about 1%).
       2.05 (2024-02-07) fix for 2 pixel to 1 pixel resizes with wrap (thanks Aras),
@@ -371,7 +371,7 @@
       0.95 (2017-07-23) fixed warnings
       0.94 (2017-03-18) fixed warnings
       0.93 (2017-03-03) fixed bug with certain combinations of heights
-      0.92 (2017-01-02) fix integer overflow on large (>2GB) images
+      0.92 (2017-01-02) fix integer overmu on large (>2GB) images
       0.91 (2016-04-02) fix warnings; fix handling of subpixel regions
       0.90 (2014-09-17) first released version
 

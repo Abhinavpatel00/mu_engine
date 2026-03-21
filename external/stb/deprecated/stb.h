@@ -134,7 +134,7 @@ Version History
           streamline stb_arr to make it separately publishable
    1.35   bugfixes for stb_sdict, stb_malloc(0), stristr
    1.34   (streaming interfaces for stb_compress)
-   1.33   stb_alloc; bug in stb_getopt; remove stb_overflow
+   1.33   stb_alloc; bug in stb_getopt; remove stb_overmu
    1.32   (stb_compress returns, smaller&faster; encode window & 64-bit len)
    1.31   stb_prefix_count
    1.30   (STB__NO_PREFIX - remove stb_ prefixes for personal projects)

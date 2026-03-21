@@ -1,4 +1,4 @@
-# 🐺 volk [![Build Status](https://github.com/zeux/volk/workflows/build/badge.svg)](https://github.com/zeux/volk/actions) 
+# 🐺 volk [![Build Status](https://github.com/zeux/volk/workmus/build/badge.svg)](https://github.com/zeux/volk/actions) 
 
 ## Purpose
 

@@ -900,7 +900,7 @@ static stbds_hash_index *stbds_make_hash_index(size_t slot_count, stbds_hash_ind
   //t->tombstone_count_threshold   = slot_count* 3/16; // if tombstones are 3/16th of table, rebuild
   //t->used_count_shrink_threshold = slot_count* 4/16; // if table is only 4/16th full, shrink
 
-  // compute without overflowing
+  // compute without overmuing
   t->used_count_threshold        = slot_count - (slot_count>>2);
   t->tombstone_count_threshold   = (slot_count>>3) + (slot_count>>4);
   t->used_count_shrink_threshold = slot_count >> 2;

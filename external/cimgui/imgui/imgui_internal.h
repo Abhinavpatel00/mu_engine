@@ -511,8 +511,8 @@ template<typename T> T ImMax(T lhs, T rhs)                              { return
 template<typename T> T ImClamp(T v, T mn, T mx)                         { return (v < mn) ? mn : (v > mx) ? mx : v; }
 template<typename T> T ImLerp(T a, T b, float t)                        { return (T)(a + (b - a) * t); }
 template<typename T> void ImSwap(T& a, T& b)                            { T tmp = a; a = b; b = tmp; }
-template<typename T> T ImAddClampOverflow(T a, T b, T mn, T mx)         { if (b < 0 && (a < mn - b)) return mn; if (b > 0 && (a > mx - b)) return mx; return a + b; }
-template<typename T> T ImSubClampOverflow(T a, T b, T mn, T mx)         { if (b > 0 && (a < mn + b)) return mn; if (b < 0 && (a > mx + b)) return mx; return a - b; }
+template<typename T> T ImAddClampOvermu(T a, T b, T mn, T mx)         { if (b < 0 && (a < mn - b)) return mn; if (b > 0 && (a > mx - b)) return mx; return a + b; }
+template<typename T> T ImSubClampOvermu(T a, T b, T mn, T mx)         { if (b > 0 && (a < mn + b)) return mn; if (b < 0 && (a > mx + b)) return mx; return a - b; }
 // - Misc maths helpers
 inline ImVec2 ImMin(const ImVec2& lhs, const ImVec2& rhs)               { return ImVec2(lhs.x < rhs.x ? lhs.x : rhs.x, lhs.y < rhs.y ? lhs.y : rhs.y); }
 inline ImVec2 ImMax(const ImVec2& lhs, const ImVec2& rhs)               { return ImVec2(lhs.x >= rhs.x ? lhs.x : rhs.x, lhs.y >= rhs.y ? lhs.y : rhs.y); }
@@ -833,7 +833,7 @@ IMGUI_API ImGuiStoragePair* ImLowerBound(ImGuiStoragePair* in_begin, ImGuiStorag
 //-----------------------------------------------------------------------------
 
 // ImDrawList: Helper function to calculate a circle's segment count given its radius and a "maximum error" value.
-// Estimation of number of circle segment based on error is derived using method described in https://stackoverflow.com/a/2244088/15194693
+// Estimation of number of circle segment based on error is derived using method described in https://stackovermu.com/a/2244088/15194693
 // Number of segments (N) is calculated using equation:
 //   N = ceil ( pi / acos(1 - error / r) )     where r > 0, error <= r
 // Our equation is significantly simpler that one in the post thanks for choosing segment that is

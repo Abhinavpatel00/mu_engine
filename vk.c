@@ -1,5 +1,4 @@
 #include "vk.h"
-#include "flow/flow.h"
 #include "tinytypes.h"
 #include <assert.h>
 #include <signal.h>
@@ -24,9 +23,9 @@
 // But arrays need full struct size, so forward declarations don't work.
 
 
-flow_id_pool      pipeline_id_pool                = {0};
-flow_id_pool      texture_pool                    = {0};
-flow_id_pool      sampler_pool                    = {0};
+mu_id_pool      pipeline_id_pool                = {0};
+mu_id_pool      texture_pool                    = {0};
+mu_id_pool      sampler_pool                    = {0};
 Texture           textures[MAX_BINDLESS_TEXTURES] = {0};  // reference by textureid
 VkSampler         samplers[MAX_BINDLESS_SAMPLERS] = {0};  // reference by samplerid
 RendererPipelines g_render_pipelines              = {0};
@@ -881,7 +880,7 @@ void renderer_create(Renderer* r, RendererDesc* desc)
         VkApplicationInfo app = {.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO,
                                  .pApplicationName   = desc->app_name,
                                  .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-                                 .pEngineName        = "FLOW",
+                                 .pEngineName        = "MU",
                                  .engineVersion      = VK_MAKE_VERSION(1, 0, 0),
                                  .apiVersion         = VK_API_VERSION_1_3
 
@@ -1202,11 +1201,11 @@ void renderer_create(Renderer* r, RendererDesc* desc)
     log_info("[renderer] initialization complete");
 
 
-    flow_id_pool_init(&texture_pool, MAX_BINDLESS_TEXTURES);
+    mu_id_pool_init(&texture_pool, MAX_BINDLESS_TEXTURES);
 
-    flow_id_pool_init(&sampler_pool, MAX_BINDLESS_SAMPLERS);
+    mu_id_pool_init(&sampler_pool, MAX_BINDLESS_SAMPLERS);
 
-    flow_id_pool_init(&pipeline_id_pool, MAX_PIPELINES);
+    mu_id_pool_init(&pipeline_id_pool, MAX_PIPELINES);
     vk_cmd_create_pool(r->device, r->graphics_queue_index, true, false, &r->one_time_gfx_pool);
 
     int fb_w, fb_h;
@@ -1998,11 +1997,11 @@ bool buffer_pool_init(Renderer* r,
 
     if(type == BUFFER_POOL_LINEAR)
     {
-        flow_linear_init(&pool->linear, pool->mapped, (uint32_t)size_bytes);
+        mu_linear_init(&pool->linear, pool->mapped, (uint32_t)size_bytes);
     }
     else if(type == BUFFER_POOL_RING)
     {
-        flow_ring_init(&pool->ring, pool->mapped, (uint32_t)size_bytes);
+        mu_ring_init(&pool->ring, pool->mapped, (uint32_t)size_bytes);
     }
     else if(type == BUFFER_POOL_TLSF)
     {
@@ -2030,7 +2029,7 @@ void buffer_pool_linear_reset(BufferPool* pool)
 {
     if(pool->type == BUFFER_POOL_LINEAR)
     {
-        flow_linear_reset(&pool->linear);
+        mu_linear_reset(&pool->linear);
     }
 }
 
@@ -2038,7 +2037,7 @@ void buffer_pool_ring_free_to(BufferPool* pool, uint32_t offset)
 {
     if(pool->type == BUFFER_POOL_RING)
     {
-        flow_ring_free_to(&pool->ring, offset);
+        mu_ring_free_to(&pool->ring, offset);
     }
 }
 BufferSlice buffer_pool_alloc(BufferPool* pool, VkDeviceSize size_bytes, VkDeviceSize alignment)
@@ -2062,7 +2061,7 @@ BufferSlice buffer_pool_alloc(BufferPool* pool, VkDeviceSize size_bytes, VkDevic
     switch(pool->type)
     {
         case BUFFER_POOL_LINEAR: {
-            void* ptr = flow_linear_alloc(&pool->linear, size, align);
+            void* ptr = mu_linear_alloc(&pool->linear, size, align);
             if(!ptr)
                 return slice;
 
@@ -2071,7 +2070,7 @@ BufferSlice buffer_pool_alloc(BufferPool* pool, VkDeviceSize size_bytes, VkDevic
         break;
 
         case BUFFER_POOL_RING: {
-            void* ptr = flow_ring_alloc(&pool->ring, size, align, &offset);
+            void* ptr = mu_ring_alloc(&pool->ring, size, align, &offset);
             if(!ptr)
                 return slice;
         }
@@ -2320,7 +2319,7 @@ void vk_create_swapchain(VkDevice                       device,
         out_swapchain->states[i] =
             (ImageState){.layout = VK_IMAGE_LAYOUT_UNDEFINED, .stage = VK_PIPELINE_STAGE_2_NONE, .access = 0, .validity = IMAGE_STATE_UNDEFINED};
 
-        flow_id_pool_create_id(&texture_pool, &out_swapchain->bindless_index[i]);
+        mu_id_pool_create_id(&texture_pool, &out_swapchain->bindless_index[i]);
 
         if(info->extra_usage & VK_IMAGE_USAGE_SAMPLED_BIT)
         {
@@ -2360,14 +2359,14 @@ void vk_create_swapchain(VkDevice                       device,
 }
 
 
-void vk_swapchain_destroy(VkDevice device, FlowSwapchain* swapchain, flow_id_pool* id_pool)
+void vk_swapchain_destroy(VkDevice device, FlowSwapchain* swapchain, mu_id_pool* id_pool)
 {
     if(!swapchain)
         return;
 
     forEach(i, swapchain->image_count)
     {
-        flow_id_pool_destroy_id(id_pool, swapchain->bindless_index[i]);
+        mu_id_pool_destroy_id(id_pool, swapchain->bindless_index[i]);
         if(swapchain->image_views[i] != VK_NULL_HANDLE)
         {
             vkDestroyImageView(device, swapchain->image_views[i], NULL);
@@ -3152,7 +3151,7 @@ void destroy_buffer(Renderer* r, Buffer* b)
 
     memset(b, 0, sizeof(*b));
 }
-static FLOW_INLINE VkImageAspectFlags get_image_aspect(VkFormat format)
+static MU_INLINE VkImageAspectFlags get_image_aspect(VkFormat format)
 {
     switch(format)
     {
@@ -3173,7 +3172,7 @@ TextureID create_texture(Renderer* r, const TextureCreateDesc* desc)
 {
     TextureID id;
 
-    if(!flow_id_pool_create_id(&texture_pool, &id))
+    if(!mu_id_pool_create_id(&texture_pool, &id))
     {
         fprintf(stderr, "Texture pool exhausted\n");
         return UINT32_MAX;
@@ -3284,7 +3283,7 @@ void destroy_texture(Renderer* r, TextureID id)
         vmaDestroyImage(r->vmaallocator, tex->image, tex->allocation);
 
     memset(tex, 0, sizeof(*tex));
-    flow_id_pool_destroy_id(&texture_pool, id);
+    mu_id_pool_destroy_id(&texture_pool, id);
 }
 
 #define DDSKTX_IMPLEMENT
@@ -3500,7 +3499,7 @@ SamplerID create_sampler(Renderer* r, const SamplerCreateDesc* desc)
 {
     SamplerID id;
 
-    if(!flow_id_pool_create_id(&sampler_pool, &id))
+    if(!mu_id_pool_create_id(&sampler_pool, &id))
     {
         fprintf(stderr, "Sampler pool exhausted\n");
         return UINT32_MAX;
@@ -3550,7 +3549,7 @@ void destroy_sampler(Renderer* r, SamplerID id)
 
     samplers[id] = VK_NULL_HANDLE;
 
-    flow_id_pool_destroy_id(&sampler_pool, id);
+    mu_id_pool_destroy_id(&sampler_pool, id);
 }
 
 
@@ -3693,7 +3692,7 @@ bool rt_create(Renderer* r, RenderTarget* rt, const RenderTargetSpec* spec)
 
     uint32_t id;
 
-    if(!flow_id_pool_create_id(&texture_pool, &id))
+    if(!mu_id_pool_create_id(&texture_pool, &id))
     {
         fprintf(stderr, "Texture pool exhausted\n");
         return UINT32_MAX;
@@ -3780,7 +3779,7 @@ void rt_destroy(Renderer* r, RenderTarget* rt)
             vkUpdateDescriptorSets(r->device, 1, &write, 0, NULL);
         }
 
-        flow_id_pool_destroy_id(&texture_pool, id);
+        mu_id_pool_destroy_id(&texture_pool, id);
     }
 
     if(rt->view)
@@ -3870,11 +3869,11 @@ PipelineID pipeline_create_compute(Renderer* r, const char* path)
 
 
     u32 id;
-    flow_id_pool_create_id(&pipeline_id_pool, &id);
+    mu_id_pool_create_id(&pipeline_id_pool, &id);
 
     if(id >= MAX_PIPELINES)
     {
-        printf("Pipeline overflow\n");
+        printf("Pipeline overmu\n");
         debug_break();
     }
 
@@ -3895,7 +3894,7 @@ PipelineID pipeline_create_compute(Renderer* r, const char* path)
 PipelineID pipeline_create_graphics(Renderer* r, GraphicsPipelineConfig* cfg)
 {
     u32 id;
-    flow_id_pool_create_id(&pipeline_id_pool, &id);
+    mu_id_pool_create_id(&pipeline_id_pool, &id);
 
     PipelineEntry* e = &g_render_pipelines.entries[id];
 
@@ -3984,7 +3983,7 @@ bool sampler_create(Renderer* r, const VkSamplerCreateInfo* ci, uint32_t* out_sa
         return false;
 
     uint32_t id;
-    if(!flow_id_pool_create_id(&sampler_pool, &id))
+    if(!mu_id_pool_create_id(&sampler_pool, &id))
     {
         vkDestroySampler(r->device, sampler, NULL);
         return false;

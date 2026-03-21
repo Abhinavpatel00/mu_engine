@@ -436,7 +436,7 @@ STBIDEF int      stbi_is_16_bit_from_file(FILE *f);
 
 // for image formats that explicitly notate that they have premultiplied alpha,
 // we just return the colors as stored in the file. set this flag to force
-// unpremultiplication. results are undefined if the unpremultiply overflow.
+// unpremultiplication. results are undefined if the unpremultiply overmu.
 STBIDEF void stbi_set_unpremultiply_on_load(int flag_true_if_should_unpremultiply);
 
 // indicate whether we should process iphone images back to canonical format,
@@ -865,46 +865,46 @@ static void *stbi__malloc(size_t size)
 // significant limitation for the intended use case.
 //
 // we do, however, need to make sure our size calculations don't
-// overflow. hence a few helper functions for size calculations that
+// overmu. hence a few helper functions for size calculations that
 // multiply integers together, making sure that they're non-negative
-// and no overflow occurs.
+// and no overmu occurs.
 
-// return 1 if the sum is valid, 0 on overflow.
+// return 1 if the sum is valid, 0 on overmu.
 // negative terms are considered invalid.
 static int stbi__addsizes_valid(int a, int b)
 {
    if (b < 0) return 0;
    // now 0 <= b <= INT_MAX, hence also
    // 0 <= INT_MAX - b <= INTMAX.
-   // And "a + b <= INT_MAX" (which might overflow) is the
-   // same as a <= INT_MAX - b (no overflow)
+   // And "a + b <= INT_MAX" (which might overmu) is the
+   // same as a <= INT_MAX - b (no overmu)
    return a <= INT_MAX - b;
 }
 
-// returns 1 if the product is valid, 0 on overflow.
+// returns 1 if the product is valid, 0 on overmu.
 // negative factors are considered invalid.
 static int stbi__mul2sizes_valid(int a, int b)
 {
    if (a < 0 || b < 0) return 0;
    if (b == 0) return 1; // mul-by-0 is always safe
-   // portable way to check for no overflows in a*b
+   // portable way to check for no overmus in a*b
    return a <= INT_MAX/b;
 }
 
-// returns 1 if "a*b + add" has no negative terms/factors and doesn't overflow
+// returns 1 if "a*b + add" has no negative terms/factors and doesn't overmu
 static int stbi__mad2sizes_valid(int a, int b, int add)
 {
    return stbi__mul2sizes_valid(a, b) && stbi__addsizes_valid(a*b, add);
 }
 
-// returns 1 if "a*b*c + add" has no negative terms/factors and doesn't overflow
+// returns 1 if "a*b*c + add" has no negative terms/factors and doesn't overmu
 static int stbi__mad3sizes_valid(int a, int b, int c, int add)
 {
    return stbi__mul2sizes_valid(a, b) && stbi__mul2sizes_valid(a*b, c) &&
       stbi__addsizes_valid(a*b*c, add);
 }
 
-// returns 1 if "a*b*c*d + add" has no negative terms/factors and doesn't overflow
+// returns 1 if "a*b*c*d + add" has no negative terms/factors and doesn't overmu
 #if !defined(STBI_NO_LINEAR) || !defined(STBI_NO_HDR)
 static int stbi__mad4sizes_valid(int a, int b, int c, int d, int add)
 {
@@ -913,7 +913,7 @@ static int stbi__mad4sizes_valid(int a, int b, int c, int d, int add)
 }
 #endif
 
-// mallocs with size overflow checking
+// mallocs with size overmu checking
 static void *stbi__malloc_mad2(int a, int b, int add)
 {
    if (!stbi__mad2sizes_valid(a, b, add)) return NULL;
@@ -3055,7 +3055,7 @@ static int stbi__process_frame_header(stbi__jpeg *z, int scan)
       // discard the extra data until colorspace conversion
       //
       // img_mcu_x, img_mcu_y: <=17 bits; comp[i].h and .v are <=4 (checked earlier)
-      // so these muls can't overflow with 32-bit ints (which we require)
+      // so these muls can't overmu with 32-bit ints (which we require)
       z->img_comp[i].w2 = z->img_mcu_x * z->img_comp[i].h * 8;
       z->img_comp[i].h2 = z->img_mcu_y * z->img_comp[i].v * 8;
       z->img_comp[i].coeff = 0;

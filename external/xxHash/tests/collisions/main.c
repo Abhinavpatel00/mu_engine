@@ -738,7 +738,7 @@ static size_t search_collisions(
     time_t const storeTBegin = time(NULL);
     size_t const hashByteSize = (htype == ht128) ? 16 : 8;
     size_t const tableSize = (size_t)((maxNbH+1) * hashByteSize);
-    assert(tableSize > maxNbH);  /* check tableSize calculation overflow */
+    assert(tableSize > maxNbH);  /* check tableSize calculation overmu */
     DISPLAY(" Storing hash candidates (%i MB) \n", (int)(tableSize >> 20));
 
     /* Generate and store hashes */

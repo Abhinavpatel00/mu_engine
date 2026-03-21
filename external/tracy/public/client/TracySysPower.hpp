@@ -20,7 +20,7 @@ class SysPower
     struct Domain
     {
         uint64_t value;
-        uint64_t overflow;
+        uint64_t overmu;
         FILE* handle;
         const char* name;
     };

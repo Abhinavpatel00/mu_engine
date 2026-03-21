@@ -439,7 +439,7 @@ static unsigned int getNeighborTriangle(const meshopt_Meshlet& meshlet, const Co
 			// artificially increase the priority of dangling triangles as they're expensive to add to new meshlets
 			else if (live_triangles[a] == 1 || live_triangles[b] == 1 || live_triangles[c] == 1)
 				priority = 1;
-			// if two vertices have live count of 2, removing this triangle will make another triangle dangling which is good for overall flow
+			// if two vertices have live count of 2, removing this triangle will make another triangle dangling which is good for overall mu
 			else if ((live_triangles[a] == 2) + (live_triangles[b] == 2) + (live_triangles[c] == 2) >= 2)
 				priority = 1 + extra;
 			// otherwise adjust priority to be after the above cases, 3 or 4 based on used[] count
@@ -1195,7 +1195,7 @@ size_t meshopt_buildMeshletsFlex(meshopt_Meshlet* meshlets, unsigned int* meshle
 	KDNode* nodes = allocator.allocate<KDNode>(face_count * 2);
 	kdtreeBuild(0, nodes, face_count * 2, &triangles[0].px, sizeof(Cone) / sizeof(float), kdindices, face_count, /* leaf_size= */ 8, 0);
 
-	// find a specific corner of the mesh to use as a starting point for meshlet flow
+	// find a specific corner of the mesh to use as a starting point for meshlet mu
 	float cornerx = FLT_MAX, cornery = FLT_MAX, cornerz = FLT_MAX;
 
 	for (size_t i = 0; i < face_count; ++i)
@@ -1229,7 +1229,7 @@ size_t meshopt_buildMeshletsFlex(meshopt_Meshlet* meshlets, unsigned int* meshle
 		}
 	}
 
-	// seed triangles to continue meshlet flow
+	// seed triangles to continue meshlet mu
 	unsigned int seeds[kMeshletMaxSeeds] = {};
 	size_t seed_count = 0;
 
@@ -1271,7 +1271,7 @@ size_t meshopt_buildMeshletsFlex(meshopt_Meshlet* meshlets, unsigned int* meshle
 
 		int best_extra = (used[indices[best_triangle * 3 + 0]] < 0) + (used[indices[best_triangle * 3 + 1]] < 0) + (used[indices[best_triangle * 3 + 2]] < 0);
 
-		// if the best triangle doesn't fit into current meshlet, we re-select using seeds to maintain global flow
+		// if the best triangle doesn't fit into current meshlet, we re-select using seeds to maintain global mu
 		if (split || (meshlet.vertex_count + best_extra > max_vertices || meshlet.triangle_count >= max_triangles))
 		{
 			seed_count = pruneSeedTriangles(seeds, seed_count, emitted_flags);
@@ -1708,7 +1708,7 @@ void meshopt_optimizeMeshlet(unsigned int* meshlet_vertices, unsigned char* mesh
 			assert(a < vertex_count && b < vertex_count && c < vertex_count);
 
 			// score each triangle by how many vertices are in cache
-			// note: the distance is computed using unsigned 8-bit values, so cache timestamp overflow is handled gracefully
+			// note: the distance is computed using unsigned 8-bit values, so cache timestamp overmu is handled gracefully
 			int aok = (unsigned char)(cache_last - cache[a]) < cache_cutoff;
 			int bok = (unsigned char)(cache_last - cache[b]) < cache_cutoff;
 			int cok = (unsigned char)(cache_last - cache[c]) < cache_cutoff;
@@ -1736,7 +1736,7 @@ void meshopt_optimizeMeshlet(unsigned int* meshlet_vertices, unsigned char* mesh
 		indices[i * 3 + 1] = b;
 		indices[i * 3 + 2] = c;
 
-		// cache timestamp is the same between all vertices of each triangle to reduce overflow
+		// cache timestamp is the same between all vertices of each triangle to reduce overmu
 		cache_last++;
 		cache[a] = cache_last;
 		cache[b] = cache_last;

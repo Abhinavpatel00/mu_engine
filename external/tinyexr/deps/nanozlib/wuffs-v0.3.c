@@ -323,8 +323,8 @@ wuffs_base__cpu_arch__have_x86_sse42() {
 // ---------------- Fundamentals
 
 // Wuffs assumes that:
-//  - converting a uint32_t to a size_t will never overflow.
-//  - converting a size_t to a uint64_t will never overflow.
+//  - converting a uint32_t to a size_t will never overmu.
+//  - converting a size_t to a uint64_t will never overmu.
 #if defined(__WORDSIZE)
 #if (__WORDSIZE != 32) && (__WORDSIZE != 64)
 #error "Wuffs requires a word size of either 32 or 64 bits"
@@ -919,7 +919,7 @@ wuffs_base__u64__rotate_right(uint64_t x, uint32_t n) {
 // are per https://locklessinc.com/articles/sat_arithmetic/
 //
 // It is important that the underlying types are unsigned integers, as signed
-// integer arithmetic overflow is undefined behavior in C.
+// integer arithmetic overmu is undefined behavior in C.
 
 static inline uint8_t  //
 wuffs_base__u8__sat_add(uint8_t x, uint8_t y) {
@@ -1756,10 +1756,10 @@ wuffs_base__table_u8__subtable_ij(wuffs_base__table_u8 t,
 // naive (height * stride = 30) computation. Indeed, advancing 29 elements from
 // the first 'i' would venture past 'z', out of bounds of the original table.
 //
-// It does not check for overflow, but if the arguments come from a table that
+// It does not check for overmu, but if the arguments come from a table that
 // exists in memory and each element occupies a positive number of bytes then
 // the result should be bounded by the amount of allocatable memory (which
-// shouldn't overflow SIZE_MAX).
+// shouldn't overmu SIZE_MAX).
 static inline size_t  //
 wuffs_base__table__flattened_length(size_t width,
                                     size_t height,
@@ -3673,7 +3673,7 @@ wuffs_base__token_buffer::writer_token_position() const {
 // You can pass the C stdlib's malloc as the malloc_func.
 //
 // It returns an empty slice (containing a NULL ptr field) if (num_uxx *
-// sizeof(uintxx_t)) would overflow SIZE_MAX.
+// sizeof(uintxx_t)) would overmu SIZE_MAX.
 
 static inline wuffs_base__slice_u8  //
 wuffs_base__malloc_slice_u8(void* (*malloc_func)(size_t), uint64_t num_u8) {
@@ -5312,7 +5312,7 @@ wuffs_base__pixel_swizzler::swizzle_interleaved_from_slice(
 // they are accepted.
 //
 // This affects the literal "inf" as input, but also affects inputs like
-// "1e999" that would overflow double-precision floating point.
+// "1e999" that would overmu double-precision floating point.
 #define WUFFS_BASE__PARSE_NUMBER_FXX__REJECT_INF_AND_NAN ((uint32_t)0x00000020)
 
 // --------
@@ -5487,7 +5487,7 @@ wuffs_base__ieee_754_bit_representation__from_u64_to_f64(uint64_t u) {
 // The options argument can change these, but by default, it:
 //  - Allows "inf", "+Infinity" and "-NAN", case insensitive. Similarly,
 //    without an explicit opt-out, it would successfully parse "1e999" as
-//    infinity, even though it overflows double-precision floating point.
+//    infinity, even though it overmus double-precision floating point.
 //  - Rejects underscores. With an explicit opt-in, "_3.141_592" would
 //    successfully parse as an approximation to π.
 //  - Rejects unnecessary leading zeroes: "00", "0644" and "00.7".
@@ -5503,7 +5503,7 @@ wuffs_base__parse_number_f64(wuffs_base__slice_u8 s, uint32_t options);
 // s contains the bytes "-123" then it will return the int64_t -123.
 //
 // It returns an error if s does not contain an integer or if the integer
-// within would overflow an int64_t.
+// within would overmu an int64_t.
 //
 // It is similar to wuffs_base__parse_number_u64 but it returns a signed
 // integer, not an unsigned integer. It also allows a leading '+' or '-'.
@@ -5518,7 +5518,7 @@ wuffs_base__parse_number_i64(wuffs_base__slice_u8 s, uint32_t options);
 // s contains the bytes "123" then it will return the uint64_t 123.
 //
 // It returns an error if s does not contain an integer or if the integer
-// within would overflow a uint64_t.
+// within would overmu a uint64_t.
 //
 // It is similar to the C standard library's strtoull function, but:
 //  - Errors are returned in-band (in a result type), not out-of-band (errno).
@@ -9832,7 +9832,7 @@ wuffs_base__private_implementation__high_prec_dec__lshift_num_new_digits(
     wuffs_base__private_implementation__high_prec_dec* h,
     uint32_t shift) {
   // Masking with 0x3F should be unnecessary (assuming the preconditions) but
-  // it's cheap and ensures that we don't overflow the
+  // it's cheap and ensures that we don't overmu the
   // wuffs_base__private_implementation__hpd_left_shift array.
   shift &= 63;
 
@@ -10369,10 +10369,10 @@ wuffs_base__private_implementation__parse_number_f64_eisel_lemire(
   // Before we shift right by at least 9 bits, recall that the look-up table
   // entry was possibly truncated. We have so far only calculated a lower bound
   // for the product (man * e), where e is (10 ** exp10). The upper bound would
-  // add a further (man * 1) to the 128-bit product, which overflows the lower
+  // add a further (man * 1) to the 128-bit product, which overmus the lower
   // 64-bit limb if ((x_lo + man) < man).
   //
-  // If overflow occurs, that adds 1 to x_hi. Since we're about to shift right
+  // If overmu occurs, that adds 1 to x_hi. Since we're about to shift right
   // by at least 9 bits, that carried 1 can be ignored unless the higher 64-bit
   // limb's low 9 bits are all on.
   //
@@ -10404,7 +10404,7 @@ wuffs_base__private_implementation__parse_number_f64_eisel_lemire(
     uint64_t merged_hi = x_hi;
     uint64_t merged_lo = x_lo + y_hi;
     if (merged_lo < x_lo) {
-      merged_hi++;  // Carry the overflow bit.
+      merged_hi++;  // Carry the overmu bit.
     }
 
     // The "high resolution" approximation of e is still a lower bound. Once
@@ -10414,7 +10414,7 @@ wuffs_base__private_implementation__parse_number_f64_eisel_lemire(
     //
     // This three-part check is similar to the two-part check that guarded the
     // if block that we're now in, but it has an extra term for the middle 64
-    // bits (checking that adding 1 to merged_lo would overflow).
+    // bits (checking that adding 1 to merged_lo would overmu).
     //
     // For example, parsing "5.9604644775390625e-8" will take the if-true
     // branch here, since:
@@ -10460,14 +10460,14 @@ wuffs_base__private_implementation__parse_number_f64_eisel_lemire(
   // If we're not halfway then it's rounding to-nearest. Starting with a 54-bit
   // number, carry the lowest bit (bit 0) up if it's on. Regardless of whether
   // it was on or off, shifting right by one then produces a 53-bit number. If
-  // carrying up overflowed, shift again.
+  // carrying up overmued, shift again.
   ret_mantissa += ret_mantissa & 1;
   ret_mantissa >>= 1;
   // This if block is equivalent to (but benchmarks slightly faster than) the
   // following branchless form:
-  //    uint64_t overflow_adjustment = ret_mantissa >> 53;
-  //    ret_mantissa >>= overflow_adjustment;
-  //    ret_exp2 += overflow_adjustment;
+  //    uint64_t overmu_adjustment = ret_mantissa >> 53;
+  //    ret_mantissa >>= overmu_adjustment;
+  //    ret_exp2 += overmu_adjustment;
   //
   // For example, parsing "7.2057594037927933e+16" will take the if-true
   // branch here, since:
@@ -10763,7 +10763,7 @@ wuffs_base__private_implementation__high_prec_dec__to_f64(
       exp2 += (int32_t)n;
     }
 
-    // Check for overflow.
+    // Check for overmu.
     if ((exp2 - f64_bias) >= 0x07FF) {  // (1 << 11) - 1.
       goto infinity;
     }
@@ -10774,7 +10774,7 @@ wuffs_base__private_implementation__high_prec_dec__to_f64(
     uint64_t man2 =
         wuffs_base__private_implementation__high_prec_dec__rounded_integer(h);
 
-    // Rounding might have added one bit. If so, shift and re-check overflow.
+    // Rounding might have added one bit. If so, shift and re-check overmu.
     if ((man2 >> 53) != 0) {
       man2 >>= 1;
       exp2++;
@@ -10885,7 +10885,7 @@ wuffs_base__parse_number_f64(wuffs_base__slice_u8 s, uint32_t options) {
     // it must be a single '0'. If it starts with a non-zero decimal digit, it
     // can be a sequence of decimal digits.
     //
-    // Update the man variable during the walk. It's OK if man overflows now.
+    // Update the man variable during the walk. It's OK if man overmus now.
     // We'll detect that later.
     uint64_t man;
     if (*p == '0') {
@@ -10948,7 +10948,7 @@ wuffs_base__parse_number_f64(wuffs_base__slice_u8 s, uint32_t options) {
       }
       int32_t exp_num = ((uint8_t)(*p - '0'));
       p++;
-      // The rest of the exp_num walking has a peculiar control flow but, once
+      // The rest of the exp_num walking has a peculiar control mu but, once
       // again, the "script/process-json-numbers.c with -p" benchmark is
       // sensitive to alternative formulations.
       if (wuffs_base__private_implementation__is_decimal_digit(*p)) {
@@ -10975,7 +10975,7 @@ wuffs_base__parse_number_f64(wuffs_base__slice_u8 s, uint32_t options) {
       goto fallback;
     }
 
-    // Check that the uint64_t typed man variable has not overflowed, based on
+    // Check that the uint64_t typed man variable has not overmued, based on
     // digit_count.
     //
     // For reference:
@@ -10987,7 +10987,7 @@ wuffs_base__parse_number_f64(wuffs_base__slice_u8 s, uint32_t options) {
     //     bits and 17 hexadecimal digits.
     if (digit_count > 19) {
       // Even if we have more than 19 pseudo-digits, it's not yet definitely an
-      // overflow. Recall that digit_count might be off-by-one (too large) if
+      // overmu. Recall that digit_count might be off-by-one (too large) if
       // there's a decimal separator. It will also over-report the number of
       // meaningful digits if the input looks something like "0.000dddExxx".
       //
@@ -22397,42 +22397,3 @@ wuffs_zlib__decoder__do_transform_io(
       }
       if ( ! self->private_impl.f_ignore_checksum && (v_checksum_got != v_checksum_want)) {
         status = wuffs_base__make_status(wuffs_zlib__error__bad_checksum);
-        goto exit;
-      }
-    }
-
-    ok:
-    self->private_impl.p_do_transform_io[0] = 0;
-    goto exit;
-  }
-
-  goto suspend;
-  suspend:
-  self->private_impl.p_do_transform_io[0] = wuffs_base__status__is_suspension(&status) ? coro_susp_point : 0;
-  self->private_data.s_do_transform_io[0].v_checksum_got = v_checksum_got;
-
-  goto exit;
-  exit:
-  if (a_dst && a_dst->data.ptr) {
-    a_dst->meta.wi = ((size_t)(iop_a_dst - a_dst->data.ptr));
-  }
-  if (a_src && a_src->data.ptr) {
-    a_src->meta.ri = ((size_t)(iop_a_src - a_src->data.ptr));
-  }
-
-  return status;
-}
-
-#endif  // !defined(WUFFS_CONFIG__MODULES) || defined(WUFFS_CONFIG__MODULE__ZLIB)
-
-
-
-#endif  // WUFFS_IMPLEMENTATION
-
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#elif defined(__clang__)
-#pragma clang diagnostic pop
-#endif
-
-#endif  // WUFFS_INCLUDE_GUARD

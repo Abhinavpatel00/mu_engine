@@ -20,10 +20,10 @@ unsigned short meshopt_quantizeHalf(float v)
 	// bias exponent and round to nearest; 112 is relative exponent bias (127-15)
 	int h = (em - (112 << 23) + (1 << 12)) >> 13;
 
-	// underflow: flush to zero; 113 encodes exponent -14
+	// undermu: flush to zero; 113 encodes exponent -14
 	h = (em < (113 << 23)) ? 0 : h;
 
-	// overflow: infinity; 143 encodes exponent 16
+	// overmu: infinity; 143 encodes exponent 16
 	h = (em >= (143 << 23)) ? 0x7c00 : h;
 
 	// NaN; note that we convert all types of NaN to qNaN
@@ -45,7 +45,7 @@ float meshopt_quantizeFloat(float v, int N)
 	int e = ui & 0x7f800000;
 	unsigned int rui = (ui + round) & ~mask;
 
-	// round all numbers except inf/nan; this is important to make sure nan doesn't overflow into -0
+	// round all numbers except inf/nan; this is important to make sure nan doesn't overmu into -0
 	ui = e == 0x7f800000 ? ui : rui;
 
 	// flush denormals to zero

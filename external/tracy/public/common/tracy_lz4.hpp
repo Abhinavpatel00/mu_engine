@@ -185,7 +185,7 @@ LZ4LIB_API const char* LZ4_versionString (void);   /**< library version string; 
  *      dstCapacity : size of buffer 'dst' (which must be already allocated)
  *     @return  : the number of bytes written into buffer 'dst' (necessarily <= dstCapacity)
  *                or 0 if compression fails
- * Note : This function is protected against buffer overflow scenarios (never writes outside 'dst' buffer, nor read outside 'source' buffer).
+ * Note : This function is protected against buffer overmu scenarios (never writes outside 'dst' buffer, nor read outside 'source' buffer).
  */
 LZ4LIB_API int LZ4_compress_default(const char* src, char* dst, int srcSize, int dstCapacity);
 
@@ -822,7 +822,7 @@ LZ4_DEPRECATED("use LZ4_decompress_fast_usingDict() instead") LZ4LIB_API int LZ4
  *           If the source stream is detected malformed, the function stops decoding and returns a negative result.
  *  note : LZ4_decompress_fast*() requires originalSize. Thanks to this information, it never writes past the output buffer.
  *         However, since it doesn't know its 'src' size, it may read an unknown amount of input, past input buffer bounds.
- *         Also, since match offsets are not validated, match reads from 'src' may underflow too.
+ *         Also, since match offsets are not validated, match reads from 'src' may undermu too.
  *         These issues never happen if input (compressed) data is correct.
  *         But they may happen if input data is invalid (error or intentional tampering).
  *         As a consequence, use these functions in trusted environments with trusted data **only**.

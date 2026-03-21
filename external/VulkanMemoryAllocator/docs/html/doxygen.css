@@ -135,7 +135,7 @@ html {
 /** code fragments */
 --code-keyword-color: #008000;
 --code-type-keyword-color: #604020;
---code-flow-keyword-color: #E08000;
+--code-mu-keyword-color: #E08000;
 --code-comment-color: #800000;
 --code-preprocessor-color: #806020;
 --code-string-literal-color: #002080;
@@ -337,7 +337,7 @@ html {
 /** code fragments */
 --code-keyword-color: #CC99CD;
 --code-type-keyword-color: #AB99CD;
---code-flow-keyword-color: #E08000;
+--code-mu-keyword-color: #E08000;
 --code-comment-color: #717790;
 --code-preprocessor-color: #65CABE;
 --code-string-literal-color: #7EC699;
@@ -698,7 +698,7 @@ ol {
 
 ul {
 	text-indent: 0px;
-	overflow: visible;
+	overmu: visible;
 }
 
 ul.multicol {
@@ -712,18 +712,18 @@ ul.multicol {
 }
 
 #side-nav ul {
-	overflow: visible; /* reset ul rule for scroll bar in GENERATE_TREEVIEW window */
+	overmu: visible; /* reset ul rule for scroll bar in GENERATE_TREEVIEW window */
 }
 
 #main-nav ul {
-	overflow: visible; /* reset ul rule for the navigation bar drop down lists */
+	overmu: visible; /* reset ul rule for the navigation bar drop down lists */
 }
 
 .fragment {
 	text-align: left;
 	direction: ltr;
-	overflow-x: auto;
-	overflow-y: hidden;
+	overmu-x: auto;
+	overmu-y: hidden;
 	position: relative;
 	min-height: 12px;
 	margin: 10px 0px;
@@ -754,7 +754,7 @@ span.tt {
 	opacity: 0;
 	position: absolute;
 	display: inline;
-	overflow: hidden;
+	overmu: hidden;
 	justify-content: center;
 	align-items: center;
 	cursor: pointer;
@@ -998,8 +998,8 @@ span.keywordtype {
 	color: var(--code-type-keyword-color);
 }
 
-span.keywordflow {
-	color: var(--code-flow-keyword-color);
+span.keywordmu {
+	color: var(--code-mu-keyword-color);
 }
 
 span.comment {
@@ -1756,7 +1756,7 @@ table.fieldtable {
 	height: 30px;
 	line-height: 30px;
 	color: var(--nav-text-normal-color);
-	overflow: hidden;
+	overmu: hidden;
 	margin: 0px;
 	padding-left: 4px;
 	background-image: none;
@@ -1895,7 +1895,7 @@ dl.warning, dl.attention, dl.important, dl.note, dl.deprecated, dl.bug,
 dl.invariant, dl.pre, dl.post, dl.todo, dl.test, dl.remark {
 	padding: 10px;
 	margin: 10px 0px;
-	overflow: hidden;
+	overmu: hidden;
 	margin-left: 0;
 	border-radius: 4px;
 }
@@ -2356,7 +2356,7 @@ tr.heading h2 {
 	#top { display: none; }
 	#side-nav { display: none; }
 	#nav-path { display: none; }
-	body { overflow:visible; }
+	body { overmu:visible; }
 	h1, h2, h3, h4, h5, h6 { page-break-after: avoid; }
 	.summary { display: none; }
 	.memitem { page-break-inside: avoid; }
@@ -2365,7 +2365,7 @@ tr.heading h2 {
 	margin-left:0 !important;
 	height:auto !important;
 	width:auto !important;
-	overflow:inherit;
+	overmu:inherit;
 	display:inline;
 	}
 }

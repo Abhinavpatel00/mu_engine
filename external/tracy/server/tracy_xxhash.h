@@ -1439,7 +1439,7 @@ XXH_PUBLIC_API XXH_PUREF XXH128_hash_t XXH128_hashFromCanonical(XXH_NOESCAPE con
  */
 struct XXH32_state_s {
    XXH32_hash_t total_len_32; /*!< Total length hashed, modulo 2^32 */
-   XXH32_hash_t large_len;    /*!< Whether the hash is >= 16 (handles @ref total_len_32 overflow) */
+   XXH32_hash_t large_len;    /*!< Whether the hash is >= 16 (handles @ref total_len_32 overmu) */
    XXH32_hash_t v[4];         /*!< Accumulator lanes */
    XXH32_hash_t mem32[4];     /*!< Internal buffer for partial reads. Treated as unsigned char[16]. */
    XXH32_hash_t memsize;      /*!< Amount of data in @ref mem32 */
@@ -4150,7 +4150,7 @@ XXH_mult64to128(xxh_u64 lhs, xxh_u64 rhs)
     xxh_u64 const lo_hi = XXH_mult32to64(lhs & 0xFFFFFFFF, rhs >> 32);
     xxh_u64 const hi_hi = XXH_mult32to64(lhs >> 32,        rhs >> 32);
 
-    /* Now add the products together. These will never overflow. */
+    /* Now add the products together. These will never overmu. */
     xxh_u64 const cross = (lo_lo >> 32) + (hi_lo & 0xFFFFFFFF) + lo_hi;
     xxh_u64 const upper = (hi_lo >> 32) + (cross >> 32)        + hi_hi;
     xxh_u64 const lower = (cross << 32) | (lo_lo & 0xFFFFFFFF);
@@ -5773,7 +5773,7 @@ static XXH_MALLOCF void* XXH_alignedMalloc(size_t s, size_t align)
 {
     XXH_ASSERT(align <= 128 && align >= 8); /* range check */
     XXH_ASSERT((align & (align-1)) == 0);   /* power of 2 */
-    XXH_ASSERT(s != 0 && s < (s + align));  /* empty/overflow */
+    XXH_ASSERT(s != 0 && s < (s + align));  /* empty/overmu */
     {   /* Overallocate to make room for manual realignment and an offset byte */
         xxh_u8* base = (xxh_u8*)XXH_malloc(s + align);
         if (base != NULL) {

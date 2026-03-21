@@ -33,7 +33,7 @@ Index of this file:
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-// Typical tables call flow: (root level is generally public API):
+// Typical tables call mu: (root level is generally public API):
 //-----------------------------------------------------------------------------
 // - BeginTable()                               user begin into a table
 //    | BeginChild()                            - (if ScrollX/ScrollY is set)
@@ -209,7 +209,7 @@ Index of this file:
 #if defined(_MSC_VER) && _MSC_VER >= 1922 // MSVC 2019 16.2 or later
 #pragma warning (disable: 5054)     // operator '|': deprecated between enumerations of different types
 #endif
-#pragma warning (disable: 26451)    // [Static Analyzer] Arithmetic overflow : Using operator 'xxx' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator 'xxx' to avoid overflow(io.2).
+#pragma warning (disable: 26451)    // [Static Analyzer] Arithmetic overmu : Using operator 'xxx' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator 'xxx' to avoid overmu(io.2).
 #pragma warning (disable: 26812)    // [Static Analyzer] The enum type 'xxx' is unscoped. Prefer 'enum class' over 'enum' (Enum.3).
 #endif
 
@@ -238,7 +238,7 @@ Index of this file:
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"                // warning: format not a string literal, format string not checked
 #pragma GCC diagnostic ignored "-Wdouble-promotion"                 // warning: implicit conversion from 'float' to 'double' when passing argument to function
 #pragma GCC diagnostic ignored "-Wformat"                           // warning: format '%p' expects argument of type 'int'/'void*', but argument X has type 'unsigned int'/'ImGuiWindow*'
-#pragma GCC diagnostic ignored "-Wstrict-overflow"
+#pragma GCC diagnostic ignored "-Wstrict-overmu"
 #pragma GCC diagnostic ignored "-Wclass-memaccess"                  // [__GNUC__ >= 8] warning: 'memset/memcpy' clearing/writing an object of type 'xxxx' with no trivial copy-assignment; use assignment or value-initialization instead
 #endif
 
@@ -3612,7 +3612,7 @@ void ImGui::TableDrawDefaultContextMenu(ImGuiTable* table, ImGuiTableFlags flags
 //-------------------------------------------------------------------------
 // [SECTION] Tables: Settings (.ini data)
 //-------------------------------------------------------------------------
-// FIXME: The binding/finding/creating flow are too confusing.
+// FIXME: The binding/finding/creating mu are too confusing.
 //-------------------------------------------------------------------------
 // - TableSettingsInit() [Internal]
 // - TableSettingsCalcChunkSize() [Internal]

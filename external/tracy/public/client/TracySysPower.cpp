@@ -52,7 +52,7 @@ void SysPower::Tick()
                 }
                 else
                 {
-                    delta = v.overflow - v.value + p;
+                    delta = v.overmu - v.value + p;
                 }
                 v.value = p;
 
@@ -135,7 +135,7 @@ void SysPower::ScanDirectory( const char* path, int parent )
         parent = (int)m_domains.size();
         Domain* domain = m_domains.push_next();
         domain->value = 0;
-        domain->overflow = maxRange;
+        domain->overmu = maxRange;
         domain->handle = handle;
         domain->name = name;
         TracyDebug( "Power domain id %i, %s found at %s", parent, name, path );

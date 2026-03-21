@@ -1299,7 +1299,7 @@ static size_t boundEdgeCollapses(const EdgeAdjacency& adjacency, size_t vertex_c
 
 	assert(dual_count <= index_count);
 
-	// pad capacity by 3 so that we can check for overflow once per triangle instead of once per edge
+	// pad capacity by 3 so that we can check for overmu once per triangle instead of once per edge
 	return (index_count - dual_count / 2) + 3;
 }
 

@@ -410,7 +410,7 @@ macho_add_dwarf_segment (struct backtrace_state *state, int descriptor,
     {
       if (secoffset + sec_header_size > sizesecs)
 	{
-	  error_callback (data, "section overflow withing segment", 0);
+	  error_callback (data, "section overmu withing segment", 0);
 	  return 0;
 	}
 

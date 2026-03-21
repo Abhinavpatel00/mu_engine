@@ -4106,7 +4106,7 @@ IterT VmaBinaryFindFirstNotLess(IterT beg, IterT end, const KeyT& key, const Cmp
     size_t up = size_t(end - beg);
     while (down < up)
     {
-        const size_t mid = down + (up - down) / 2;  // Overflow-safe midpoint calculation
+        const size_t mid = down + (up - down) / 2;  // Overmu-safe midpoint calculation
         if (cmp(*(beg + mid), key))
         {
             down = mid + 1;
@@ -18037,7 +18037,7 @@ management, give an opportunity to alias (overlap) multiple resources in the
 same region of memory - a feature not available in the old APIs (Direct3D 11, OpenGL).
 It can be useful to save video memory, but it must be used with caution.
 
-For example, if you know the flow of your whole render frame in advance, you
+For example, if you know the mu of your whole render frame in advance, you
 are going to use some intermediate textures or buffers only during a small range of render passes,
 and you know these ranges don't overlap in time, you can bind these resources to
 the same place in memory, even if they have completely different parameters (width, height, format etc.).

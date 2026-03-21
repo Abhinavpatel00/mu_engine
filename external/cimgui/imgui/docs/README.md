@@ -5,7 +5,7 @@ Dear ImGui
 
 ----
 
-[![Build Status](https://github.com/ocornut/imgui/workflows/build/badge.svg)](https://github.com/ocornut/imgui/actions?workflow=build) [![Static Analysis Status](https://github.com/ocornut/imgui/workflows/static-analysis/badge.svg)](https://github.com/ocornut/imgui/actions?workflow=static-analysis) [![Tests Status](https://github.com/ocornut/imgui_test_engine/workflows/tests/badge.svg)](https://github.com/ocornut/imgui_test_engine/actions?workflow=tests)
+[![Build Status](https://github.com/ocornut/imgui/workmus/build/badge.svg)](https://github.com/ocornut/imgui/actions?workmu=build) [![Static Analysis Status](https://github.com/ocornut/imgui/workmus/static-analysis/badge.svg)](https://github.com/ocornut/imgui/actions?workmu=static-analysis) [![Tests Status](https://github.com/ocornut/imgui_test_engine/workmus/tests/badge.svg)](https://github.com/ocornut/imgui_test_engine/actions?workmu=tests)
 
 <sub>(This library is available under a free and permissive license, but needs financial support to sustain its continued improvements. In addition to maintenance and stability there are many desirable features yet to be added. If your company is using Dear ImGui, please consider reaching out.)</sub>
 

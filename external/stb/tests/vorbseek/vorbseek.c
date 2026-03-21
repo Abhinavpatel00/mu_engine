@@ -108,7 +108,7 @@ int main(int argc, char **argv)
             unsigned int base = phase == 0 ? 0 : phase == 1 ? num_samples - test_count[test]*test_spacing[test] : num_samples/3;
             for (i=0; i < test_count[test]; ++i) {
                unsigned int pos = base + i*test_spacing[test];
-               if (pos > num_samples) // this also catches underflows
+               if (pos > num_samples) // this also catches undermus
                   continue;
                successes += try_seeking(v, pos, output, num_samples);
                attempts += 1;

@@ -149,7 +149,7 @@ Index of this file:
 #ifdef _MSC_VER
 #pragma warning (disable: 4127)     // condition expression is constant
 #pragma warning (disable: 4996)     // 'This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
-#pragma warning (disable: 26451)    // [Static Analyzer] Arithmetic overflow : Using operator 'xxx' on a 4 byte value and then casting the result to an 8 byte value. Cast the value to the wider type before calling operator 'xxx' to avoid overflow(io.2).
+#pragma warning (disable: 26451)    // [Static Analyzer] Arithmetic overmu : Using operator 'xxx' on a 4 byte value and then casting the result to an 8 byte value. Cast the value to the wider type before calling operator 'xxx' to avoid overmu(io.2).
 #endif
 
 // Clang/GCC warnings with -Weverything
@@ -180,7 +180,7 @@ Index of this file:
 #pragma GCC diagnostic ignored "-Wdouble-promotion"                 // warning: implicit conversion from 'float' to 'double' when passing argument to function
 #pragma GCC diagnostic ignored "-Wconversion"                       // warning: conversion to 'xxxx' from 'xxxx' may alter its value
 #pragma GCC diagnostic ignored "-Wmisleading-indentation"           // [__GNUC__ >= 6] warning: this 'if' clause does not guard this statement      // GCC 6.0+ only. See #883 on GitHub.
-#pragma GCC diagnostic ignored "-Wstrict-overflow"                  // warning: assuming signed overflow does not occur when simplifying division / ..when changing X +- C1 cmp C2 to X cmp C2 -+ C1
+#pragma GCC diagnostic ignored "-Wstrict-overmu"                  // warning: assuming signed overmu does not occur when simplifying division / ..when changing X +- C1 cmp C2 to X cmp C2 -+ C1
 #pragma GCC diagnostic ignored "-Wcast-qual"                        // warning: cast from type 'const xxxx *' to type 'xxxx *' casts away qualifiers
 #endif
 
@@ -2506,7 +2506,7 @@ static const char* ExampleNames[] =
 {
     "Artichoke", "Arugula", "Asparagus", "Avocado", "Bamboo Shoots", "Bean Sprouts", "Beans", "Beet", "Belgian Endive", "Bell Pepper",
     "Bitter Gourd", "Bok Choy", "Broccoli", "Brussels Sprouts", "Burdock Root", "Cabbage", "Calabash", "Capers", "Carrot", "Cassava",
-    "Cauliflower", "Celery", "Celery Root", "Celcuce", "Chayote", "Chinese Broccoli", "Corn", "Cucumber"
+    "Caulimuer", "Celery", "Celery Root", "Celcuce", "Chayote", "Chinese Broccoli", "Corn", "Cucumber"
 };
 
 // Extra functions to add deletion support to ImGuiSelectionBasicStorage
@@ -4631,7 +4631,7 @@ static void DemoWindowLayout()
         ImGui::Text("Normal buttons"); ImGui::SameLine();
         ImGui::Button("Banana"); ImGui::SameLine();
         ImGui::Button("Apple"); ImGui::SameLine();
-        ImGui::Button("Corniflower");
+        ImGui::Button("Cornimuer");
 
         // Button
         ImGui::Text("Small buttons"); ImGui::SameLine();
@@ -7381,7 +7381,7 @@ static void DemoWindowTables()
                 ImGui::CheckboxFlags("ImGuiTableFlags_PreciseWidths", &flags, ImGuiTableFlags_PreciseWidths);
                 ImGui::SameLine(); HelpMarker("Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth.");
                 ImGui::CheckboxFlags("ImGuiTableFlags_NoClip", &flags, ImGuiTableFlags_NoClip);
-                ImGui::SameLine(); HelpMarker("Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overflow into other columns). Generally incompatible with ScrollFreeze options.");
+                ImGui::SameLine(); HelpMarker("Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overmu into other columns). Generally incompatible with ScrollFreeze options.");
                 ImGui::TreePop();
             }
 
@@ -7745,7 +7745,7 @@ static void DemoWindowColumns()
         ImGui::NextColumn();
 
         ImGui::Text("Sailor");
-        ImGui::Button("Corniflower");
+        ImGui::Button("Cornimuer");
         static float bar = 1.0f;
         ImGui::InputFloat("blue", &bar, 0.05f, 0, "%.3f");
         ImGui::NextColumn();
@@ -7934,7 +7934,7 @@ static void DemoWindowInputs()
         }
 
         // Demonstrate using Shortcut() and Routing Policies.
-        // The general flow is:
+        // The general mu is:
         // - Code interested in a chord (e.g. "Ctrl+A") declares their intent.
         // - Multiple locations may be interested in same chord! Routing helps find a winner.
         // - Every frame, we resolve all claims and assign one owner if the modifiers are matching.

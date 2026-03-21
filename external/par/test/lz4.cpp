@@ -960,7 +960,7 @@ int LZ4_loadDict (LZ4_stream_t* LZ4_dict, const char* dictionary, int dictSize)
     const BYTE* const dictEnd = p + dictSize;
     const BYTE* base;
 
-    if ((dict->initCheck) || (dict->currentOffset > 1 GB))  /* Uninitialized structure, or reuse overflow */
+    if ((dict->initCheck) || (dict->currentOffset > 1 GB))  /* Uninitialized structure, or reuse overmu */
         LZ4_resetStream(LZ4_dict);
 
     if (dictSize < (int)HASH_UNIT)
@@ -990,7 +990,7 @@ int LZ4_loadDict (LZ4_stream_t* LZ4_dict, const char* dictionary, int dictSize)
 static void LZ4_renormDictT(LZ4_stream_t_internal* LZ4_dict, const BYTE* src)
 {
     if ((LZ4_dict->currentOffset > 0x80000000) ||
-        ((size_t)LZ4_dict->currentOffset > (size_t)src))   /* address space overflow */
+        ((size_t)LZ4_dict->currentOffset > (size_t)src))   /* address space overmu */
     {
         /* rescale hash table */
         U32 delta = LZ4_dict->currentOffset - 64 KB;
@@ -1164,8 +1164,8 @@ FORCE_INLINE int LZ4_decompress_generic(
                 length += s;
             }
             while (likely((endOnInput)?ip<iend-RUN_MASK:1) && (s==255));
-            if ((safeDecode) && unlikely((size_t)(op+length)<(size_t)(op))) goto _output_error;   /* overflow detection */
-            if ((safeDecode) && unlikely((size_t)(ip+length)<(size_t)(ip))) goto _output_error;   /* overflow detection */
+            if ((safeDecode) && unlikely((size_t)(op+length)<(size_t)(op))) goto _output_error;   /* overmu detection */
+            if ((safeDecode) && unlikely((size_t)(ip+length)<(size_t)(ip))) goto _output_error;   /* overmu detection */
         }
 
         /* copy literals */
@@ -1206,7 +1206,7 @@ FORCE_INLINE int LZ4_decompress_generic(
                 s = *ip++;
                 length += s;
             } while (s==255);
-            if ((safeDecode) && unlikely((size_t)(op+length)<(size_t)op)) goto _output_error;   /* overflow detection */
+            if ((safeDecode) && unlikely((size_t)(op+length)<(size_t)op)) goto _output_error;   /* overmu detection */
         }
         length += MINMATCH;
 
@@ -1279,7 +1279,7 @@ FORCE_INLINE int LZ4_decompress_generic(
     else
        return (int) (((const char*)ip)-source);   /* Nb of input bytes read */
 
-    /* Overflow error detected */
+    /* Overmu error detected */
 _output_error:
     return (int) (-(((const char*)ip)-source))-1;
 }

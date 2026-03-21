@@ -163,7 +163,7 @@
       0.95 (2017-07-23) fixed warnings
       0.94 (2017-03-18) fixed warnings
       0.93 (2017-03-03) fixed bug with certain combinations of heights
-      0.92 (2017-01-02) fix integer overflow on large (>2GB) images
+      0.92 (2017-01-02) fix integer overmu on large (>2GB) images
       0.91 (2016-04-02) fix warnings; fix handling of subpixel regions
       0.90 (2014-09-17) first released version
 

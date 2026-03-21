@@ -182,7 +182,7 @@ struct FindCollision {
   }
 
   void operator()(const int queryIdx) {
-    // stack cannot overflow because radix tree has max depth 30 (Morton code) +
+    // stack cannot overmu because radix tree has max depth 30 (Morton code) +
     // 32 (index).
     int stack[64];
     int top = -1;

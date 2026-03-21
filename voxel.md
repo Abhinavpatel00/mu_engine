@@ -1,4 +1,4 @@
-// we can get texture id in specific range so that it can be encoded in bitfield using flow id in range we can built a structure with compact per
+// we can get texture id in specific range so that it can be encoded in bitfield using mu id in range we can built a structure with compact per
 // face texture
 //
 //      struct Voxel
@@ -15,7 +15,7 @@ struct BlockType
 };
 we would want to compress voxel as much as possible i dont think there is even  need of 
 bottom texture
-so essensially this comes down to number of textures we want to support flow api already supports allocating in range so i dont think we have so much textures even uint 8 byte is sufficient to start with because seriously we are not AAA to have more than 
+so essensially this comes down to number of textures we want to support mu api already supports allocating in range so i dont think we have so much textures even uint 8 byte is sufficient to start with because seriously we are not AAA to have more than 
 
 
 top    = grass_top

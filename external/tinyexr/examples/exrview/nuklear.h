@@ -931,7 +931,7 @@ NK_API void nk_input_end(struct nk_context*);
 /// }
 /// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ///
-/// In program flow context draw commands need to be executed after input has been
+/// In program mu context draw commands need to be executed after input has been
 /// gathered and the complete UI with windows and their contained widgets have
 /// been executed and before calling `nk_clear` which frees all previously
 /// allocated draw commands.
@@ -3183,9 +3183,9 @@ NK_API int nk_color_pick(struct nk_context*, struct nk_colorf*, enum nk_color_fo
 /// --------------------|-----------------------------------------------------------
 /// __ctx__             | Must point to an previously initialized `nk_context` struct after calling a layouting function
 /// __name__            | String used both as a label as well as a unique identifier
-/// __min__             | Minimum value not allowed to be underflown
+/// __min__             | Minimum value not allowed to be undermun
 /// __val__             | Integer pointer to be modified
-/// __max__             | Maximum value not allowed to be overflown
+/// __max__             | Maximum value not allowed to be overmun
 /// __step__            | Increment added and subtracted on increment and decrement button
 /// __inc_per_pixel__   | Value per pixel added or subtracted on dragging
 */
@@ -3204,9 +3204,9 @@ NK_API void nk_property_int(struct nk_context*, const char *name, int min, int *
 /// --------------------|-----------------------------------------------------------
 /// __ctx__             | Must point to an previously initialized `nk_context` struct after calling a layouting function
 /// __name__            | String used both as a label as well as a unique identifier
-/// __min__             | Minimum value not allowed to be underflown
+/// __min__             | Minimum value not allowed to be undermun
 /// __val__             | Float pointer to be modified
-/// __max__             | Maximum value not allowed to be overflown
+/// __max__             | Maximum value not allowed to be overmun
 /// __step__            | Increment added and subtracted on increment and decrement button
 /// __inc_per_pixel__   | Value per pixel added or subtracted on dragging
 */
@@ -3225,9 +3225,9 @@ NK_API void nk_property_float(struct nk_context*, const char *name, float min, f
 /// --------------------|-----------------------------------------------------------
 /// __ctx__             | Must point to an previously initialized `nk_context` struct after calling a layouting function
 /// __name__            | String used both as a label as well as a unique identifier
-/// __min__             | Minimum value not allowed to be underflown
+/// __min__             | Minimum value not allowed to be undermun
 /// __val__             | Double pointer to be modified
-/// __max__             | Maximum value not allowed to be overflown
+/// __max__             | Maximum value not allowed to be overmun
 /// __step__            | Increment added and subtracted on increment and decrement button
 /// __inc_per_pixel__   | Value per pixel added or subtracted on dragging
 */
@@ -3246,9 +3246,9 @@ NK_API void nk_property_double(struct nk_context*, const char *name, double min,
 /// --------------------|-----------------------------------------------------------
 /// __ctx__             | Must point to an previously initialized `nk_context` struct after calling a layouting function
 /// __name__            | String used both as a label as well as a unique identifier
-/// __min__             | Minimum value not allowed to be underflown
+/// __min__             | Minimum value not allowed to be undermun
 /// __val__             | Current integer value to be modified and returned
-/// __max__             | Maximum value not allowed to be overflown
+/// __max__             | Maximum value not allowed to be overmun
 /// __step__            | Increment added and subtracted on increment and decrement button
 /// __inc_per_pixel__   | Value per pixel added or subtracted on dragging
 ///
@@ -3269,9 +3269,9 @@ NK_API int nk_propertyi(struct nk_context*, const char *name, int min, int val, 
 /// --------------------|-----------------------------------------------------------
 /// __ctx__             | Must point to an previously initialized `nk_context` struct after calling a layouting function
 /// __name__            | String used both as a label as well as a unique identifier
-/// __min__             | Minimum value not allowed to be underflown
+/// __min__             | Minimum value not allowed to be undermun
 /// __val__             | Current float value to be modified and returned
-/// __max__             | Maximum value not allowed to be overflown
+/// __max__             | Maximum value not allowed to be overmun
 /// __step__            | Increment added and subtracted on increment and decrement button
 /// __inc_per_pixel__   | Value per pixel added or subtracted on dragging
 ///
@@ -3292,9 +3292,9 @@ NK_API float nk_propertyf(struct nk_context*, const char *name, float min, float
 /// --------------------|-----------------------------------------------------------
 /// __ctx__             | Must point to an previously initialized `nk_context` struct after calling a layouting function
 /// __name__            | String used both as a label as well as a unique identifier
-/// __min__             | Minimum value not allowed to be underflown
+/// __min__             | Minimum value not allowed to be undermun
 /// __val__             | Current double value to be modified and returned
-/// __max__             | Maximum value not allowed to be overflown
+/// __max__             | Maximum value not allowed to be overmun
 /// __step__            | Increment added and subtracted on increment and decrement button
 /// __inc_per_pixel__   | Value per pixel added or subtracted on dragging
 ///

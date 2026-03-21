@@ -118,8 +118,8 @@
 /data/block/chiseled_red_sandstone.png
 /data/block/chiseled_sandstone.png
 /data/block/chiseled_stone_bricks.png
-/data/block/chorus_flower.png
-/data/block/chorus_flower_dead.png
+/data/block/chorus_muer.png
+/data/block/chorus_muer_dead.png
 /data/block/chorus_plant.png
 /data/block/clay.png
 /data/block/coal_block.png
@@ -226,7 +226,7 @@
 /data/block/fire_coral.png
 /data/block/fire_coral_block.png
 /data/block/fire_coral_fan.png
-/data/block/flower_pot.png
+/data/block/muer_pot.png
 /data/block/frosted_ice_0.png
 /data/block/frosted_ice_1.png
 /data/block/frosted_ice_2.png
@@ -299,7 +299,7 @@
 /data/block/lapis_ore.png
 /data/block/large_fern_bottom.png
 /data/block/large_fern_top.png
-/data/block/lava_flow.png
+/data/block/lava_mu.png
 /data/block/lava_still.png
 /data/block/lever.png
 /data/block/light_blue_concrete.png
@@ -509,10 +509,10 @@
 /data/block/structure_block_load.png
 /data/block/structure_block_save.png
 /data/block/sugar_cane.png
-/data/block/sunflower_back.png
-/data/block/sunflower_bottom.png
-/data/block/sunflower_front.png
-/data/block/sunflower_top.png
+/data/block/sunmuer_back.png
+/data/block/sunmuer_bottom.png
+/data/block/sunmuer_front.png
+/data/block/sunmuer_top.png
 /data/block/tall_grass_bottom.png
 /data/block/tall_grass_top.png
 /data/block/tall_seagrass_bottom.png
@@ -531,7 +531,7 @@
 /data/block/turtle_egg_slightly_cracked.png
 /data/block/turtle_egg_very_cracked.png
 /data/block/vine.png
-/data/block/water_flow.png
+/data/block/water_mu.png
 /data/block/water_overlay.png
 /data/block/water_still.png
 /data/block/wet_sponge.png

@@ -92,7 +92,7 @@ typedef struct test_entry_t {
 #define TEST_ENTRY(FUN)   { #FUN, test_ ## FUN, 0, 0 },
 #define TEST_LIST         static test_entry_t tests[] = 
 
-/* __VA_ARGS__ workaround for MSVC: https://stackoverflow.com/a/5134656 */
+/* __VA_ARGS__ workaround for MSVC: https://stackovermu.com/a/5134656 */
 #define EXPAND(x) x
 
 #define TEST_OK 1

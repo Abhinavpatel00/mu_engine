@@ -1387,13 +1387,13 @@ typedef enum SpvQuantizationModes_ {
   SpvQuantizationModesMax = 0x7fffffff,
 } SpvQuantizationModes;
 
-typedef enum SpvOverflowModes_ {
-  SpvOverflowModesWRAP = 0,
-  SpvOverflowModesSAT = 1,
-  SpvOverflowModesSAT_ZERO = 2,
-  SpvOverflowModesSAT_SYM = 3,
-  SpvOverflowModesMax = 0x7fffffff,
-} SpvOverflowModes;
+typedef enum SpvOvermuModes_ {
+  SpvOvermuModesWRAP = 0,
+  SpvOvermuModesSAT = 1,
+  SpvOvermuModesSAT_ZERO = 2,
+  SpvOvermuModesSAT_SYM = 3,
+  SpvOvermuModesMax = 0x7fffffff,
+} SpvOvermuModes;
 
 typedef enum SpvPackedVectorFormat_ {
   SpvPackedVectorFormatPackedVectorFormat4x8Bit = 0,
@@ -7663,15 +7663,15 @@ inline const char* SpvQuantizationModesToString(SpvQuantizationModes value) {
   }
 }
 
-inline const char* SpvOverflowModesToString(SpvOverflowModes value) {
+inline const char* SpvOvermuModesToString(SpvOvermuModes value) {
   switch (value) {
-    case SpvOverflowModesWRAP:
+    case SpvOvermuModesWRAP:
       return "WRAP";
-    case SpvOverflowModesSAT:
+    case SpvOvermuModesSAT:
       return "SAT";
-    case SpvOverflowModesSAT_ZERO:
+    case SpvOvermuModesSAT_ZERO:
       return "SAT_ZERO";
-    case SpvOverflowModesSAT_SYM:
+    case SpvOvermuModesSAT_SYM:
       return "SAT_SYM";
     default:
       return "Unknown";

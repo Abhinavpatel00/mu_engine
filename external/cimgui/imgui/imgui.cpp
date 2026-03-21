@@ -1220,7 +1220,7 @@ IMPLEMENTING SUPPORT for ImGuiBackendFlags_RendererHasTextures:
 #if defined(_MSC_VER) && _MSC_VER >= 1922   // MSVC 2019 16.2 or later
 #pragma warning (disable: 5054)             // operator '|': deprecated between enumerations of different types
 #endif
-#pragma warning (disable: 26451)            // [Static Analyzer] Arithmetic overflow : Using operator 'xxx' on a 4 byte value and then casting the result to an 8 byte value. Cast the value to the wider type before calling operator 'xxx' to avoid overflow(io.2).
+#pragma warning (disable: 26451)            // [Static Analyzer] Arithmetic overmu : Using operator 'xxx' on a 4 byte value and then casting the result to an 8 byte value. Cast the value to the wider type before calling operator 'xxx' to avoid overmu(io.2).
 #pragma warning (disable: 26495)            // [Static Analyzer] Variable 'XXX' is uninitialized. Always initialize a member variable (type.6).
 #pragma warning (disable: 26812)            // [Static Analyzer] The enum type 'xxx' is unscoped. Prefer 'enum class' over 'enum' (Enum.3).
 #endif
@@ -1256,7 +1256,7 @@ IMPLEMENTING SUPPORT for ImGuiBackendFlags_RendererHasTextures:
 #pragma GCC diagnostic ignored "-Wdouble-promotion"                 // warning: implicit conversion from 'float' to 'double' when passing argument to function
 #pragma GCC diagnostic ignored "-Wconversion"                       // warning: conversion to 'xxxx' from 'xxxx' may alter its value
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"                // warning: format not a string literal, format string not checked
-#pragma GCC diagnostic ignored "-Wstrict-overflow"                  // warning: assuming signed overflow does not occur when assuming that (X - c) > X is always false
+#pragma GCC diagnostic ignored "-Wstrict-overmu"                  // warning: assuming signed overmu does not occur when assuming that (X - c) > X is always false
 #pragma GCC diagnostic ignored "-Wclass-memaccess"                  // [__GNUC__ >= 8] warning: 'memset/memcpy' clearing/writing an object of type 'xxxx' with no trivial copy-assignment; use assignment or value-initialization instead
 #pragma GCC diagnostic ignored "-Wcast-qual"                        // warning: cast from type 'const xxxx *' to type 'xxxx *' casts away qualifiers
 #endif
@@ -2254,7 +2254,7 @@ const char* ImStrSkipBlank(const char* str)
     return str;
 }
 
-// A) MSVC version appears to return -1 on overflow, whereas glibc appears to return total count (which may be >= buf_size).
+// A) MSVC version appears to return -1 on overmu, whereas glibc appears to return total count (which may be >= buf_size).
 // Ideally we would test for only one of those limits at runtime depending on the behavior the vsnprintf(), but trying to deduct it at compile time sounds like a pandora can of worm.
 // B) When buf==NULL vsnprintf() will return the output size.
 #ifndef IMGUI_DISABLE_DEFAULT_FORMAT_FUNCTIONS
@@ -11390,7 +11390,7 @@ static void ImGui::ErrorCheckNewFrameSanityChecks()
     // Check user IM_ASSERT macro
     // (IF YOU GET A WARNING OR COMPILE ERROR HERE: it means your assert macro is incorrectly defined!
     //  If your macro uses multiple statements, it NEEDS to be surrounded by a 'do { ... } while (0)' block.
-    //  This is a common C/C++ idiom to allow multiple statements macros to be used in control flow blocks.)
+    //  This is a common C/C++ idiom to allow multiple statements macros to be used in control mu blocks.)
     // #define IM_ASSERT(EXPR)   if (SomeCode(EXPR)) SomeMoreCode();                    // Wrong!
     // #define IM_ASSERT(EXPR)   do { if (SomeCode(EXPR)) SomeMoreCode(); } while (0)   // Correct!
     if (true) IM_ASSERT(1); else IM_ASSERT(0);
@@ -17445,7 +17445,7 @@ void ImGui::DestroyPlatformWindows()
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-// Typical Docking call flow: (root level is generally public API):
+// Typical Docking call mu: (root level is generally public API):
 //-----------------------------------------------------------------------------
 // - NewFrame()                               new dear imgui frame
 //    | DockContextNewFrameUpdateUndocking()  - process queued undocking requests

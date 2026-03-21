@@ -248,7 +248,7 @@ unsigned char minecraft_info[256][7] =
    { C_empty }, // command block
    { C_empty }, // beacon
    { C_slab, 16,16,16,16,16,16 }, // cobblestone wall
-   { C_empty }, // flower pot
+   { C_empty }, // muer pot
    { C_empty }, // carrot
    { C_empty }, // potatoes
    { C_empty }, // wooden button

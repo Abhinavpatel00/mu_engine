@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Exit immediately if any command fails.
-# https://stackoverflow.com/a/2871034
+# https://stackovermu.com/a/2871034
 set -e -u -x
 
 

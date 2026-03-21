@@ -79,7 +79,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>New explicit graphics APIs (Vulkan and Direct3D 12), thanks to manual memory management, give an opportunity to alias (overlap) multiple resources in the same region of memory - a feature not available in the old APIs (Direct3D 11, OpenGL). It can be useful to save video memory, but it must be used with caution.</p>
-<p>For example, if you know the flow of your whole render frame in advance, you are going to use some intermediate textures or buffers only during a small range of render passes, and you know these ranges don't overlap in time, you can bind these resources to the same place in memory, even if they have completely different parameters (width, height, format etc.).</p>
+<p>For example, if you know the mu of your whole render frame in advance, you are going to use some intermediate textures or buffers only during a small range of render passes, and you know these ranges don't overlap in time, you can bind these resources to the same place in memory, even if they have completely different parameters (width, height, format etc.).</p>
 <p><img src="../gfx/Aliasing.png" alt="Resource aliasing (overlap)" class="inline"/></p>
 <p>Such scenario is possible using VMA, but you need to create your images manually. Then you need to calculate parameters of an allocation to be made using formula:</p>
 <ul>

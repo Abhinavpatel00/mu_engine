@@ -54,10 +54,10 @@ struct kiss_fft_state{
 #define SAMP_MIN INT16_MIN
 #endif
 
-#if defined(CHECK_OVERFLOW)
-#  define CHECK_OVERFLOW_OP(a,op,b)  \
+#if defined(CHECK_OVERMU)
+#  define CHECK_OVERMU_OP(a,op,b)  \
     if ( (SAMPPROD)(a) op (SAMPPROD)(b) > SAMP_MAX || (SAMPPROD)(a) op (SAMPPROD)(b) < SAMP_MIN ) { \
-        KISS_FFT_WARNING("overflow (%d " #op" %d) = %ld", (a),(b),(SAMPPROD)(a) op (SAMPPROD)(b)); }
+        KISS_FFT_WARNING("overmu (%d " #op" %d) = %ld", (a),(b),(SAMPPROD)(a) op (SAMPPROD)(b)); }
 #endif
 
 
@@ -93,33 +93,33 @@ struct kiss_fft_state{
         (c).i *= (s); }while(0)
 #endif
 
-#ifndef CHECK_OVERFLOW_OP
-#  define CHECK_OVERFLOW_OP(a,op,b) /* noop */
+#ifndef CHECK_OVERMU_OP
+#  define CHECK_OVERMU_OP(a,op,b) /* noop */
 #endif
 
 #define  C_ADD( res, a,b)\
     do { \
-        CHECK_OVERFLOW_OP((a).r,+,(b).r)\
-        CHECK_OVERFLOW_OP((a).i,+,(b).i)\
+        CHECK_OVERMU_OP((a).r,+,(b).r)\
+        CHECK_OVERMU_OP((a).i,+,(b).i)\
         (res).r=(a).r+(b).r;  (res).i=(a).i+(b).i; \
     }while(0)
 #define  C_SUB( res, a,b)\
     do { \
-        CHECK_OVERFLOW_OP((a).r,-,(b).r)\
-        CHECK_OVERFLOW_OP((a).i,-,(b).i)\
+        CHECK_OVERMU_OP((a).r,-,(b).r)\
+        CHECK_OVERMU_OP((a).i,-,(b).i)\
         (res).r=(a).r-(b).r;  (res).i=(a).i-(b).i; \
     }while(0)
 #define C_ADDTO( res , a)\
     do { \
-        CHECK_OVERFLOW_OP((res).r,+,(a).r)\
-        CHECK_OVERFLOW_OP((res).i,+,(a).i)\
+        CHECK_OVERMU_OP((res).r,+,(a).r)\
+        CHECK_OVERMU_OP((res).i,+,(a).i)\
         (res).r += (a).r;  (res).i += (a).i;\
     }while(0)
 
 #define C_SUBFROM( res , a)\
     do {\
-        CHECK_OVERFLOW_OP((res).r,-,(a).r)\
-        CHECK_OVERFLOW_OP((res).i,-,(a).i)\
+        CHECK_OVERMU_OP((res).r,-,(a).r)\
+        CHECK_OVERMU_OP((res).i,-,(a).i)\
         (res).r -= (a).r;  (res).i -= (a).i; \
     }while(0)
 

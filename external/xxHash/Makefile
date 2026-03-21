@@ -42,7 +42,7 @@ DEBUGFLAGS+=-Wall -Wextra -Wconversion -Wcast-qual -Wcast-align -Wshadow \
             -Wstrict-aliasing=1 -Wswitch-enum -Wdeclaration-after-statement \
             -Wstrict-prototypes -Wundef -Wpointer-arith -Wformat-security \
             -Wvla -Wformat=2 -Winit-self -Wfloat-equal -Wwrite-strings \
-            -Wredundant-decls -Wstrict-overflow=2
+            -Wredundant-decls -Wstrict-overmu=2
 CFLAGS += $(DEBUGFLAGS) $(MOREFLAGS)
 FLAGS   = $(CFLAGS) $(CPPFLAGS)
 XXHSUM_VERSION = $(LIBVER)

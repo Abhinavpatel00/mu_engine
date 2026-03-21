@@ -82,7 +82,7 @@ Start conservative:
 - `max_lights = 4096`
 - `max_lights_per_cluster = 128`
 
-If overflow occurs, clamp writes and track overflow count for debugging.
+If overmu occurs, clamp writes and track overmu count for debugging.
 
 ## Compute Passes
 ## 1) Reset Counters
@@ -156,12 +156,12 @@ For reliable pipeline hot reload:
 1. **Data plumbing only**: allocate buffers, upload test lights, visualize cluster IDs
 2. **Assignment pass**: fill cluster lists, add debug counters
 3. **Shading integration**: consume lists in fragment shader
-4. **Optimization**: tighten bounds tests, reduce atomics, add overflow diagnostics
+4. **Optimization**: tighten bounds tests, reduce atomics, add overmu diagnostics
 
 ## Validation Checklist
 - Cluster count matches current render extent each resize
 - No out-of-bounds writes in cluster index buffer
-- Overflow counter remains near zero in normal scenes
+- Overmu counter remains near zero in normal scenes
 - Lighting result matches brute-force reference for small scenes
 - GPU time improves as light count increases
 

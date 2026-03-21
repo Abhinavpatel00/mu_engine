@@ -3384,7 +3384,7 @@ static int vorbis_decode_packet_rest(vorb *f, int *len, Mode *m, int left_start,
       // this isn't to spec, but spec would require us to read ahead
       // and decode the size of all current frames--could be done,
       // but presumably it's not a commonly used feature
-      f->current_loc = 0u - n2; // start of first frame is positioned for discard (NB this is an intentional unsigned overflow/wrap-around)
+      f->current_loc = 0u - n2; // start of first frame is positioned for discard (NB this is an intentional unsigned overmu/wrap-around)
       // we might have to discard samples "from" the next frame too,
       // if we're lapping a large block then a small at the start?
       f->discard_samples_deferred = n - right_end;

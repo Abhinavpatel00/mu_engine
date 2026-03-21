@@ -1,6 +1,6 @@
 # Rendering Pipeline
 
-This document describes the high-level rendering architecture and frame execution flow of the renderer.
+This document describes the high-level rendering architecture and frame execution mu of the renderer.
 
 ## Frame Architecture
 

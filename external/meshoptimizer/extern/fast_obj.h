@@ -1573,7 +1573,7 @@ fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbac
         parse_buffer(&data, buffer, last, callbacks, user_data);
 
 
-        /* Copy overflow for next buffer */
+        /* Copy overmu for next buffer */
         bytes = (fastObjUInt)(end - last);
         memmove(buffer, last, bytes);
         start = buffer + bytes;

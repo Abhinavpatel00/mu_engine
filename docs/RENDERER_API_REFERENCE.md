@@ -1,6 +1,6 @@
 # Render API Reference
 
-Complete documentation of the Vulkan-based renderer API including core structures, initialization, resource management, and rendering workflows.
+Complete documentation of the Vulkan-based renderer API including core structures, initialization, resource management, and rendering workmus.
 
 ## Table of Contents
 
@@ -9,7 +9,7 @@ Complete documentation of the Vulkan-based renderer API including core structure
 3. [Initialization](#initialization)
 4. [Resource Management](#resource-management)
 5. [Pipeline System](#pipeline-system)
-6. [Rendering Workflow](#rendering-workflow)
+6. [Rendering Workmu](#rendering-workmu)
 7. [Advanced Topics](#advanced-topics)
 
 ---
@@ -623,7 +623,7 @@ image_transition_swapchain(cmd, &renderer.swapchain,
 
 ---
 
-## Rendering Workflow
+## Rendering Workmu
 
 ### Per-Frame Structure
 

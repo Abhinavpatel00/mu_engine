@@ -66,7 +66,7 @@ void QueryTwoDTree(VecView<PolyVert> points, Rect r, F f) {
     if (r.Contains(middle.pos)) f(middle);
     if (left.DoesOverlap(r)) {
       if (right.DoesOverlap(r)) {
-        DEBUG_ASSERT(stackPointer < 64, logicErr, "Stack overflow");
+        DEBUG_ASSERT(stackPointer < 64, logicErr, "Stack overmu");
         rectStack[stackPointer] = right;
         viewStack[stackPointer] = currentView.view(currentView.size() / 2 + 1);
         levelStack[stackPointer] = level + 1;

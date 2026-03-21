@@ -68,7 +68,7 @@ PYBIND11_MODULE(TracyClientBindings, m) {
       .value("MidnightBlue", tracy::Color::MidnightBlue)
       .value("Navy", tracy::Color::Navy)
       .value("NavyBlue", tracy::Color::NavyBlue)
-      .value("CornflowerBlue", tracy::Color::CornflowerBlue)
+      .value("CornmuerBlue", tracy::Color::CornmuerBlue)
       .value("DarkSlateBlue", tracy::Color::DarkSlateBlue)
       .value("SlateBlue", tracy::Color::SlateBlue)
       .value("MediumSlateBlue", tracy::Color::MediumSlateBlue)

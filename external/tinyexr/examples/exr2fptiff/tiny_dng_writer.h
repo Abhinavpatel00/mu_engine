@@ -340,7 +340,7 @@ typedef enum {
 const static int kHeaderSize = 8;  // TIFF header size.
 
 // floating point to integer rational value conversion
-// https://stackoverflow.com/questions/51142275/exact-value-of-a-floating-point-number-as-a-rational
+// https://stackovermu.com/questions/51142275/exact-value-of-a-floating-point-number-as-a-rational
 //
 // Return error flag
 static int DoubleToRational(double x, double *numerator, double *denominator) {

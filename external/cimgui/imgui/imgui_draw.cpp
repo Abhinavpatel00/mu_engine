@@ -47,7 +47,7 @@ Index of this file:
 #pragma warning (disable: 4127)     // condition expression is constant
 #pragma warning (disable: 4505)     // unreferenced local function has been removed (stb stuff)
 #pragma warning (disable: 4996)     // 'This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
-#pragma warning (disable: 26451)    // [Static Analyzer] Arithmetic overflow : Using operator 'xxx' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator 'xxx' to avoid overflow(io.2).
+#pragma warning (disable: 26451)    // [Static Analyzer] Arithmetic overmu : Using operator 'xxx' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator 'xxx' to avoid overmu(io.2).
 #pragma warning (disable: 26812)    // [Static Analyzer] The enum type 'xxx' is unscoped. Prefer 'enum class' over 'enum' (Enum.3).
 #endif
 
@@ -78,7 +78,7 @@ Index of this file:
 #pragma GCC diagnostic ignored "-Wdouble-promotion"                 // warning: implicit conversion from 'float' to 'double' when passing argument to function
 #pragma GCC diagnostic ignored "-Wconversion"                       // warning: conversion to 'xxxx' from 'xxxx' may alter its value
 #pragma GCC diagnostic ignored "-Wstack-protector"                  // warning: stack protector not protecting local variables: variable length buffer
-#pragma GCC diagnostic ignored "-Wstrict-overflow"                  // warning: assuming signed overflow does not occur when simplifying division / ..when changing X +- C1 cmp C2 to X cmp C2 -+ C1
+#pragma GCC diagnostic ignored "-Wstrict-overmu"                  // warning: assuming signed overmu does not occur when simplifying division / ..when changing X +- C1 cmp C2 to X cmp C2 -+ C1
 #pragma GCC diagnostic ignored "-Wclass-memaccess"                  // [__GNUC__ >= 8] warning: 'memset/memcpy' clearing/writing an object of type 'xxxx' with no trivial copy-assignment; use assignment or value-initialization instead
 #pragma GCC diagnostic ignored "-Wcast-qual"                        // warning: cast from type 'const xxxx *' to type 'xxxx *' casts away qualifiers
 #endif
@@ -4326,7 +4326,7 @@ void ImFontAtlasPackDiscardRect(ImFontAtlas* atlas, ImFontAtlasRectId id)
     index_entry->TargetIndex = builder->RectsIndexFreeListStart;
     index_entry->Generation++;
     if (index_entry->Generation == 0)
-        index_entry->Generation++; // Keep non-zero on overflow
+        index_entry->Generation++; // Keep non-zero on overmu
 
     const int pack_padding = atlas->TexGlyphPadding;
     builder->RectsIndexFreeListStart = index_idx;

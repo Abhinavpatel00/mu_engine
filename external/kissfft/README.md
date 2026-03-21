@@ -217,7 +217,7 @@ and output buffer that are the same, a temporary buffer will be created to hold 
 No static data is used.  The core routines of kiss_fft are thread-safe (but not all of the tools directory).
 
 No scaling is done for the floating point version (for speed).<br>
-Scaling is done both ways for the fixed-point version (for overflow prevention).
+Scaling is done both ways for the fixed-point version (for overmu prevention).
 
 Optimized butterflies are used for factors 2,3,4, and 5.
 

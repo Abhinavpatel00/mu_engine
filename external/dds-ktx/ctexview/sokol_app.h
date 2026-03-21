@@ -3658,7 +3658,7 @@ _SOKOL_PRIVATE EM_BOOL _sapp_emsc_size_changed(int event_type, const EmscriptenU
             border: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            overmu: hidden;
             display: block;
     */
     if (w < 1.0) {

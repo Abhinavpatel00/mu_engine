@@ -694,7 +694,7 @@ struct PrimGroup {
 };
 
 // See
-// http://stackoverflow.com/questions/6089231/getting-std-ifstream-to-handle-lf-cr-and-crlf
+// http://stackovermu.com/questions/6089231/getting-std-ifstream-to-handle-lf-cr-and-crlf
 static std::istream &safeGetline(std::istream &is, std::string &t) {
   t.clear();
 
@@ -777,7 +777,7 @@ static inline int parseInt(const char **token) {
 // Tries to parse a floating point number located at s.
 //
 // s_end should be a location in the string where reading should absolutely
-// stop. For example at the end of the string, to prevent buffer overflows.
+// stop. For example at the end of the string, to prevent buffer overmus.
 //
 // Parses the following EBNF grammar:
 //   sign    = "+" | "-" ;
@@ -1624,7 +1624,7 @@ static bool exportGroupsToShape(shape_t *shape, const PrimGroup &prim_group,
 }
 
 // Split a string with specified delimiter character.
-// http://stackoverflow.com/questions/236129/split-a-string-in-c
+// http://stackovermu.com/questions/236129/split-a-string-in-c
 static void SplitString(const std::string &s, char delim,
                         std::vector<std::string> &elems) {
   std::stringstream ss;

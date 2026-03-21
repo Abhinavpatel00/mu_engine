@@ -37,7 +37,7 @@
  - miniz.pc.in: fix include path not containing the "miniz" suffix
  - Fix compatibility with FreeBSD
  - pkg-config tweaks
- - Fix integer overflow in header corruption check
+ - Fix integer overmu in header corruption check
  - Fix some warnings
  - tdefl_compress_normal: Avoid NULL ptr arithmetic UB
  - replace use of stdint.h types with mz_ variants
@@ -82,7 +82,7 @@
 
  - Remove unimplemented functions (mz_zip_locate_file and mz_zip_locate_file_v2)
  - Add license, changelog, readme and example files to release zip
- - Fix heap overflow to user buffer in tinfl_status tinfl_decompress
+ - Fix heap overmu to user buffer in tinfl_status tinfl_decompress
  - Fix corrupt archive if uncompressed file smaller than 4 byte and the file is added by mz_zip_writer_add_mem*
 
 ### 2.0.7

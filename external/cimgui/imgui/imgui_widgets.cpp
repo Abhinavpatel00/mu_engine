@@ -58,7 +58,7 @@ Index of this file:
 #if defined(_MSC_VER) && _MSC_VER >= 1922 // MSVC 2019 16.2 or later
 #pragma warning (disable: 5054)     // operator '|': deprecated between enumerations of different types
 #endif
-#pragma warning (disable: 26451)    // [Static Analyzer] Arithmetic overflow : Using operator 'xxx' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator 'xxx' to avoid overflow(io.2).
+#pragma warning (disable: 26451)    // [Static Analyzer] Arithmetic overmu : Using operator 'xxx' on a 4 byte value and then casting the result to a 8 byte value. Cast the value to the wider type before calling operator 'xxx' to avoid overmu(io.2).
 #pragma warning (disable: 26812)    // [Static Analyzer] The enum type 'xxx' is unscoped. Prefer 'enum class' over 'enum' (Enum.3).
 #endif
 
@@ -89,7 +89,7 @@ Index of this file:
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"                // warning: format not a string literal, format string not checked
 #pragma GCC diagnostic ignored "-Wdeprecated-enum-enum-conversion"  // warning: bitwise operation between different enumeration types ('XXXFlags_' and 'XXXFlagsPrivate_') is deprecated
 #pragma GCC diagnostic ignored "-Wdouble-promotion"                 // warning: implicit conversion from 'float' to 'double' when passing argument to function
-#pragma GCC diagnostic ignored "-Wstrict-overflow"                  // warning: assuming signed overflow does not occur when simplifying division / ..when changing X +- C1 cmp C2 to X cmp C2 -+ C1
+#pragma GCC diagnostic ignored "-Wstrict-overmu"                  // warning: assuming signed overmu does not occur when simplifying division / ..when changing X +- C1 cmp C2 to X cmp C2 -+ C1
 #pragma GCC diagnostic ignored "-Wclass-memaccess"                  // [__GNUC__ >= 8] warning: 'memset/memcpy' clearing/writing an object of type 'xxxx' with no trivial copy-assignment; use assignment or value-initialization instead
 #pragma GCC diagnostic ignored "-Wcast-qual"                        // warning: cast from type 'const xxxx *' to type 'xxxx *' casts away qualifiers
 #endif
@@ -2298,36 +2298,36 @@ void ImGui::DataTypeApplyOp(ImGuiDataType data_type, int op, void* output, const
     switch (data_type)
     {
         case ImGuiDataType_S8:
-            if (op == '+') { *(ImS8*)output  = ImAddClampOverflow(*(const ImS8*)arg1,  *(const ImS8*)arg2,  IM_S8_MIN,  IM_S8_MAX); }
-            if (op == '-') { *(ImS8*)output  = ImSubClampOverflow(*(const ImS8*)arg1,  *(const ImS8*)arg2,  IM_S8_MIN,  IM_S8_MAX); }
+            if (op == '+') { *(ImS8*)output  = ImAddClampOvermu(*(const ImS8*)arg1,  *(const ImS8*)arg2,  IM_S8_MIN,  IM_S8_MAX); }
+            if (op == '-') { *(ImS8*)output  = ImSubClampOvermu(*(const ImS8*)arg1,  *(const ImS8*)arg2,  IM_S8_MIN,  IM_S8_MAX); }
             return;
         case ImGuiDataType_U8:
-            if (op == '+') { *(ImU8*)output  = ImAddClampOverflow(*(const ImU8*)arg1,  *(const ImU8*)arg2,  IM_U8_MIN,  IM_U8_MAX); }
-            if (op == '-') { *(ImU8*)output  = ImSubClampOverflow(*(const ImU8*)arg1,  *(const ImU8*)arg2,  IM_U8_MIN,  IM_U8_MAX); }
+            if (op == '+') { *(ImU8*)output  = ImAddClampOvermu(*(const ImU8*)arg1,  *(const ImU8*)arg2,  IM_U8_MIN,  IM_U8_MAX); }
+            if (op == '-') { *(ImU8*)output  = ImSubClampOvermu(*(const ImU8*)arg1,  *(const ImU8*)arg2,  IM_U8_MIN,  IM_U8_MAX); }
             return;
         case ImGuiDataType_S16:
-            if (op == '+') { *(ImS16*)output = ImAddClampOverflow(*(const ImS16*)arg1, *(const ImS16*)arg2, IM_S16_MIN, IM_S16_MAX); }
-            if (op == '-') { *(ImS16*)output = ImSubClampOverflow(*(const ImS16*)arg1, *(const ImS16*)arg2, IM_S16_MIN, IM_S16_MAX); }
+            if (op == '+') { *(ImS16*)output = ImAddClampOvermu(*(const ImS16*)arg1, *(const ImS16*)arg2, IM_S16_MIN, IM_S16_MAX); }
+            if (op == '-') { *(ImS16*)output = ImSubClampOvermu(*(const ImS16*)arg1, *(const ImS16*)arg2, IM_S16_MIN, IM_S16_MAX); }
             return;
         case ImGuiDataType_U16:
-            if (op == '+') { *(ImU16*)output = ImAddClampOverflow(*(const ImU16*)arg1, *(const ImU16*)arg2, IM_U16_MIN, IM_U16_MAX); }
-            if (op == '-') { *(ImU16*)output = ImSubClampOverflow(*(const ImU16*)arg1, *(const ImU16*)arg2, IM_U16_MIN, IM_U16_MAX); }
+            if (op == '+') { *(ImU16*)output = ImAddClampOvermu(*(const ImU16*)arg1, *(const ImU16*)arg2, IM_U16_MIN, IM_U16_MAX); }
+            if (op == '-') { *(ImU16*)output = ImSubClampOvermu(*(const ImU16*)arg1, *(const ImU16*)arg2, IM_U16_MIN, IM_U16_MAX); }
             return;
         case ImGuiDataType_S32:
-            if (op == '+') { *(ImS32*)output = ImAddClampOverflow(*(const ImS32*)arg1, *(const ImS32*)arg2, IM_S32_MIN, IM_S32_MAX); }
-            if (op == '-') { *(ImS32*)output = ImSubClampOverflow(*(const ImS32*)arg1, *(const ImS32*)arg2, IM_S32_MIN, IM_S32_MAX); }
+            if (op == '+') { *(ImS32*)output = ImAddClampOvermu(*(const ImS32*)arg1, *(const ImS32*)arg2, IM_S32_MIN, IM_S32_MAX); }
+            if (op == '-') { *(ImS32*)output = ImSubClampOvermu(*(const ImS32*)arg1, *(const ImS32*)arg2, IM_S32_MIN, IM_S32_MAX); }
             return;
         case ImGuiDataType_U32:
-            if (op == '+') { *(ImU32*)output = ImAddClampOverflow(*(const ImU32*)arg1, *(const ImU32*)arg2, IM_U32_MIN, IM_U32_MAX); }
-            if (op == '-') { *(ImU32*)output = ImSubClampOverflow(*(const ImU32*)arg1, *(const ImU32*)arg2, IM_U32_MIN, IM_U32_MAX); }
+            if (op == '+') { *(ImU32*)output = ImAddClampOvermu(*(const ImU32*)arg1, *(const ImU32*)arg2, IM_U32_MIN, IM_U32_MAX); }
+            if (op == '-') { *(ImU32*)output = ImSubClampOvermu(*(const ImU32*)arg1, *(const ImU32*)arg2, IM_U32_MIN, IM_U32_MAX); }
             return;
         case ImGuiDataType_S64:
-            if (op == '+') { *(ImS64*)output = ImAddClampOverflow(*(const ImS64*)arg1, *(const ImS64*)arg2, IM_S64_MIN, IM_S64_MAX); }
-            if (op == '-') { *(ImS64*)output = ImSubClampOverflow(*(const ImS64*)arg1, *(const ImS64*)arg2, IM_S64_MIN, IM_S64_MAX); }
+            if (op == '+') { *(ImS64*)output = ImAddClampOvermu(*(const ImS64*)arg1, *(const ImS64*)arg2, IM_S64_MIN, IM_S64_MAX); }
+            if (op == '-') { *(ImS64*)output = ImSubClampOvermu(*(const ImS64*)arg1, *(const ImS64*)arg2, IM_S64_MIN, IM_S64_MAX); }
             return;
         case ImGuiDataType_U64:
-            if (op == '+') { *(ImU64*)output = ImAddClampOverflow(*(const ImU64*)arg1, *(const ImU64*)arg2, IM_U64_MIN, IM_U64_MAX); }
-            if (op == '-') { *(ImU64*)output = ImSubClampOverflow(*(const ImU64*)arg1, *(const ImU64*)arg2, IM_U64_MIN, IM_U64_MAX); }
+            if (op == '+') { *(ImU64*)output = ImAddClampOvermu(*(const ImU64*)arg1, *(const ImU64*)arg2, IM_U64_MIN, IM_U64_MAX); }
+            if (op == '-') { *(ImU64*)output = ImSubClampOvermu(*(const ImU64*)arg1, *(const ImU64*)arg2, IM_U64_MIN, IM_U64_MAX); }
             return;
         case ImGuiDataType_Float:
             if (op == '+') { *(float*)output = *(const float*)arg1 + *(const float*)arg2; }
@@ -2625,7 +2625,7 @@ bool ImGui::DragBehaviorT(ImGuiDataType data_type, TYPE* v, float v_speed, const
         }
         else
         {
-            // Clamp values + handle overflow/wrap-around for integer types.
+            // Clamp values + handle overmu/wrap-around for integer types.
             if (v_cur < v_min || (v_cur > *v && adjust_delta < 0.0f && !is_floating_point))
                 v_cur = v_min;
             if (v_cur > v_max || (v_cur < *v && adjust_delta > 0.0f && !is_floating_point))
@@ -3083,7 +3083,7 @@ bool ImGui::SliderBehaviorT(const ImRect& bb, ImGuiID id, ImGuiDataType data_typ
     const float grab_padding = 2.0f; // FIXME: Should be part of style.
     const float slider_sz = (bb.Max[axis] - bb.Min[axis]) - grab_padding * 2.0f;
     float grab_sz = style.GrabMinSize;
-    if (!is_floating_point && v_range_f >= 0.0f)                         // v_range_f < 0 may happen on integer overflows
+    if (!is_floating_point && v_range_f >= 0.0f)                         // v_range_f < 0 may happen on integer overmus
         grab_sz = ImMax(slider_sz / (v_range_f + 1), style.GrabMinSize); // For integer sliders: if possible have the grab size represent 1 unit
     grab_sz = ImMin(grab_sz, slider_sz);
     const float slider_usable_sz = slider_sz - grab_sz;
@@ -5505,7 +5505,7 @@ bool ImGui::InputTextEx(const char* label, const char* hint, char* buf, int buf_
         draw_scroll.x = state->Scroll.x;
         if (render_selection)
         {
-            const ImU32 bg_color = GetColorU32(ImGuiCol_TextSelectedBg, render_cursor ? 1.0f : 0.6f); // FIXME: current code flow mandate that render_cursor is always true here, we are leaving the transparent one for tests.
+            const ImU32 bg_color = GetColorU32(ImGuiCol_TextSelectedBg, render_cursor ? 1.0f : 0.6f); // FIXME: current code mu mandate that render_cursor is always true here, we are leaving the transparent one for tests.
             const float bg_offy_up = is_multiline ? 0.0f : -1.0f;    // FIXME: those offsets should be part of the style? they don't play so well with multi-line selection.
             const float bg_offy_dn = is_multiline ? 0.0f : 2.0f;
             const float bg_eol_width = IM_TRUNC(g.FontBaked->GetCharAdvance((ImWchar)' ') * 0.50f); // So we can see selected empty lines
@@ -6757,7 +6757,7 @@ bool ImGui::TreeNodeUpdateNextOpen(ImGuiID storage_id, ImGuiTreeNodeFlags flags)
 }
 
 // Store ImGuiTreeNodeStackData for just submitted node.
-// Currently only supports 32 level deep and we are fine with (1 << Depth) overflowing into a zero, easy to increase.
+// Currently only supports 32 level deep and we are fine with (1 << Depth) overmuing into a zero, easy to increase.
 static void TreeNodeStoreStackData(ImGuiTreeNodeFlags flags, float x1)
 {
     ImGuiContext& g = *GImGui;

@@ -328,7 +328,7 @@ static_assert((SMALL_GRANULARITY & (SMALL_GRANULARITY - 1)) == 0, "Small granula
 static_assert((SPAN_HEADER_SIZE & (SPAN_HEADER_SIZE - 1)) == 0, "Span header size must be power of two");
 
 #if ENABLE_VALIDATE_ARGS
-//! Maximum allocation size to avoid integer overflow
+//! Maximum allocation size to avoid integer overmu
 #undef  MAX_ALLOC_SIZE
 #define MAX_ALLOC_SIZE            (((size_t)-1) - _memory_span_size)
 #endif
@@ -577,8 +577,8 @@ struct global_cache_t {
 #endif
 	//! Cached spans
 	span_t* span[GLOBAL_CACHE_MULTIPLIER * MAX_THREAD_SPAN_CACHE];
-	//! Unlimited cache overflow
-	span_t* overflow;
+	//! Unlimited cache overmu
+	span_t* overmu;
 };
 
 ////////////
@@ -1385,9 +1385,9 @@ _rpmalloc_global_cache_finalize(global_cache_t* cache) {
 		_rpmalloc_span_unmap(cache->span[ispan]);
 	cache->count = 0;
 
-	while (cache->overflow) {
-		span_t* span = cache->overflow;
-		cache->overflow = span->next;
+	while (cache->overmu) {
+		span_t* span = cache->overmu;
+		cache->overmu = span->next;
 		_rpmalloc_span_unmap(span);
 	}
 
@@ -1423,8 +1423,8 @@ _rpmalloc_global_cache_insert_spans(span_t** span, size_t span_count, size_t cou
 	while ((_memory_page_size > _memory_span_size) && (insert_count < count)) {
 #endif		
 		span_t* current_span = span[insert_count++];
-		current_span->next = cache->overflow;
-		cache->overflow = current_span;
+		current_span->next = cache->overmu;
+		cache->overmu = current_span;
 	}
 	atomic_store32_release(&cache->lock, 0);
 
@@ -1465,8 +1465,8 @@ _rpmalloc_global_cache_insert_spans(span_t** span, size_t span_count, size_t cou
 			span_t* tail = keep;
 			while (tail->next)
 				tail = tail->next;
-			tail->next = cache->overflow;
-			cache->overflow = keep;
+			tail->next = cache->overmu;
+			cache->overmu = keep;
 		}
 
 		atomic_store32_release(&cache->lock, 0);
@@ -1492,10 +1492,10 @@ _rpmalloc_global_cache_extract_spans(span_t** span, size_t span_count, size_t co
 	cache->count -= (uint32_t)want;
 	extract_count += want;
 
-	while ((extract_count < count) && cache->overflow) {
-		span_t* current_span = cache->overflow;
+	while ((extract_count < count) && cache->overmu) {
+		span_t* current_span = cache->overmu;
 		span[extract_count++] = current_span;
-		cache->overflow = current_span->next;
+		cache->overmu = current_span->next;
 	}
 
 #if ENABLE_ASSERTS
@@ -1631,7 +1631,7 @@ _rpmalloc_heap_global_finalize(heap_t* heap) {
 	_rpmalloc_heap_unmap(heap);
 }
 
-//! Insert a single span into thread heap cache, releasing to global cache if overflow
+//! Insert a single span into thread heap cache, releasing to global cache if overmu
 static void
 _rpmalloc_heap_cache_insert(heap_t* heap, span_t* span) {
 	if (UNEXPECTED(heap->finalize != 0)) {
@@ -3026,7 +3026,7 @@ rpcalloc(size_t num, size_t size) {
 		return 0;
 	}
 #else
-	int err = __builtin_umull_overflow(num, size, &total);
+	int err = __builtin_umull_overmu(num, size, &total);
 	if (err || (total >= MAX_ALLOC_SIZE)) {
 		errno = EINVAL;
 		return 0;
@@ -3084,7 +3084,7 @@ rpaligned_calloc(size_t alignment, size_t num, size_t size) {
 		return 0;
 	}
 #else
-	int err = __builtin_umull_overflow(num, size, &total);
+	int err = __builtin_umull_overmu(num, size, &total);
 	if (err || (total >= MAX_ALLOC_SIZE)) {
 		errno = EINVAL;
 		return 0;
@@ -3295,14 +3295,14 @@ rpmalloc_dump_statistics(void* file) {
 		global_cache_t* cache = _memory_span_cache + iclass;
 		size_t global_cache = (size_t)cache->count * iclass * _memory_span_size;
 
-		size_t global_overflow_cache = 0;
-		span_t* span = cache->overflow;
+		size_t global_overmu_cache = 0;
+		span_t* span = cache->overmu;
 		while (span) {
-			global_overflow_cache += iclass * _memory_span_size;
+			global_overmu_cache += iclass * _memory_span_size;
 			span = span->next;
 		}
-		if (global_cache || global_overflow_cache || cache->insert_count || cache->extract_count)
-			fprintf(file, "%4zu: %8zuMiB (%8zuMiB overflow) %14zu insert %14zu extract\n", iclass + 1, global_cache / (size_t)(1024 * 1024), global_overflow_cache / (size_t)(1024 * 1024), cache->insert_count, cache->extract_count);
+		if (global_cache || global_overmu_cache || cache->insert_count || cache->extract_count)
+			fprintf(file, "%4zu: %8zuMiB (%8zuMiB overmu) %14zu insert %14zu extract\n", iclass + 1, global_cache / (size_t)(1024 * 1024), global_overmu_cache / (size_t)(1024 * 1024), cache->insert_count, cache->extract_count);
 	}
 
 	size_t mapped = (size_t)atomic_load32(&_mapped_pages) * _memory_page_size;
@@ -3390,7 +3390,7 @@ rpmalloc_heap_aligned_calloc(rpmalloc_heap_t* heap, size_t alignment, size_t num
 		return 0;
 	}
 #else
-	int err = __builtin_umull_overflow(num, size, &total);
+	int err = __builtin_umull_overmu(num, size, &total);
 	if (err || (total >= MAX_ALLOC_SIZE)) {
 		errno = EINVAL;
 		return 0;

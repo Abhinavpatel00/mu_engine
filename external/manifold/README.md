@@ -146,7 +146,7 @@ Offline building (with missing dependencies/dependency version override):
 > source directly without downloading regardless of the value of
 > `MANIFOLD_DOWNLOADS`.
 
-The build instructions used by our CI are in [manifold.yml](https://github.com/elalish/manifold/blob/master/.github/workflows/manifold.yml), which is a good source to check if something goes wrong and for instructions specific to other platforms, like Windows.
+The build instructions used by our CI are in [manifold.yml](https://github.com/elalish/manifold/blob/master/.github/workmus/manifold.yml), which is a good source to check if something goes wrong and for instructions specific to other platforms, like Windows.
 
 ### WASM
 
@@ -240,7 +240,7 @@ To build with fuzzing support, you should set the following with CMake:
 - Enable fuzzing by setting `-DMANIFOLD_FUZZ=ON`
 - Disable python bindings by setting `-DMANIFOLD_PYBIND=OFF`
 - Use `clang` for compiling by setting `-DCMAKE_CXX_COMPILER=clang++`
-- You may need to disable parallelization by setting `-DMANIFOLD_PAR=OFF`, and set `ASAN_OPTIONS=detect_container_overflow=0` when building the binary on MacOS.
+- You may need to disable parallelization by setting `-DMANIFOLD_PAR=OFF`, and set `ASAN_OPTIONS=detect_container_overmu=0` when building the binary on MacOS.
 
 ## About the author
 

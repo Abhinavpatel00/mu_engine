@@ -223,16 +223,16 @@
         with SG_USAGE_DYNAMIC or SG_USAGE_STREAM.
 
         If the application appends more data to the buffer then fits into
-        the buffer, the buffer will go into the "overflow" state for the
+        the buffer, the buffer will go into the "overmu" state for the
         rest of the frame.
 
-        Any draw calls attempting to render an overflown buffer will be
+        Any draw calls attempting to render an overmun buffer will be
         silently dropped (in debug mode this will also result in a
         validation error).
 
-        You can also check manually if a buffer is in overflow-state by calling
+        You can also check manually if a buffer is in overmu-state by calling
 
-            bool sg_query_buffer_overflow(sg_buffer buf)
+            bool sg_query_buffer_overmu(sg_buffer buf)
 
         NOTE: Due to restrictions in underlying 3D-APIs, appended chunks of
         data will be 4-byte aligned in the destination buffer. This means
@@ -1995,7 +1995,7 @@ typedef struct sg_buffer_info {
     uint32_t update_frame_index;    /* frame index of last sg_update_buffer() */
     uint32_t append_frame_index;    /* frame index of last sg_append_buffer() */
     int append_pos;                 /* current position in buffer for sg_append_buffer() */
-    bool append_overflow;           /* is buffer in overflow state (due to sg_append_buffer) */
+    bool append_overmu;           /* is buffer in overmu state (due to sg_append_buffer) */
     int num_slots;                  /* number of renaming-slots for dynamically updated buffers */
     int active_slot;                /* currently active write-slot for dynamically updated buffers */
 } sg_buffer_info;
@@ -2214,7 +2214,7 @@ SOKOL_API_DECL void sg_destroy_pass(sg_pass pass);
 SOKOL_API_DECL void sg_update_buffer(sg_buffer buf, const void* data_ptr, int data_size);
 SOKOL_API_DECL void sg_update_image(sg_image img, const sg_image_content* data);
 SOKOL_API_DECL int sg_append_buffer(sg_buffer buf, const void* data_ptr, int data_size);
-SOKOL_API_DECL bool sg_query_buffer_overflow(sg_buffer buf);
+SOKOL_API_DECL bool sg_query_buffer_overmu(sg_buffer buf);
 
 /* rendering functions */
 SOKOL_API_DECL void sg_begin_default_pass(const sg_pass_action* pass_action, int width, int height);
@@ -2614,7 +2614,7 @@ typedef struct {
 typedef struct {
     int size;
     int append_pos;
-    bool append_overflow;
+    bool append_overmu;
     sg_buffer_type type;
     sg_usage usage;
     uint32_t update_frame_index;
@@ -2626,7 +2626,7 @@ typedef struct {
 _SOKOL_PRIVATE void _sg_buffer_common_init(_sg_buffer_common_t* cmn, const sg_buffer_desc* desc) {
     cmn->size = desc->size;
     cmn->append_pos = 0;
-    cmn->append_overflow = false;
+    cmn->append_overmu = false;
     cmn->type = desc->type;
     cmn->usage = desc->usage;
     cmn->update_frame_index = 0;
@@ -3609,12 +3609,12 @@ typedef enum {
     _SG_VALIDATE_ABND_VBS,
     _SG_VALIDATE_ABND_VB_EXISTS,
     _SG_VALIDATE_ABND_VB_TYPE,
-    _SG_VALIDATE_ABND_VB_OVERFLOW,
+    _SG_VALIDATE_ABND_VB_OVERMU,
     _SG_VALIDATE_ABND_NO_IB,
     _SG_VALIDATE_ABND_IB,
     _SG_VALIDATE_ABND_IB_EXISTS,
     _SG_VALIDATE_ABND_IB_TYPE,
-    _SG_VALIDATE_ABND_IB_OVERFLOW,
+    _SG_VALIDATE_ABND_IB_OVERMU,
     _SG_VALIDATE_ABND_VS_IMGS,
     _SG_VALIDATE_ABND_VS_IMG_EXISTS,
     _SG_VALIDATE_ABND_VS_IMG_TYPES,
@@ -12719,8 +12719,8 @@ _SOKOL_PRIVATE void _sg_discard_pools(_sg_pools_t* p) {
     - return the resource id
 */
 _SOKOL_PRIVATE uint32_t _sg_slot_alloc(_sg_pool_t* pool, _sg_slot_t* slot, int slot_index) {
-    /* FIXME: add handling for an overflowing generation counter,
-       for now, just overflow (another option is to disable
+    /* FIXME: add handling for an overmuing generation counter,
+       for now, just overmu (another option is to disable
        the slot)
     */
     SOKOL_ASSERT(pool && pool->gen_ctrs);
@@ -12984,12 +12984,12 @@ _SOKOL_PRIVATE const char* _sg_validate_string(_sg_validate_error_t err) {
         case _SG_VALIDATE_ABND_VBS:                 return "sg_apply_bindings: number of vertex buffers doesn't match number of pipeline vertex layouts";
         case _SG_VALIDATE_ABND_VB_EXISTS:           return "sg_apply_bindings: vertex buffer no longer alive";
         case _SG_VALIDATE_ABND_VB_TYPE:             return "sg_apply_bindings: buffer in vertex buffer slot is not a SG_BUFFERTYPE_VERTEXBUFFER";
-        case _SG_VALIDATE_ABND_VB_OVERFLOW:         return "sg_apply_bindings: buffer in vertex buffer slot is overflown";
+        case _SG_VALIDATE_ABND_VB_OVERMU:         return "sg_apply_bindings: buffer in vertex buffer slot is overmun";
         case _SG_VALIDATE_ABND_NO_IB:               return "sg_apply_bindings: pipeline object defines indexed rendering, but no index buffer provided";
         case _SG_VALIDATE_ABND_IB:                  return "sg_apply_bindings: pipeline object defines non-indexed rendering, but index buffer provided";
         case _SG_VALIDATE_ABND_IB_EXISTS:           return "sg_apply_bindings: index buffer no longer alive";
         case _SG_VALIDATE_ABND_IB_TYPE:             return "sg_apply_bindings: buffer in index buffer slot is not a SG_BUFFERTYPE_INDEXBUFFER";
-        case _SG_VALIDATE_ABND_IB_OVERFLOW:         return "sg_apply_bindings: buffer in index buffer slot is overflown";
+        case _SG_VALIDATE_ABND_IB_OVERMU:         return "sg_apply_bindings: buffer in index buffer slot is overmun";
         case _SG_VALIDATE_ABND_VS_IMGS:             return "sg_apply_bindings: vertex shader image count doesn't match sg_shader_desc";
         case _SG_VALIDATE_ABND_VS_IMG_EXISTS:       return "sg_apply_bindings: vertex shader image no longer alive";
         case _SG_VALIDATE_ABND_VS_IMG_TYPES:        return "sg_apply_bindings: one or more vertex shader image types don't match sg_shader_desc";
@@ -13447,7 +13447,7 @@ _SOKOL_PRIVATE bool _sg_validate_apply_bindings(const sg_bindings* bindings) {
                 SOKOL_VALIDATE(buf != 0, _SG_VALIDATE_ABND_VB_EXISTS);
                 if (buf && buf->slot.state == SG_RESOURCESTATE_VALID) {
                     SOKOL_VALIDATE(SG_BUFFERTYPE_VERTEXBUFFER == buf->cmn.type, _SG_VALIDATE_ABND_VB_TYPE);
-                    SOKOL_VALIDATE(!buf->cmn.append_overflow, _SG_VALIDATE_ABND_VB_OVERFLOW);
+                    SOKOL_VALIDATE(!buf->cmn.append_overmu, _SG_VALIDATE_ABND_VB_OVERMU);
                 }
             }
             else {
@@ -13471,7 +13471,7 @@ _SOKOL_PRIVATE bool _sg_validate_apply_bindings(const sg_bindings* bindings) {
             SOKOL_VALIDATE(buf != 0, _SG_VALIDATE_ABND_IB_EXISTS);
             if (buf && buf->slot.state == SG_RESOURCESTATE_VALID) {
                 SOKOL_VALIDATE(SG_BUFFERTYPE_INDEXBUFFER == buf->cmn.type, _SG_VALIDATE_ABND_IB_TYPE);
-                SOKOL_VALIDATE(!buf->cmn.append_overflow, _SG_VALIDATE_ABND_IB_OVERFLOW);
+                SOKOL_VALIDATE(!buf->cmn.append_overmu, _SG_VALIDATE_ABND_IB_OVERMU);
             }
         }
 
@@ -14493,7 +14493,7 @@ SOKOL_API_IMPL void sg_apply_bindings(const sg_bindings* bindings) {
             vbs[i] = _sg_lookup_buffer(&_sg.pools, bindings->vertex_buffers[i].id);
             SOKOL_ASSERT(vbs[i]);
             _sg.next_draw_valid &= (SG_RESOURCESTATE_VALID == vbs[i]->slot.state);
-            _sg.next_draw_valid &= !vbs[i]->cmn.append_overflow;
+            _sg.next_draw_valid &= !vbs[i]->cmn.append_overmu;
         }
         else {
             break;
@@ -14505,7 +14505,7 @@ SOKOL_API_IMPL void sg_apply_bindings(const sg_bindings* bindings) {
         ib = _sg_lookup_buffer(&_sg.pools, bindings->index_buffer.id);
         SOKOL_ASSERT(ib);
         _sg.next_draw_valid &= (SG_RESOURCESTATE_VALID == ib->slot.state);
-        _sg.next_draw_valid &= !ib->cmn.append_overflow;
+        _sg.next_draw_valid &= !ib->cmn.append_overmu;
     }
 
     _sg_image_t* vs_imgs[SG_MAX_SHADERSTAGE_IMAGES] = { 0 };
@@ -14647,15 +14647,15 @@ SOKOL_API_IMPL int sg_append_buffer(sg_buffer buf_id, const void* data, int num_
         /* rewind append cursor in a new frame */
         if (buf->cmn.append_frame_index != _sg.frame_index) {
             buf->cmn.append_pos = 0;
-            buf->cmn.append_overflow = false;
+            buf->cmn.append_overmu = false;
         }
         if ((buf->cmn.append_pos + _sg_roundup(num_bytes, 4)) > buf->cmn.size) {
-            buf->cmn.append_overflow = true;
+            buf->cmn.append_overmu = true;
         }
         const int start_pos = buf->cmn.append_pos;
         if (buf->slot.state == SG_RESOURCESTATE_VALID) {
             if (_sg_validate_append_buffer(buf, data, num_bytes)) {
-                if (!buf->cmn.append_overflow && (num_bytes > 0)) {
+                if (!buf->cmn.append_overmu && (num_bytes > 0)) {
                     /* update and append on same buffer in same frame not allowed */
                     SOKOL_ASSERT(buf->cmn.update_frame_index != _sg.frame_index);
                     uint32_t copied_num_bytes = _sg_append_buffer(buf, data, (uint32_t)num_bytes, buf->cmn.append_frame_index != _sg.frame_index);
@@ -14674,10 +14674,10 @@ SOKOL_API_IMPL int sg_append_buffer(sg_buffer buf_id, const void* data, int num_
     return result;
 }
 
-SOKOL_API_IMPL bool sg_query_buffer_overflow(sg_buffer buf_id) {
+SOKOL_API_IMPL bool sg_query_buffer_overmu(sg_buffer buf_id) {
     SOKOL_ASSERT(_sg.valid);
     _sg_buffer_t* buf = _sg_lookup_buffer(&_sg.pools, buf_id.id);
-    bool result = buf ? buf->cmn.append_overflow : false;
+    bool result = buf ? buf->cmn.append_overmu : false;
     return result;
 }
 
@@ -14718,7 +14718,7 @@ SOKOL_API_IMPL sg_buffer_info sg_query_buffer_info(sg_buffer buf_id) {
         info.update_frame_index = buf->cmn.update_frame_index;
         info.append_frame_index = buf->cmn.append_frame_index;
         info.append_pos = buf->cmn.append_pos;
-        info.append_overflow = buf->cmn.append_overflow;
+        info.append_overmu = buf->cmn.append_overmu;
         #if defined(SOKOL_D3D11)
         info.num_slots = 1;
         info.active_slot = 0;

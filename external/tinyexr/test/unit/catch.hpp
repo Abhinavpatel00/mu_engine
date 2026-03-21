@@ -6794,7 +6794,7 @@ namespace Catch {
         }
 
     private:
-        int overflow( int c ) {
+        int overmu( int c ) {
             sync();
 
             if( c != EOF ) {

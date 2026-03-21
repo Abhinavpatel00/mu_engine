@@ -2254,7 +2254,7 @@ static int stbtt__run_charstring(const stbtt_fontinfo *info, int glyph_index, st
             stbtt__buf_skip(&b, -1);
             f = (float)(stbtt_int16)stbtt__cff_int(&b);
          }
-         if (sp >= 48) return STBTT__CSERR("push stack overflow");
+         if (sp >= 48) return STBTT__CSERR("push stack overmu");
          s[sp++] = f;
          clear_stack = 0;
          break;

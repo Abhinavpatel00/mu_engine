@@ -512,7 +512,7 @@ void renderer_create(Renderer* r, RendererDesc* desc)
         VkApplicationInfo app = {.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO,
                                  .pApplicationName   = desc->app_name,
                                  .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-                                 .pEngineName        = "FLOW",
+                                 .pEngineName        = "MU",
                                  .engineVersion      = VK_MAKE_VERSION(1, 0, 0),
                                  .apiVersion         = VK_API_VERSION_1_3
 

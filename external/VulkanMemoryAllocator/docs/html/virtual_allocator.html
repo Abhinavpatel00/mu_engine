@@ -111,11 +111,11 @@ Making virtual allocations</h1>
 <div class="line"><a class="code hl_struct" href="struct_vma_virtual_allocation.html">VmaVirtualAllocation</a> alloc;</div>
 <div class="line">VkDeviceSize offset;</div>
 <div class="line">res = <a class="code hl_function" href="group__group__virtual.html#ga6b7cdcc1c3e5103c323fedc4e1319e01">vmaVirtualAllocate</a>(block, &amp;allocCreateInfo, &amp;alloc, &amp;offset);</div>
-<div class="line"><span class="keywordflow">if</span>(res == VK_SUCCESS)</div>
+<div class="line"><span class="keywordmu">if</span>(res == VK_SUCCESS)</div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Use the 4 KB of your memory starting at offset.</span></div>
 <div class="line">}</div>
-<div class="line"><span class="keywordflow">else</span></div>
+<div class="line"><span class="keywordmu">else</span></div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// Allocation failed - no space for it could be found. Handle this error!</span></div>
 <div class="line">}</div>

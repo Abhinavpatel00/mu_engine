@@ -288,7 +288,7 @@ extern int      stbi_info_from_file  (FILE *f,                  int *x, int *y, 
 
 // for image formats that explicitly notate that they have premultiplied alpha,
 // we just return the colors as stored in the file. set this flag to force
-// unpremultiplication. results are undefined if the unpremultiply overflow.
+// unpremultiplication. results are undefined if the unpremultiply overmu.
 extern void stbi_set_unpremultiply_on_load(int flag_true_if_should_unpremultiply);
 
 // indicate whether we should process iphone images back to canonical format,

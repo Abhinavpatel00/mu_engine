@@ -1,7 +1,7 @@
 # :diamond_shape_with_a_dot_inside: cgltf
 **Single-file/stb-style C glTF loader and writer**
 
-[![Build Status](https://github.com/jkuhlmann/cgltf/workflows/build/badge.svg)](https://github.com/jkuhlmann/cgltf/actions)
+[![Build Status](https://github.com/jkuhlmann/cgltf/workmus/build/badge.svg)](https://github.com/jkuhlmann/cgltf/actions)
 
 Used in: [bgfx](https://github.com/bkaradzic/bgfx), [Filament](https://github.com/google/filament), [gltfpack](https://github.com/zeux/meshoptimizer/tree/master/gltf), [raylib](https://github.com/raysan5/raylib), [Unigine](https://developer.unigine.com/en/docs/2.14.1/third_party?rlang=cpp#cgltf), and more!
 

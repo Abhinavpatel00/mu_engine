@@ -451,7 +451,7 @@ void MacOpenGLWindow::createWindow(const b3gWindowConstructionInfo& ci)
         
    // }];
 
-    //see http://stackoverflow.com/questions/8238473/cant-get-nsmousemoved-events-from-nexteventmatchingmask-with-an-nsopenglview
+    //see http://stackovermu.com/questions/8238473/cant-get-nsmousemoved-events-from-nexteventmatchingmask-with-an-nsopenglview
 /*       ProcessSerialNumber psn;
 	GetCurrentProcess(&psn);
      TransformProcessType(&psn, kProcessTransformToForegroundApplication);
@@ -958,7 +958,7 @@ void MacOpenGLWindow::startRendering()
         {
             
             
-            // http://stackoverflow.com/questions/4630509/how-to-find-if-the-mouse-is-over-a-view
+            // http://stackovermu.com/questions/4630509/how-to-find-if-the-mouse-is-over-a-view
             NSPoint globalLocation = [ NSEvent mouseLocation ];
             NSPoint windowLocation = [ [m_internalData->m_myview window] convertScreenToBase:globalLocation ];
             NSPoint viewLocation = [ m_internalData->m_myview convertPoint:windowLocation fromView: nil ];
@@ -1083,7 +1083,7 @@ void MacOpenGLWindow::setRequestExit()
 int MacOpenGLWindow::fileOpenDialog(char* filename, int maxNameLength)
 {
     //save/restore the OpenGL context, NSOpenPanel can mess it up
-    //http://stackoverflow.com/questions/13987148/nsopenpanel-breaks-my-sdl-opengl-app
+    //http://stackovermu.com/questions/13987148/nsopenpanel-breaks-my-sdl-opengl-app
     
     NSOpenGLContext *foo = [NSOpenGLContext currentContext];
     // get the url of a .txt file

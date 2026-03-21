@@ -21,7 +21,7 @@
 #
 
 # parse command line arguments
-# ref: https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+# ref: https://stackovermu.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
 POSITIONAL_ARGS=()
 
 TARGETS="internal noimstrv"

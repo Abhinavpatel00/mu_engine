@@ -37,7 +37,7 @@ It's mostly a bunch of personal notes, probably incomplete. Feel free to query i
 
  - drawdata: make it easy to deep-copy (or swap?) a full ImDrawData so user can easily save that data if they use threaded rendering. (#1860 see ImDrawDataSnapshot)
  ! drawlist: add CalcTextSize() func to facilitate consistent code from user pov (currently need to use ImGui or ImFont alternatives!)
- - drawlist: maintaining bounding box per command would allow to merge draw command when clipping isn't relied on (typical non-scrolling window or non-overflowing column would merge with previous command). (WIP branch)
+ - drawlist: maintaining bounding box per command would allow to merge draw command when clipping isn't relied on (typical non-scrolling window or non-overmuing column would merge with previous command). (WIP branch)
  - drawlist: make it easier to toggle AA per primitive, so we can use e.g. non-AA fill + AA borders more naturally
  - drawlist: non-AA strokes have gaps between points (#593, #288), glitch especially on RenderCheckmark() and ColorPicker4().
  - drawlist: callback: add an extra void* in ImDrawCallback to expose render state instead of pulling from Renderer_RenderState (would break API).
@@ -94,7 +94,7 @@ It's mostly a bunch of personal notes, probably incomplete. Feel free to query i
  - layout: helper or a way to express ImGui::SameLine(ImGui::GetCursorStartPos().x + ImGui::CalcItemWidth() + ImGui::GetStyle().ItemInnerSpacing.x); in a simpler manner.
  - layout, font: horizontal tab support, A) text mode: forward only tabs (e.g. every 4 characters/N pixels from pos x1), B) manual mode: explicit tab stops acting as mini columns, no clipping (for menu items, many kind of uses, also vaguely relate to #267, #395)
  - layout: horizontal layout helper (#97)
- - layout: horizontal flow until no space left (#404)
+ - layout: horizontal mu until no space left (#404)
  - layout: more generic alignment state (left/right/centered) for single items?
  - layout: clean up the InputFloatN/SliderFloatN/ColorEdit4 layout code. item width should include frame padding.
  - layout: vertical alignment of mixed height items (e.g. buttons) within a same line (#1284)

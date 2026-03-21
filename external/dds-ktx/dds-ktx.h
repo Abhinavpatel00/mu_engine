@@ -1156,7 +1156,7 @@ void ddsktx_get_sub(const ddsktx_texture_info* tc, ddsktx_sub_data* sub_data,
                         }
 
                         r.offset += mip_size;
-                        ddsktx_assert(r.offset <= r.total && "texture buffer overflow");
+                        ddsktx_assert(r.offset <= r.total && "texture buffer overmu");
                     } // foreach slice
 
                     width >>= 1;
@@ -1212,7 +1212,7 @@ void ddsktx_get_sub(const ddsktx_texture_info* tc, ddsktx_sub_data* sub_data,
                         }
 
                         r.offset += mip_size;
-                        ddsktx_assert(r.offset <= r.total && "texture buffer overflow");
+                        ddsktx_assert(r.offset <= r.total && "texture buffer overmu");
                     }   // foreach slice
 
                     

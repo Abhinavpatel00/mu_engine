@@ -507,7 +507,7 @@ STBIDEF int      stbi_is_16_bit_from_file(FILE *f);
 
 // for image formats that explicitly notate that they have premultiplied alpha,
 // we just return the colors as stored in the file. set this flag to force
-// unpremultiplication. results are undefined if the unpremultiply overflow.
+// unpremultiplication. results are undefined if the unpremultiply overmu.
 STBIDEF void stbi_set_unpremultiply_on_load(int flag_true_if_should_unpremultiply);
 
 // indicate whether we should process iphone images back to canonical format,
@@ -993,48 +993,48 @@ static void *stbi__malloc(size_t size)
 // significant limitation for the intended use case.
 //
 // we do, however, need to make sure our size calculations don't
-// overflow. hence a few helper functions for size calculations that
+// overmu. hence a few helper functions for size calculations that
 // multiply integers together, making sure that they're non-negative
-// and no overflow occurs.
+// and no overmu occurs.
 
-// return 1 if the sum is valid, 0 on overflow.
+// return 1 if the sum is valid, 0 on overmu.
 // negative terms are considered invalid.
 static int stbi__addsizes_valid(int a, int b)
 {
    if (b < 0) return 0;
    // now 0 <= b <= INT_MAX, hence also
    // 0 <= INT_MAX - b <= INTMAX.
-   // And "a + b <= INT_MAX" (which might overflow) is the
-   // same as a <= INT_MAX - b (no overflow)
+   // And "a + b <= INT_MAX" (which might overmu) is the
+   // same as a <= INT_MAX - b (no overmu)
    return a <= INT_MAX - b;
 }
 
-// returns 1 if the product is valid, 0 on overflow.
+// returns 1 if the product is valid, 0 on overmu.
 // negative factors are considered invalid.
 static int stbi__mul2sizes_valid(int a, int b)
 {
    if (a < 0 || b < 0) return 0;
    if (b == 0) return 1; // mul-by-0 is always safe
-   // portable way to check for no overflows in a*b
+   // portable way to check for no overmus in a*b
    return a <= INT_MAX/b;
 }
 
 #if !defined(STBI_NO_JPEG) || !defined(STBI_NO_PNG) || !defined(STBI_NO_TGA) || !defined(STBI_NO_HDR)
-// returns 1 if "a*b + add" has no negative terms/factors and doesn't overflow
+// returns 1 if "a*b + add" has no negative terms/factors and doesn't overmu
 static int stbi__mad2sizes_valid(int a, int b, int add)
 {
    return stbi__mul2sizes_valid(a, b) && stbi__addsizes_valid(a*b, add);
 }
 #endif
 
-// returns 1 if "a*b*c + add" has no negative terms/factors and doesn't overflow
+// returns 1 if "a*b*c + add" has no negative terms/factors and doesn't overmu
 static int stbi__mad3sizes_valid(int a, int b, int c, int add)
 {
    return stbi__mul2sizes_valid(a, b) && stbi__mul2sizes_valid(a*b, c) &&
       stbi__addsizes_valid(a*b*c, add);
 }
 
-// returns 1 if "a*b*c*d + add" has no negative terms/factors and doesn't overflow
+// returns 1 if "a*b*c*d + add" has no negative terms/factors and doesn't overmu
 #if !defined(STBI_NO_LINEAR) || !defined(STBI_NO_HDR) || !defined(STBI_NO_PNM)
 static int stbi__mad4sizes_valid(int a, int b, int c, int d, int add)
 {
@@ -1044,7 +1044,7 @@ static int stbi__mad4sizes_valid(int a, int b, int c, int d, int add)
 #endif
 
 #if !defined(STBI_NO_JPEG) || !defined(STBI_NO_PNG) || !defined(STBI_NO_TGA) || !defined(STBI_NO_HDR)
-// mallocs with size overflow checking
+// mallocs with size overmu checking
 static void *stbi__malloc_mad2(int a, int b, int add)
 {
    if (!stbi__mad2sizes_valid(a, b, add)) return NULL;
@@ -1066,18 +1066,18 @@ static void *stbi__malloc_mad4(int a, int b, int c, int d, int add)
 }
 #endif
 
-// returns 1 if the sum of two signed ints is valid (between -2^31 and 2^31-1 inclusive), 0 on overflow.
+// returns 1 if the sum of two signed ints is valid (between -2^31 and 2^31-1 inclusive), 0 on overmu.
 static int stbi__addints_valid(int a, int b)
 {
-   if ((a >= 0) != (b >= 0)) return 1; // a and b have different signs, so no overflow
-   if (a < 0 && b < 0) return a >= INT_MIN - b; // same as a + b >= INT_MIN; INT_MIN - b cannot overflow since b < 0.
+   if ((a >= 0) != (b >= 0)) return 1; // a and b have different signs, so no overmu
+   if (a < 0 && b < 0) return a >= INT_MIN - b; // same as a + b >= INT_MIN; INT_MIN - b cannot overmu since b < 0.
    return a <= INT_MAX - b;
 }
 
-// returns 1 if the product of two ints fits in a signed short, 0 on overflow.
+// returns 1 if the product of two ints fits in a signed short, 0 on overmu.
 static int stbi__mul2shorts_valid(int a, int b)
 {
-   if (b == 0 || b == -1) return 1; // multiplication by 0 is always 0; check for -1 so SHRT_MIN/b doesn't overflow
+   if (b == 0 || b == -1) return 1; // multiplication by 0 is always 0; check for -1 so SHRT_MIN/b doesn't overmu
    if ((a >= 0) == (b >= 0)) return a <= SHRT_MAX/b; // product is positive, so similar to mul2sizes_valid
    if (b < 0) return a <= SHRT_MIN / b; // same as a * b >= SHRT_MIN
    return a >= SHRT_MIN / b;
@@ -3328,7 +3328,7 @@ static int stbi__process_frame_header(stbi__jpeg *z, int scan)
       // discard the extra data until colorspace conversion
       //
       // img_mcu_x, img_mcu_y: <=17 bits; comp[i].h and .v are <=4 (checked earlier)
-      // so these muls can't overflow with 32-bit ints (which we require)
+      // so these muls can't overmu with 32-bit ints (which we require)
       z->img_comp[i].w2 = z->img_mcu_x * z->img_comp[i].h * 8;
       z->img_comp[i].h2 = z->img_mcu_y * z->img_comp[i].v * 8;
       z->img_comp[i].coeff = 0;
@@ -5573,7 +5573,7 @@ static void *stbi__bmp_load(stbi__context *s, int *x, int *y, int *comp, int req
       // we established that bytes_read_so_far is positive and sensible.
       // the first half of this test rejects offsets that are either too small positives, or
       // negative, and guarantees that info.offset >= bytes_read_so_far > 0. this in turn
-      // ensures the number computed in the second half of the test can't overflow.
+      // ensures the number computed in the second half of the test can't overmu.
       if (info.offset < bytes_read_so_far || info.offset - bytes_read_so_far > extra_data_limit) {
          return stbi__errpuc("bad offset", "Corrupt BMP");
       } else {
@@ -7572,7 +7572,7 @@ static int      stbi__pnm_getinteger(stbi__context *s, char *c)
       value = value*10 + (*c - '0');
       *c = (char) stbi__get8(s);
       if((value > 214748364) || (value == 214748364 && *c > '7'))
-          return stbi__err("integer parse overflow", "Parsing an integer in the PPM header overflowed a 32-bit int");
+          return stbi__err("integer parse overmu", "Parsing an integer in the PPM header overmued a 32-bit int");
    }
 
    return value;
@@ -7604,12 +7604,12 @@ static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp)
 
    *x = stbi__pnm_getinteger(s, &c); // read width
    if(*x == 0)
-       return stbi__err("invalid width", "PPM image header had zero or overflowing width");
+       return stbi__err("invalid width", "PPM image header had zero or overmuing width");
    stbi__pnm_skip_whitespace(s, &c);
 
    *y = stbi__pnm_getinteger(s, &c); // read height
    if (*y == 0)
-       return stbi__err("invalid width", "PPM image header had zero or overflowing width");
+       return stbi__err("invalid width", "PPM image header had zero or overmuing width");
    stbi__pnm_skip_whitespace(s, &c);
 
    maxv = stbi__pnm_getinteger(s, &c);  // read max value

@@ -558,7 +558,7 @@ public:
         uint16_t repeat = out[-1];
 
         if (out + run_len > out_end) {
-          break;  // Would overflow
+          break;  // Would overmu
         }
 
         // SIMD-accelerated fill for longer runs
@@ -798,7 +798,7 @@ public:
         }
 
         if (out + len > out_end) {
-          return false;  // Output overflow
+          return false;  // Output overmu
         }
 
         // Copy literal bytes
@@ -1147,7 +1147,7 @@ private:
       if (sym < 256) {
         // Literal byte
         if (TINYEXR_UNLIKELY(out >= out_end)) {
-          return false;  // Output overflow
+          return false;  // Output overmu
         }
         *out++ = static_cast<uint8_t>(sym);
       } else if (sym == 256) {
@@ -1183,7 +1183,7 @@ private:
 
         // Copy match
         if (TINYEXR_UNLIKELY(out + length > out_end)) {
-          return false;  // Output overflow
+          return false;  // Output overmu
         }
         if (TINYEXR_UNLIKELY(out - out_start < distance)) {
           return false;  // Distance too far back

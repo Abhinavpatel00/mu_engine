@@ -17,7 +17,8 @@
 #undef Status
 #endif
 #include "gpu_timer.h"
-#include "flow/flow.h"
+
+#include "mu/mu.h"
 
 #include "tinytypes.h"
 #include "slangtypes.h"
@@ -384,8 +385,8 @@ typedef struct BufferPool
     BufferPoolType type;
     union
     {
-        flow_linear_allocator linear;
-        flow_ring_allocator   ring;
+        mu_linear_allocator linear;
+        mu_ring_allocator   ring;
         OA_Allocator          tlsf;
     };
 
@@ -406,7 +407,7 @@ void flush_barriers( VkCommandBuffer cmd);
 
 typedef struct
 {
-  // frame flow
+  // frame mu
     uint32_t current_frame;
     float    dt;
 
@@ -719,7 +720,7 @@ void vk_create_swapchain(VkDevice                       device,
                          VkQueue                        graphics_queue,
                          VkCommandPool                  one_time_pool,
                          Renderer*                      r);
-void vk_swapchain_destroy(VkDevice device, FlowSwapchain* swapchain, flow_id_pool* id_pool);
+void vk_swapchain_destroy(VkDevice device, FlowSwapchain* swapchain, mu_id_pool* id_pool);
 
 void             vk_swapchain_recreate(VkDevice         device,
                                        VkPhysicalDevice gpu,
@@ -925,7 +926,7 @@ SamplerID create_sampler(Renderer* r, const SamplerCreateDesc* desc);
 void      destroy_sampler(Renderer* r, SamplerID id);
 
 
-FLOW_INLINE void rt_transition_mip(VkCommandBuffer cmd, RenderTarget* rt, uint32_t mip, VkImageLayout new_layout, VkPipelineStageFlags2 new_stage, VkAccessFlags2 new_access
+MU_INLINE void rt_transition_mip(VkCommandBuffer cmd, RenderTarget* rt, uint32_t mip, VkImageLayout new_layout, VkPipelineStageFlags2 new_stage, VkAccessFlags2 new_access
 
 )
 {
@@ -933,7 +934,7 @@ FLOW_INLINE void rt_transition_mip(VkCommandBuffer cmd, RenderTarget* rt, uint32
     cmd_transition_mip(cmd, rt->image, &rt->mip_states[mip], rt->aspect, mip, new_stage, new_access, new_layout, VK_QUEUE_FAMILY_IGNORED);
 }
 
-FLOW_INLINE void rt_transition_all(VkCommandBuffer cmd, RenderTarget* rt, VkImageLayout new_layout, VkPipelineStageFlags2 new_stage, VkAccessFlags2 new_access)
+MU_INLINE void rt_transition_all(VkCommandBuffer cmd, RenderTarget* rt, VkImageLayout new_layout, VkPipelineStageFlags2 new_stage, VkAccessFlags2 new_access)
 {
     for(uint32_t mip = 0; mip < rt->mip_count; mip++)
     {
@@ -993,7 +994,7 @@ static inline uint64_t time_now_ns()
     _Static_assert(sizeof(name) == 256, "Push constant != 256");
 
 
-static FLOW_INLINE void frame_start(Renderer* renderer, Camera* cam)
+static MU_INLINE void frame_start(Renderer* renderer, Camera* cam)
 {
     TracyCZoneNC(ctx, "frame_start", 0x00FF00, 1);
     renderer->current_frame = (renderer->current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -1247,7 +1248,7 @@ static FLOW_INLINE void frame_start(Renderer* renderer, Camera* cam)
 }
 
 
-static FLOW_INLINE void submit_frame(Renderer* r)
+static MU_INLINE void submit_frame(Renderer* r)
 {
     TracyCZoneNC(ctx, "submit_frame", 0xFF0000, 1);
     FrameContext* f   = &r->frames[r->current_frame];
@@ -1325,8 +1326,8 @@ typedef struct RendererPipelines
 
 
 typedef uint32_t         PipelineID;
-extern flow_id_pool      texture_pool;
-extern flow_id_pool      sampler_pool;
+extern mu_id_pool      texture_pool;
+extern mu_id_pool      sampler_pool;
 extern Texture           textures[MAX_BINDLESS_TEXTURES];  // reference by textureid
 extern VkSampler         samplers[MAX_BINDLESS_SAMPLERS];  // reference by samplerid
 extern RendererPipelines g_render_pipelines;

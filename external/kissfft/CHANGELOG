@@ -58,9 +58,9 @@
     Replaced fixed point division with multiply&shift.  Thanks to Jean-Marc Valin for 
     discussions regarding.  Considerable speedup for fixed-point.
 
-    Corrected overflow protection in real fft routines  when using fixed point.
+    Corrected overmu protection in real fft routines  when using fixed point.
     Finder's Credit goes to Robert Oschler of robodance for pointing me at the bug.
-    This also led to the CHECK_OVERFLOW_OP macro.
+    This also led to the CHECK_OVERMU_OP macro.
 
 1.2.1 (April 4, 2004) 
     compiles cleanly with just about every -W warning flag under the sun

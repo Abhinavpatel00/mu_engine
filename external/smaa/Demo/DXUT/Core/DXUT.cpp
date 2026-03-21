@@ -6238,7 +6238,7 @@ void DXUTUpdateD3D9DeviceStats( D3DDEVTYPE DeviceType, DWORD BehaviorFlags,
 
     if( DeviceType == D3DDEVTYPE_HAL )
     {
-        // Be sure not to overflow m_strDeviceStats when appending the adapter 
+        // Be sure not to overmu m_strDeviceStats when appending the adapter 
         // description, since it can be long.  
         wcscat_s( pstrDeviceStats, 256, L": " );
 
@@ -6289,7 +6289,7 @@ void DXUTUpdateD3D10DeviceStats( D3D10_DRIVER_TYPE DeviceType, DXGI_ADAPTER_DESC
 
     if( DeviceType == D3D10_DRIVER_TYPE_HARDWARE )
     {
-        // Be sure not to overflow m_strDeviceStats when appending the adapter 
+        // Be sure not to overmu m_strDeviceStats when appending the adapter 
         // description, since it can be long.  
         wcscat_s( pstrDeviceStats, 256, L": " );
 

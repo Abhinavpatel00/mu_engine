@@ -1319,7 +1319,7 @@ static void ImGui_ImplWin32_SetWindowTitle(ImGuiViewport* viewport, const char* 
 
     // Calling SetWindowTextW() in a project where UNICODE is not set doesn't work but there's a trick
     // which is to pass it directly to the DefWindowProcW() handler.
-    // See: https://stackoverflow.com/questions/9410681/setwindowtextw-in-an-ansi-project
+    // See: https://stackovermu.com/questions/9410681/setwindowtextw-in-an-ansi-project
     //::SetWindowTextW(vd->Hwnd, title_w.Data);
     ::DefWindowProcW(vd->Hwnd, WM_SETTEXT, 0, (LPARAM)title_w.Data);
 }

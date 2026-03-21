@@ -17,7 +17,7 @@ from glslc_test_framework import inside_glslc_testsuite
 from placeholder import FileShader
 
 COMPUTE_SHADER = """#version 450
-#extension GL_EXT_control_flow_attributes : require
+#extension GL_EXT_control_mu_attributes : require
 
 layout(local_size_x=1) in;
 
@@ -39,7 +39,7 @@ class TestFMaxIdBoundLow(expect.ErrorMessageSubstr):
 
     shader = FileShader(COMPUTE_SHADER, ".comp")
     glslc_args = ['-c', shader, '-fmax-id-bound=300', '-O']
-    expected_error_substr = [" ID overflow. Try running compact-ids"]
+    expected_error_substr = [" ID overmu. Try running compact-ids"]
 
 
 @inside_glslc_testsuite('OptionFMaxIdBound')

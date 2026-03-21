@@ -1,6 +1,5 @@
 #include "external/debugbreak/debugbreak.h"
 #include "tinytypes.h"
-#include "flow/flow.h"
 #include "vk_default.h"
 #include "vk.h"
 #include <GLFW/glfw3.h>
@@ -38,7 +37,7 @@ how to decide lifetime and memory managent for efficient caching
 
 #define PRINT_STRUCT(type) printf("\nSTRUCT %-20s size = %zu  align = %zu\n\n", #type, sizeof(type), _Alignof(type));
 
-static inline size_t flow_ravel_index(const size_t* coord, const size_t* strides, size_t ndim)
+static inline size_t mu_ravel_index(const size_t* coord, const size_t* strides, size_t ndim)
 {
     size_t index = 0;
 
@@ -49,7 +48,7 @@ static inline size_t flow_ravel_index(const size_t* coord, const size_t* strides
 }
 
 
-static inline void flow_unravel_index(size_t index, const size_t* dims, size_t ndim, size_t* coord)
+static inline void mu_unravel_index(size_t index, const size_t* dims, size_t ndim, size_t* coord)
 {
     for(int i = ndim - 1; i >= 0; i--)
     {
@@ -181,7 +180,7 @@ static inline uint32_t pack_voxel_face(uint32_t x, uint32_t y, uint32_t z, uint3
 #define CHUNK_AREA (CHUNK_SIZE * CHUNK_SIZE)
 #define CHUNK_VOLUME (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE)
 
-#define FLOW_FOR_3D(x, y, z, sx, sy, sz)                                                                               \
+#define MU_FOR_3D(x, y, z, sx, sy, sz)                                                                               \
     for(size_t z = 0; z < (sz); z++)                                                                                   \
         for(size_t y = 0; y < (sy); y++)                                                                               \
             for(size_t x = 0; x < (sx); x++)
@@ -222,6 +221,7 @@ void generate_chunk(Voxel* chunk)
 
 /* voxel part ends  */
 
+static Renderer renderer = {0};
 
 int main()
 {
@@ -235,7 +235,6 @@ int main()
 
     u32          glfw_ext_count = 0;
     const char** glfw_exts      = glfwGetRequiredInstanceExtensions(&glfw_ext_count);
-    Renderer     renderer       = {0};
 
     {
         RendererDesc desc = {
@@ -369,7 +368,7 @@ int main()
         cfg.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
         pipelines.sky              = pipeline_create_graphics(&renderer, &cfg);
     }
-    TextureID tex_id = load_texture(&renderer, "/home/lk/myprojects/flowgame/data/PNG/Tiles/greystone.png");
+    TextureID tex_id = load_texture(&renderer, "/home/lk/myprojects/mugame/data/PNG/Tiles/greystone.png");
 
     /* buffer slices start  */
 
@@ -388,7 +387,7 @@ int main()
     uint32_t* faces = NULL;
 
     generate_chunk(chunk);
-    FLOW_FOR_3D(x, y, z, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE)
+    MU_FOR_3D(x, y, z, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE)
     {
         size_t idx = voxel_index(x, y, z);
 
@@ -598,9 +597,8 @@ int main()
 
             image_transition_swapchain(cmd, &renderer.swapchain, VK_IMAGE_LAYOUT_GENERAL,
                                        VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
- flush_barriers(cmd);       
-
-	}
+            flush_barriers(cmd);
+        }
 
         VkRenderingAttachmentInfo color = {.sType     = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                                            .imageView = renderer.hdr_color[renderer.swapchain.current_image].view,
@@ -819,7 +817,7 @@ int main()
             rt_transition_all(cmd, &renderer.hdr_color[renderer.swapchain.current_image], VK_IMAGE_LAYOUT_GENERAL,
                               VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_READ_BIT);
 
-flush_barriers(cmd);   
+            flush_barriers(cmd);
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, g_render_pipelines.pipelines[pipelines.postprocess]);
 
             PostPush pp_push        = {0};
@@ -843,7 +841,7 @@ flush_barriers(cmd);
         {
             rt_transition_all(cmd, &renderer.smaa_edges[current_image], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                               VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
-flush_barriers(cmd);   
+            flush_barriers(cmd);
             VkRenderingAttachmentInfo color = {.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                                                .imageView        = renderer.smaa_edges[current_image].view,
                                                .imageLayout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -879,8 +877,8 @@ flush_barriers(cmd);
                               VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
             rt_transition_all(cmd, &renderer.smaa_edges[current_image], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                               VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT);
-        flush_barriers(cmd);   
-	    VkRenderingAttachmentInfo color = {.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            flush_barriers(cmd);
+            VkRenderingAttachmentInfo color = {.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                                                .imageView        = renderer.smaa_weights[current_image].view,
                                                .imageLayout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                                .loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -915,7 +913,7 @@ flush_barriers(cmd);
 
         rt_transition_all(cmd, &renderer.ldr_color[current_image], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                           VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
-flush_barriers(cmd);   
+        flush_barriers(cmd);
 
         {
             VkRenderingAttachmentInfo color = {.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
@@ -954,7 +952,7 @@ flush_barriers(cmd);
                           VK_PIPELINE_STAGE_2_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_READ_BIT);
         image_transition_swapchain(renderer.frames[renderer.current_frame].cmdbuf, &renderer.swapchain,
                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_2_TRANSFER_BIT, 0);
-flush_barriers(cmd);   
+        flush_barriers(cmd);
         VkImageBlit blit = {
             .srcSubresource = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .mipLevel = 0, .baseArrayLayer = 0, .layerCount = 1},
             .srcOffsets = {{0, 0, 0}, {renderer.swapchain.extent.width, renderer.swapchain.extent.height, 1}},
@@ -971,7 +969,7 @@ flush_barriers(cmd);
             image_transition_swapchain(cmd, &renderer.swapchain, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                        VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
 
-flush_barriers(cmd);   
+            flush_barriers(cmd);
             VkRenderingAttachmentInfo color = {.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                                                .imageView   = renderer.swapchain.image_views[current_image],
                                                .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -999,7 +997,7 @@ flush_barriers(cmd);
         }
         image_transition_swapchain(renderer.frames[renderer.current_frame].cmdbuf, &renderer.swapchain,
                                    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, 0);
-           flush_barriers(cmd);   
+        flush_barriers(cmd);
 
         vk_cmd_end(renderer.frames[renderer.current_frame].cmdbuf);
         TracyCZoneEnd(record_cmd_zone);

@@ -627,7 +627,7 @@ static LONG WINAPI WA_ImmGetCompositionString(HIMC himc, DWORD dwIndex, LPVOID l
 		}
 		dwRet2 /= 2;
 		//The return value of WideCharToMultiByte() should probably be checked/asserted for success.
-		//bounds violation (overflow) 'pszMb[iRc]'
+		//bounds violation (overmu) 'pszMb[iRc]'
 		const int bufSize = COUNTOF(g_szCompositionString) * 2;
 		char pszMb[bufSize];
 		int iRc = WideCharToMultiByte( g_uCodePage, 0, pwzUc2, dwRet2, pszMb, sizeof( pszMb ), NULL, NULL );
@@ -2204,7 +2204,7 @@ static DWORD GetImeId( UINT uIndex )
 		ImeUiCallback_Free(lpVerBuffer);
 	}
 
-// The flow comes here in the following conditions
+// The mu comes here in the following conditions
 // - Non Chinese IME input locale
 // - Older Chinese IME
 // - Other error cases

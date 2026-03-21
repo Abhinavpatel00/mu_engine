@@ -2,7 +2,7 @@
 
 ## Goal
 
-Use `flow_id_pool` as a fast CPU-side allocator for bindless texture indices (descriptor array slots), so texture creation/destruction is cheap and fragmentation stays manageable.
+Use `mu_id_pool` as a fast CPU-side allocator for bindless texture indices (descriptor array slots), so texture creation/destruction is cheap and fragmentation stays manageable.
 
 This fits the renderer model that uses a single descriptor set layout and a single pipeline layout.
 
@@ -15,44 +15,44 @@ typedef struct
 {
     uint32_t first;
     uint32_t last;
-} flow_id_pool_range;
+} mu_id_pool_range;
 
 typedef struct
 {
-    flow_id_pool_range* ranges;
+    mu_id_pool_range* ranges;
     uint32_t            count;
     uint32_t            capacity;
     uint32_t            max_id;
     uint32_t            used_ids;
-} flow_id_pool;
+} mu_id_pool;
 
-void flow_id_pool_init(flow_id_pool* pool, uint32_t pool_size);
-void flow_id_pool_deinit(flow_id_pool* pool);
-void flow_id_pool_destroy_all(flow_id_pool* pool);
+void mu_id_pool_init(mu_id_pool* pool, uint32_t pool_size);
+void mu_id_pool_deinit(mu_id_pool* pool);
+void mu_id_pool_destroy_all(mu_id_pool* pool);
 
 /* allocation */
-bool flow_id_pool_create_id(flow_id_pool* pool, uint32_t* out_id);
-bool flow_id_pool_create_range_id(flow_id_pool* pool, uint32_t* out_id, uint32_t count);
+bool mu_id_pool_create_id(mu_id_pool* pool, uint32_t* out_id);
+bool mu_id_pool_create_range_id(mu_id_pool* pool, uint32_t* out_id, uint32_t count);
 
 /* deallocation */
-bool flow_id_pool_destroy_id(flow_id_pool* pool, uint32_t id);
-bool flow_id_pool_destroy_range_id(flow_id_pool* pool, uint32_t id, uint32_t count);
+bool mu_id_pool_destroy_id(mu_id_pool* pool, uint32_t id);
+bool mu_id_pool_destroy_range_id(mu_id_pool* pool, uint32_t id, uint32_t count);
 
 /* queries */
-bool flow_id_pool_is_range_available(const flow_id_pool* pool, uint32_t search_count);
-void flow_id_pool_print_ranges(const flow_id_pool* pool);
-void flow_id_pool_check_ranges(const flow_id_pool* pool);
+bool mu_id_pool_is_range_available(const mu_id_pool* pool, uint32_t search_count);
+void mu_id_pool_print_ranges(const mu_id_pool* pool);
+void mu_id_pool_check_ranges(const mu_id_pool* pool);
 
-uint32_t flow_id_pool_get_available_ids(const flow_id_pool* pool);
-bool     flow_id_pool_is_id(const flow_id_pool* pool, uint32_t id);
-uint32_t flow_id_pool_get_largest_continuous_range(const flow_id_pool* pool);
+uint32_t mu_id_pool_get_available_ids(const mu_id_pool* pool);
+bool     mu_id_pool_is_id(const mu_id_pool* pool, uint32_t id);
+uint32_t mu_id_pool_get_largest_continuous_range(const mu_id_pool* pool);
 ```
 
 ---
 
 ## Core Semantics
 
-`flow_id_pool` tracks **free** ranges of descriptor IDs.
+`mu_id_pool` tracks **free** ranges of descriptor IDs.
 
 - `ranges[i] = [first, last]` (inclusive)
 - ranges are sorted by `first`
@@ -70,7 +70,7 @@ At init with `pool_size = N`:
 
 ### 1) Fast path for single ID
 
-`flow_id_pool_create_id` should allocate from the first suitable range (or a remembered cursor index if added later).
+`mu_id_pool_create_id` should allocate from the first suitable range (or a remembered cursor index if added later).
 
 - take `id = ranges[k].first`
 - increment `ranges[k].first`
@@ -80,7 +80,7 @@ This is typically $O(1)$ for stable workloads.
 
 ### 2) Contiguous range allocation
 
-`flow_id_pool_create_range_id(pool, &id, count)`:
+`mu_id_pool_create_range_id(pool, &id, count)`:
 
 - find first range with size $\ge count$
 - return start ID in `out_id`
@@ -90,7 +90,7 @@ Complexity: $O(R)$ where $R$ is number of free ranges (usually small if merges a
 
 ### 3) Deallocation with aggressive coalescing
 
-`flow_id_pool_destroy_id` and `flow_id_pool_destroy_range_id` must merge with neighbors:
+`mu_id_pool_destroy_id` and `mu_id_pool_destroy_range_id` must merge with neighbors:
 
 - merge left if `left.last + 1 == new.first`
 - merge right if `new.last + 1 == right.first`
@@ -118,11 +118,11 @@ Return `true` on successful state mutation.
 
 Each allocated ID corresponds to one slot in a large sampled-image descriptor array.
 
-- **Allocate texture slot**: `flow_id_pool_create_id` (or range for texture arrays/pages)
+- **Allocate texture slot**: `mu_id_pool_create_id` (or range for texture arrays/pages)
 - **Write descriptor** into global bindless descriptor set at that ID
 - **Store ID** in material/instance data
 - **Shader samples** using that integer ID
-- **Free slot** on texture destruction: `flow_id_pool_destroy_id`
+- **Free slot** on texture destruction: `mu_id_pool_destroy_id`
 
 This avoids per-draw descriptor set churn and matches bindless rendering.
 
@@ -134,7 +134,7 @@ This avoids per-draw descriptor set churn and matches bindless rendering.
 
 1. Choose max bindless texture count (example: 65,536).
 2. Create descriptor set with that array size.
-3. `flow_id_pool_init(&texture_ids, max_textures)`.
+3. `mu_id_pool_init(&texture_ids, max_textures)`.
 
 ### Texture creation
 
@@ -169,7 +169,7 @@ Recommended: one lock around pool mutation, or route all create/destroy through 
 
 ---
 
-## Invariants for `flow_id_pool_check_ranges`
+## Invariants for `mu_id_pool_check_ranges`
 
 Validate in debug builds:
 
@@ -184,34 +184,34 @@ Validate in debug builds:
 ## Minimal Usage Example
 
 ```c
-flow_id_pool texture_pool;
-flow_id_pool_init(&texture_pool, 65536);
+mu_id_pool texture_pool;
+mu_id_pool_init(&texture_pool, 65536);
 
 uint32_t tex_id;
-if (flow_id_pool_create_id(&texture_pool, &tex_id)) {
+if (mu_id_pool_create_id(&texture_pool, &tex_id)) {
     // write descriptor for tex_id
     // store tex_id in material
 }
 
 // later, after GPU-safe retirement:
-flow_id_pool_destroy_id(&texture_pool, tex_id);
+mu_id_pool_destroy_id(&texture_pool, tex_id);
 
-flow_id_pool_deinit(&texture_pool);
+mu_id_pool_deinit(&texture_pool);
 ```
 
 ---
 
 ## Recommended Extensions (Optional)
 
-- `flow_id_pool_create_id_at_least(pool, min_id, out_id)` for reserved ID regions.
-- `flow_id_pool_compact_hint(...)` metrics only (no remap) for fragmentation reporting.
+- `mu_id_pool_create_id_at_least(pool, min_id, out_id)` for reserved ID regions.
+- `mu_id_pool_compact_hint(...)` metrics only (no remap) for fragmentation reporting.
 - frame-deferred free API for direct integration with GPU retirement queues.
 
 ---
 
 ## Summary
 
-`flow_id_pool` is a strong fit for high-performance bindless texture index allocation when:
+`mu_id_pool` is a strong fit for high-performance bindless texture index allocation when:
 
 - free ranges stay coalesced,
 - destruction is deferred until GPU-safe,

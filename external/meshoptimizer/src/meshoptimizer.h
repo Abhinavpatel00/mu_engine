@@ -809,7 +809,7 @@ MESHOPTIMIZER_API void meshopt_spatialClusterPoints(unsigned int* destination, c
 
 /**
  * Quantize a float into half-precision (as defined by IEEE-754 fp16) floating point value
- * Generates +-inf for overflow, preserves NaN, flushes denormals to zero, rounds to nearest
+ * Generates +-inf for overmu, preserves NaN, flushes denormals to zero, rounds to nearest
  * Representable magnitude range: [6e-5; 65504]
  * Maximum relative reconstruction error: 5e-4
  */

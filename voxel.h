@@ -1,7 +1,7 @@
 
 /*
 because we would already have allocated a lot of indexes before we can  allocate texture for meshes or voxels 
-its not feasible to send texture index via voxel or mesh data in desired packed index so its better to pack material type from material id pool which contain material index either in enum form or just from flow id pool 
+its not feasible to send texture index via voxel or mesh data in desired packed index so its better to pack material type from material id pool which contain material index either in enum form or just from mu id pool 
 in this way material data can easily be packed in very compact form 
 
 like this for 32 volume chunks
