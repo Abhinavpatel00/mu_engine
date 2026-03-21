@@ -2168,14 +2168,14 @@ bool renderer_upload_texture_2d(Renderer*       r,
     if(!r || !cmd || !tex || !pixels || size_bytes == 0)
         return false;
 
-    Buffer staging = {0};
-    if(!create_buffer(r, size_bytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, &staging))
+    BufferSlice staging_slice = buffer_pool_alloc(&r->staging_pool, size_bytes, 4);
+    if(!staging_slice.buffer || !staging_slice.mapped)
         return false;
 
-    memcpy(staging.mapping, pixels, (size_t)size_bytes);
+    memcpy(staging_slice.mapped, pixels, (size_t)size_bytes);
 
     VkBufferImageCopy region = {
-        .bufferOffset                    = 0,
+        .bufferOffset                    = staging_slice.offset,
         .bufferRowLength                 = 0,
         .bufferImageHeight               = 0,
         .imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -2185,8 +2185,7 @@ bool renderer_upload_texture_2d(Renderer*       r,
         .imageExtent                     = {width, height, 1},
     };
 
-    vkCmdCopyBufferToImage(cmd, staging.buffer, tex->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-    destroy_buffer(r, &staging);
+    vkCmdCopyBufferToImage(cmd, staging_slice.buffer, tex->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
     return true;
 }
 
