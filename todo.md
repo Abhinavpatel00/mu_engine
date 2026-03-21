@@ -1,4 +1,4 @@
-
+- barrier batching
 - toon rendering using vk_toon shadr
 - first let us render a lot of voxels 
 - clustered shading like granite

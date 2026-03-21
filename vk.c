@@ -2885,6 +2885,7 @@ void vk_cmd_set_viewport_scissor(VkCommandBuffer cmd, VkExtent2D extent)
 }
 
 
+static BarrierBatch barrierbatch;
 void image_transition_swapchain(VkCommandBuffer cmd, FlowSwapchain* sc, VkImageLayout new_layout, VkPipelineStageFlags2 dst_stage, VkAccessFlags2 dst_access)
 {
     uint32_t index = sc->current_image;
@@ -2923,14 +2924,11 @@ void image_transition_swapchain(VkCommandBuffer cmd, FlowSwapchain* sc, VkImageL
         .subresourceRange = {
             .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .baseMipLevel = 0, .levelCount = 1, .baseArrayLayer = 0, .layerCount = 1}};
 
-    VkDependencyInfo dep = {.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO, .imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier};
-
-    vkCmdPipelineBarrier2(cmd, &dep);
-
-    state->layout   = new_layout;
-    state->stage    = dst_stage;
-    state->access   = dst_access;
-    state->validity = IMAGE_STATE_VALID;
+    barrierbatch.image_barriers[barrierbatch.image_count++] = barrier;
+    state->layout                                           = new_layout;
+    state->stage                                            = dst_stage;
+    state->access                                           = dst_access;
+    state->validity                                         = IMAGE_STATE_VALID;
 }
 
 
@@ -2974,10 +2972,8 @@ inline void cmd_transition_all_mips(VkCommandBuffer       cmd,
 
         .subresourceRange = image_subresource_range(aspect, 0, mipCount)};
 
-    VkDependencyInfo dep = {.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO, .imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier};
 
-    vkCmdPipelineBarrier2(cmd, &dep);
-
+    barrierbatch.image_barriers[barrierbatch.image_count++] = barrier;
     state->stage        = newStage;
     state->access       = newAccess;
     state->layout       = newLayout;
@@ -3030,9 +3026,9 @@ inline void cmd_transition_mip(VkCommandBuffer       cmd,
 
         .subresourceRange = image_subresource_range(aspect, mip, 1)};
 
-    VkDependencyInfo dep = {.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO, .imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrier};
 
-    vkCmdPipelineBarrier2(cmd, &dep);
+    barrierbatch.image_barriers[barrierbatch.image_count++] = barrier;
+
 
     state->stage        = newStage;
     state->access       = newAccess;
@@ -3042,7 +3038,22 @@ inline void cmd_transition_mip(VkCommandBuffer       cmd,
 
     state->dirty_mips &= ~bit;
 }
+void flush_barriers( VkCommandBuffer cmd)
+{
 
+
+    if (barrierbatch.image_count == 0) return;
+
+    VkDependencyInfo dep = {
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = barrierbatch.image_count,
+        .pImageMemoryBarriers = barrierbatch.image_barriers
+    };
+
+    vkCmdPipelineBarrier2(cmd, &dep);
+
+    barrierbatch.image_count = 0;
+}
 
 VkPresentModeKHR vk_swapchain_select_present_mode(VkPhysicalDevice physical_device, VkSurfaceKHR surface, bool vsync)
 {
@@ -3838,6 +3849,7 @@ void renderer_record_screenshot(Renderer* r, VkCommandBuffer cmd)
     image_transition_swapchain(cmd, &r->swapchain, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                VK_PIPELINE_STAGE_2_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_READ_BIT);
 
+flush_barriers(cmd);   
     VkBufferImageCopy region = {
         .bufferOffset      = 0,
         .bufferRowLength   = 0,

@@ -598,7 +598,9 @@ int main()
 
             image_transition_swapchain(cmd, &renderer.swapchain, VK_IMAGE_LAYOUT_GENERAL,
                                        VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
-        }
+ flush_barriers(cmd);       
+
+	}
 
         VkRenderingAttachmentInfo color = {.sType     = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                                            .imageView = renderer.hdr_color[renderer.swapchain.current_image].view,
@@ -701,50 +703,50 @@ int main()
             {
 
 
-                // ── Sky pass ──────────────────────────────────────────
-                {
-                    vec3 forward = {
-                        cosf(cam.pitch) * sinf(cam.yaw),
-                        sinf(cam.pitch),
-                        -cosf(cam.pitch) * cosf(cam.yaw),
-                    };
-                    glm_vec3_normalize(forward);
-
-                    vec3 world_up = {0.0f, 1.0f, 0.0f};
-                    vec3 right    = {0.0f};
-                    vec3 up       = {0.0f};
-                    glm_vec3_cross(forward, world_up, right);
-                    glm_vec3_normalize(right);
-                    glm_vec3_cross(right, forward, up);
-
-                    float aspect = (float)renderer.swapchain.extent.width / (float)renderer.swapchain.extent.height;
-                    mat4  proj   = GLM_MAT4_IDENTITY_INIT;
-                    mat4  inv_proj;
-                    camera_build_proj_reverse_z_infinite(proj, &cam, aspect);
-                    proj[1][1] *= -1.0f;
-                    glm_mat4_inv(proj, inv_proj);
-
-                    SkyPush sky_push = {0};
-                    memcpy(sky_push.inv_proj, inv_proj, sizeof(sky_push.inv_proj));
-                    sky_push.basis_right[0] = right[0];
-                    sky_push.basis_right[1] = right[1];
-                    sky_push.basis_right[2] = right[2];
-                    sky_push.basis_up[0]    = up[0];
-                    sky_push.basis_up[1]    = up[1];
-                    sky_push.basis_up[2]    = up[2];
-                    sky_push.basis_back[0]  = -forward[0];
-                    sky_push.basis_back[1]  = -forward[1];
-                    sky_push.basis_back[2]  = -forward[2];
-                    sky_push.time           = (float)glfwGetTime() * 0.2f;
-                    sky_push.cirrus         = 0.4f;
-                    sky_push.cumulus        = 0.8f;
-
-                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.sky]);
-                    vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
-                    vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0,
-                                       sizeof(SkyPush), &sky_push);
-                    vkCmdDraw(cmd, 4, 1, 0, 0);
-                }
+                // // ── Sky pass ──────────────────────────────────────────
+                // {
+                //     vec3 forward = {
+                //         cosf(cam.pitch) * sinf(cam.yaw),
+                //         sinf(cam.pitch),
+                //         -cosf(cam.pitch) * cosf(cam.yaw),
+                //     };
+                //     glm_vec3_normalize(forward);
+                //
+                //     vec3 world_up = {0.0f, 1.0f, 0.0f};
+                //     vec3 right    = {0.0f};
+                //     vec3 up       = {0.0f};
+                //     glm_vec3_cross(forward, world_up, right);
+                //     glm_vec3_normalize(right);
+                //     glm_vec3_cross(right, forward, up);
+                //
+                //     float aspect = (float)renderer.swapchain.extent.width / (float)renderer.swapchain.extent.height;
+                //     mat4  proj   = GLM_MAT4_IDENTITY_INIT;
+                //     mat4  inv_proj;
+                //     camera_build_proj_reverse_z_infinite(proj, &cam, aspect);
+                //     proj[1][1] *= -1.0f;
+                //     glm_mat4_inv(proj, inv_proj);
+                //
+                //     SkyPush sky_push = {0};
+                //     memcpy(sky_push.inv_proj, inv_proj, sizeof(sky_push.inv_proj));
+                //     sky_push.basis_right[0] = right[0];
+                //     sky_push.basis_right[1] = right[1];
+                //     sky_push.basis_right[2] = right[2];
+                //     sky_push.basis_up[0]    = up[0];
+                //     sky_push.basis_up[1]    = up[1];
+                //     sky_push.basis_up[2]    = up[2];
+                //     sky_push.basis_back[0]  = -forward[0];
+                //     sky_push.basis_back[1]  = -forward[1];
+                //     sky_push.basis_back[2]  = -forward[2];
+                //     sky_push.time           = (float)glfwGetTime() * 0.2f;
+                //     sky_push.cirrus         = 0.4f;
+                //     sky_push.cumulus        = 0.8f;
+                //
+                //     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.sky]);
+                //     vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
+                //     vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0,
+                //                        sizeof(SkyPush), &sky_push);
+                //     vkCmdDraw(cmd, 4, 1, 0, 0);
+                // }
 
                 static int prev_space = GLFW_RELEASE;
 
@@ -817,7 +819,7 @@ int main()
             rt_transition_all(cmd, &renderer.hdr_color[renderer.swapchain.current_image], VK_IMAGE_LAYOUT_GENERAL,
                               VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_READ_BIT);
 
-
+flush_barriers(cmd);   
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, g_render_pipelines.pipelines[pipelines.postprocess]);
 
             PostPush pp_push        = {0};
@@ -841,7 +843,7 @@ int main()
         {
             rt_transition_all(cmd, &renderer.smaa_edges[current_image], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                               VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
-
+flush_barriers(cmd);   
             VkRenderingAttachmentInfo color = {.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                                                .imageView        = renderer.smaa_edges[current_image].view,
                                                .imageLayout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -871,12 +873,14 @@ int main()
 
             vkCmdEndRendering(cmd);
         }
+
         {
             rt_transition_all(cmd, &renderer.smaa_weights[current_image], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                               VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
             rt_transition_all(cmd, &renderer.smaa_edges[current_image], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                               VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, VK_ACCESS_2_SHADER_SAMPLED_READ_BIT);
-            VkRenderingAttachmentInfo color = {.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        flush_barriers(cmd);   
+	    VkRenderingAttachmentInfo color = {.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                                                .imageView        = renderer.smaa_weights[current_image].view,
                                                .imageLayout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                                .loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR,
@@ -911,7 +915,7 @@ int main()
 
         rt_transition_all(cmd, &renderer.ldr_color[current_image], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                           VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
-
+flush_barriers(cmd);   
 
         {
             VkRenderingAttachmentInfo color = {.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
@@ -950,7 +954,7 @@ int main()
                           VK_PIPELINE_STAGE_2_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_READ_BIT);
         image_transition_swapchain(renderer.frames[renderer.current_frame].cmdbuf, &renderer.swapchain,
                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_2_TRANSFER_BIT, 0);
-
+flush_barriers(cmd);   
         VkImageBlit blit = {
             .srcSubresource = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .mipLevel = 0, .baseArrayLayer = 0, .layerCount = 1},
             .srcOffsets = {{0, 0, 0}, {renderer.swapchain.extent.width, renderer.swapchain.extent.height, 1}},
@@ -967,7 +971,7 @@ int main()
             image_transition_swapchain(cmd, &renderer.swapchain, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                                        VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
 
-
+flush_barriers(cmd);   
             VkRenderingAttachmentInfo color = {.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                                                .imageView   = renderer.swapchain.image_views[current_image],
                                                .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -995,7 +999,7 @@ int main()
         }
         image_transition_swapchain(renderer.frames[renderer.current_frame].cmdbuf, &renderer.swapchain,
                                    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, 0);
-
+           flush_barriers(cmd);   
 
         vk_cmd_end(renderer.frames[renderer.current_frame].cmdbuf);
         TracyCZoneEnd(record_cmd_zone);

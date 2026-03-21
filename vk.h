@@ -395,44 +395,49 @@ typedef struct BufferPool
     VmaAllocationCreateFlags alloc_flags;
 } BufferPool;
 
+typedef struct BarrierBatch
+{
+    VkImageMemoryBarrier2 image_barriers[32];
+
+    uint32_t image_count;
+} BarrierBatch;
+
+void flush_barriers( VkCommandBuffer cmd);
 
 typedef struct
 {
-    FlowSwapchain swapchain;
-    GLFWwindow*   window;
-    FrameContext  frames[MAX_FRAMES_IN_FLIGHT];
-    uint32_t      current_frame;
+  // frame flow
+    uint32_t current_frame;
+    float    dt;
 
-    BufferPool cpu_pool;
-    BufferPool gpu_pool;
-    BufferPool staging_pool;
+    FrameContext frames[MAX_FRAMES_IN_FLIGHT];
 
-    VkDeviceAddress gpu_base_addr;
+    // frequently used GPU resources
+    Buffer global_ubo[MAX_FRAMES_IN_FLIGHT];
 
-    Frustum          frustum;
-    VkDescriptorPool imgui_pool;
-    RenderTarget     depth[MAX_SWAPCHAIN_IMAGES];  // per-image depth
+    // barrier system (used constantly now)
 
-    RenderTarget hdr_color[MAX_SWAPCHAIN_IMAGES];  // optional HDR buffer
-    RenderTarget ldr_color[MAX_SWAPCHAIN_IMAGES];  // optional HDR buffer
-    RenderTarget smaa_edges[MAX_SWAPCHAIN_IMAGES];
-    RenderTarget smaa_weights[MAX_SWAPCHAIN_IMAGES];
-
-
-    float       dt;
-    double      cpu_frame_ns;
-    double      cpu_active_ns;
-    double      cpu_wait_ns;
-    double      cpu_wait_accum_ns;
-    double      cpu_prev_frame;
+//    BarrierBatch barrierbatch;
+    // per-frame profiling (borderline hot)
     GpuProfiler gpuprofiler[MAX_FRAMES_IN_FLIGHT];
 
-    Buffer           readback_buffer;
-    Buffer           global_ubo[MAX_FRAMES_IN_FLIGHT];
-    InstanceContext  instance;
-    VkPhysicalDevice physical_device;
-    //warm data
+    // CPU timing (if used per frame)
+    double cpu_frame_ns;
+    double cpu_active_ns;
+    double cpu_wait_ns;
+    double      cpu_wait_accum_ns;
+    double      cpu_prev_frame;
+
+
+
+Frustum frustum; 
+    // window + swapchain
+    FlowSwapchain swapchain;
+    GLFWwindow*   window;
+
+    // GPU device stuff
     VkDevice device;
+    VkPhysicalDevice physical_device;
 
     VkQueue present_queue;
     VkQueue graphics_queue;
@@ -444,24 +449,24 @@ typedef struct
     uint32_t compute_queue_index;
     uint32_t transfer_queue_index;
 
-    VkAllocationCallbacks* allocatorcallbacks;
-    VmaAllocator           vmaallocator;
-
     VkSurfaceKHR surface;
 
-    Bindless bindless_system;
+    // memory systems
+    VmaAllocator vmaallocator;
+    VkAllocationCallbacks* allocatorcallbacks;
 
-    VkCommandPool one_time_gfx_pool;
-    VkCommandPool transfer_pool;
+    BufferPool cpu_pool;
+    BufferPool gpu_pool;
+    BufferPool staging_pool;
 
-    DeviceInfo info;
+    // render targets (BIG = cold)
+    RenderTarget depth[MAX_SWAPCHAIN_IMAGES];
+    RenderTarget hdr_color[MAX_SWAPCHAIN_IMAGES];
+    RenderTarget ldr_color[MAX_SWAPCHAIN_IMAGES];
+    RenderTarget smaa_edges[MAX_SWAPCHAIN_IMAGES];
+    RenderTarget smaa_weights[MAX_SWAPCHAIN_IMAGES];
 
-    VkPipelineCache     pipeline_cache;
-    DefaultSamplerTable default_samplers;
-
-    TextureID dummy_texture;
-    TextureID smaa_area_tex;
-    TextureID smaa_search_tex;
+    // pipelines / resources
     struct
     {
         uint32_t smaa_edge;
@@ -469,6 +474,34 @@ typedef struct
         uint32_t smaa_blend;
     } smaa_pipelines;
 
+    DefaultSamplerTable default_samplers;
+
+    // descriptors
+    VkDescriptorPool imgui_pool;
+
+    // textures
+    TextureID dummy_texture;
+    TextureID smaa_area_tex;
+    TextureID smaa_search_tex;
+
+    // misc systems
+    Bindless bindless_system;
+    InstanceContext instance;
+
+    VkPipelineCache pipeline_cache;
+
+    // command pools (rarely touched per draw)
+    VkCommandPool one_time_gfx_pool;
+    VkCommandPool transfer_pool;
+
+    // debug / info
+    DeviceInfo info;
+
+    // readback (rare)
+    Buffer readback_buffer;
+
+    // GPU address (rarely used)
+    VkDeviceAddress gpu_base_addr;
 
 } Renderer;
 typedef struct BufferSlice
@@ -502,7 +535,7 @@ Staging frame-lifetime rule:
 - They remain valid only until the frame using them completes (fence signal).
 - Do not cache `mapped` pointers or staging offsets across frames.
 */
-bool renderer_upload_buffer_to_slice(Renderer* r,
+bool renderer_upload_buffer_to_slice(Renderer*       r,
                                      VkCommandBuffer cmd,
                                      BufferSlice     dst_slice,
                                      const void*     src_data,
@@ -510,7 +543,7 @@ bool renderer_upload_buffer_to_slice(Renderer* r,
                                      VkDeviceSize    staging_alignment);
 
 /* Allocates destination from `gpu_pool`, stages upload, records `vkCmdCopyBuffer`, returns destination slice. */
-BufferSlice renderer_upload_buffer(Renderer* r,
+BufferSlice renderer_upload_buffer(Renderer*       r,
                                    VkCommandBuffer cmd,
                                    const void*     src_data,
                                    VkDeviceSize    size_bytes,
@@ -858,7 +891,7 @@ TextureID create_texture(Renderer* r, const TextureCreateDesc* desc);
 void      destroy_texture(Renderer* r, TextureID id);
 
 /* Texture upload helper kept separate from generic buffer uploads due to image row/layout constraints. */
-bool renderer_upload_texture_2d(Renderer* r,
+bool renderer_upload_texture_2d(Renderer*       r,
                                 VkCommandBuffer cmd,
                                 Texture*        tex,
                                 const void*     pixels,
