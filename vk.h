@@ -489,7 +489,6 @@ Frustum frustum;
     Bindless bindless_system;
     InstanceContext instance;
 
-    VkPipelineCache pipeline_cache;
 
     // command pools (rarely touched per draw)
     VkCommandPool one_time_gfx_pool;
@@ -1339,3 +1338,5 @@ VkPipeline pipeline_get(PipelineID id);
 
 void pipeline_mark_dirty(const char* changed_shader);
 void pipeline_rebuild(Renderer* r);
+
+void pipeline_cache_save(VkDevice device, VkPhysicalDevice phys, VkPipelineCache cache, const char* path);

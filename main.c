@@ -180,7 +180,7 @@ static inline uint32_t pack_voxel_face(uint32_t x, uint32_t y, uint32_t z, uint3
 #define CHUNK_AREA (CHUNK_SIZE * CHUNK_SIZE)
 #define CHUNK_VOLUME (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE)
 
-#define MU_FOR_3D(x, y, z, sx, sy, sz)                                                                               \
+#define MU_FOR_3D(x, y, z, sx, sy, sz)                                                                                 \
     for(size_t z = 0; z < (sz); z++)                                                                                   \
         for(size_t y = 0; y < (sy); y++)                                                                               \
             for(size_t x = 0; x < (sx); x++)
@@ -236,47 +236,50 @@ int main()
     u32          glfw_ext_count = 0;
     const char** glfw_exts      = glfwGetRequiredInstanceExtensions(&glfw_ext_count);
 
+    RendererDesc desc = {
+        .app_name            = "My Renderer",
+        .instance_layers     = NULL,
+        .instance_extensions = glfw_exts,
+        .device_extensions   = dev_exts,
+
+        .instance_layer_count        = 0,
+        .instance_extension_count    = glfw_ext_count,
+        .device_extension_count      = 2,
+        .enable_gpu_based_validation = VALIDATION,
+        .enable_validation           = VALIDATION,
+
+        .validation_severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+                               | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+        .validation_types = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+                            | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+        .width  = 1362,
+        .height = 749,
+
+        .swapchain_preferred_color_space = VK_COLORSPACE_SRGB_NONLINEAR_KHR,
+        .swapchain_preferred_format      = VK_FORMAT_B8G8R8A8_SRGB,
+        .swapchain_extra_usage_flags     = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
+                                       | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,  // src for reading raw pixels
+        .vsync               = false,
+        .enable_debug_printf = false,  // Enable shader debug printf
+
+        .bindless_sampled_image_count     = 65536,
+        .bindless_sampler_count           = 256,
+        .bindless_storage_image_count     = 16384,
+        .enable_pipeline_stats            = false,
+        .swapchain_preferred_present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR,
+
+        .size_of_cpu_pool     = MB(32),
+        .size_of_gpu_pool     = MB(512),
+        .size_of_staging_pool = MB(128),
+
+    };
+    MU_SCOPE_TIMER("Renderer Creation")
     {
-        RendererDesc desc = {
-            .app_name            = "My Renderer",
-            .instance_layers     = NULL,
-            .instance_extensions = glfw_exts,
-            .device_extensions   = dev_exts,
+    renderer_create(&renderer, &desc);
+    }
 
-            .instance_layer_count        = 0,
-            .instance_extension_count    = glfw_ext_count,
-            .device_extension_count      = 2,
-            .enable_gpu_based_validation = VALIDATION,
-            .enable_validation           = VALIDATION,
-
-            .validation_severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
-                                   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
-            .validation_types = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-                                | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
-            .width  = 1362,
-            .height = 749,
-
-            .swapchain_preferred_color_space = VK_COLORSPACE_SRGB_NONLINEAR_KHR,
-            .swapchain_preferred_format      = VK_FORMAT_B8G8R8A8_SRGB,
-            .swapchain_extra_usage_flags     = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
-                                           | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,  // src for reading raw pixels
-            .vsync               = false,
-            .enable_debug_printf = false,  // Enable shader debug printf
-
-            .bindless_sampled_image_count     = 65536,
-            .bindless_sampler_count           = 256,
-            .bindless_storage_image_count     = 16384,
-            .enable_pipeline_stats            = false,
-            .swapchain_preferred_present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR,
-
-            .size_of_cpu_pool     = MB(32),
-            .size_of_gpu_pool     = MB(512),
-            .size_of_staging_pool = MB(128),
-
-        };
-
-        renderer_create(&renderer, &desc);
-
+    MU_SCOPE_TIMER("Pipeline construction")
+    {
         {
             GraphicsPipelineConfig cfg = pipeline_config_default();
             cfg.vert_path              = "compiledshaders/minimal_proc.vert.spv";
@@ -352,23 +355,27 @@ int main()
         }
 
 
+        // Sky pipeline – fullscreen quad, no depth test/write
         {
+            GraphicsPipelineConfig cfg = pipeline_config_default();
+            cfg.vert_path              = "compiledshaders/sky.vert.spv";
+            cfg.frag_path              = "compiledshaders/sky.frag.spv";
+            cfg.color_attachment_count = 1;
+            cfg.color_formats          = &renderer.hdr_color[1].format;
+            cfg.depth_format           = renderer.depth[1].format;
+            cfg.depth_test_enable      = false;
+            cfg.depth_write_enable     = false;
+            cfg.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+            pipelines.sky              = pipeline_create_graphics(&renderer, &cfg);
         }
     }
-    // Sky pipeline – fullscreen quad, no depth test/write
+
+TextureID tex_id;
+    MU_SCOPE_TIMER("texture Creation")
     {
-        GraphicsPipelineConfig cfg = pipeline_config_default();
-        cfg.vert_path              = "compiledshaders/sky.vert.spv";
-        cfg.frag_path              = "compiledshaders/sky.frag.spv";
-        cfg.color_attachment_count = 1;
-        cfg.color_formats          = &renderer.hdr_color[1].format;
-        cfg.depth_format           = renderer.depth[1].format;
-        cfg.depth_test_enable      = false;
-        cfg.depth_write_enable     = false;
-        cfg.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-        pipelines.sky              = pipeline_create_graphics(&renderer, &cfg);
+        tex_id = load_texture(&renderer, "/home/lk/myprojects/mugame/data/PNG/Tiles/greystone.png");
     }
-    TextureID tex_id = load_texture(&renderer, "/home/lk/myprojects/mugame/data/PNG/Tiles/greystone.png");
+
 
     /* buffer slices start  */
 
@@ -385,9 +392,11 @@ int main()
     static Voxel chunk[CHUNK_VOLUME];
 
     uint32_t* faces = NULL;
-
+    MU_SCOPE_TIMER("VOXEL Creation")
+    {
     generate_chunk(chunk);
     MU_FOR_3D(x, y, z, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE)
+
     {
         size_t idx = voxel_index(x, y, z);
 
@@ -424,6 +433,8 @@ int main()
             }
         }
     }
+    }
+
 
     uint32_t    voxel_face_count = arrlen(faces);
     BufferSlice cpu_faces        = buffer_pool_alloc(&renderer.cpu_pool, voxel_face_count * sizeof(uint32_t), 4);
@@ -1022,18 +1033,18 @@ int main()
     printf("Push size = %zu\n", sizeof(Push));
     printf("view_proj offset = %zu\n", offsetof(Push, view_proj));
 
-    PRINT_FIELD(Push, face_ptr);
-    PRINT_FIELD(Push, mat_ptr);
-    PRINT_FIELD(Push, face_count);
-    PRINT_FIELD(Push, aspect);
-    PRINT_FIELD(Push, cam_pos);
-    PRINT_FIELD(Push, pad1);
-    PRINT_FIELD(Push, cam_dir);
-    PRINT_FIELD(Push, pad2);
-    PRINT_FIELD(Push, view_proj);
-    PRINT_FIELD(Push, texture_id);
-    PRINT_FIELD(Push, sampler_id);
-    //    ANALYZE_STRUCT(ImageState);
-    //renderer_destroy(&renderer);
+    // PRINT_FIELD(Push, face_ptr);
+    // PRINT_FIELD(Push, mat_ptr);
+    // PRINT_FIELD(Push, face_count);
+    // PRINT_FIELD(Push, aspect);
+    // PRINT_FIELD(Push, cam_pos);
+    // PRINT_FIELD(Push, pad1);
+    // PRINT_FIELD(Push, cam_dir);
+    // PRINT_FIELD(Push, pad2);
+    // PRINT_FIELD(Push, view_proj);
+    // PRINT_FIELD(Push, texture_id);
+    // PRINT_FIELD(Push, sampler_id);
+    // //    ANALYZE_STRUCT(ImageState);
+    renderer_destroy(&renderer);
     return 0;
 }

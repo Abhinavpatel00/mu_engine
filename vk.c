@@ -29,7 +29,7 @@ mu_id_pool      sampler_pool                    = {0};
 Texture           textures[MAX_BINDLESS_TEXTURES] = {0};  // reference by textureid
 VkSampler         samplers[MAX_BINDLESS_SAMPLERS] = {0};  // reference by samplerid
 RendererPipelines g_render_pipelines              = {0};
-
+VkPipelineCache pipeline_cache;
 
 static void spv_to_slang(const char* spv, char* out)
 {
@@ -1212,7 +1212,7 @@ void renderer_create(Renderer* r, RendererDesc* desc)
     glfwGetFramebufferSize(r->window, &fb_w, &fb_h);
     //  descriptor_layout_cache_init(&r->descriptor_layout_cache);
     //pipeline_layout_cache_init(&r->pipeline_layout_cache);
-    r->pipeline_cache = pipeline_cache_load_or_create(r->device, r->physical_device, "pipeline_cache.bin");
+    pipeline_cache = pipeline_cache_load_or_create(r->device, r->physical_device, "pipeline_cache.bin");
     VkDescriptorSetLayoutBinding bindings[] = {// textures
                                                {
                                                    .binding         = BINDLESS_TEXTURE_BINDING,
@@ -1828,16 +1828,16 @@ void renderer_destroy(Renderer* r)
         gpu_profiler_destroy(&r->gpuprofiler[i], r->device);
     }
 
-    pipeline_cache_save(r->device, r->physical_device, r->pipeline_cache, "pipeline_cache.bin");
-
-    vkDestroyPipelineCache(r->device, r->pipeline_cache, NULL);
+    {
+        pipeline_cache_save(r->device, r->physical_device,pipeline_cache, "pipeline_cache.bin");
+        vkDestroyPipelineCache(r->device, pipeline_cache, NULL);
+    }
 
     forEach(i, MAX_FRAMES_IN_FLIGHT)
     {
         destroy_buffer(r, &r->global_ubo[i]);
     }
 
-    vkDestroyDevice(r->device, NULL);
 }
 
 
@@ -2819,7 +2819,7 @@ VkPipeline create_graphics_pipeline(Renderer* renderer, const GraphicsPipelineCo
 
     VkPipeline pipeline;
 
-    VkResult res = vkCreateGraphicsPipelines(renderer->device, renderer->pipeline_cache, 1, &pipe, NULL, &pipeline);
+    VkResult res = vkCreateGraphicsPipelines(renderer->device, pipeline_cache, 1, &pipe, NULL, &pipeline);
 
     if(res != VK_SUCCESS)
     {
@@ -2858,7 +2858,7 @@ VkPipeline create_compute_pipeline(Renderer* renderer, const char* compute_path)
 
     VkPipeline pipeline;
 
-    VK_CHECK(vkCreateComputePipelines(renderer->device, renderer->pipeline_cache, 1, &ci, NULL, &pipeline));
+    VK_CHECK(vkCreateComputePipelines(renderer->device,pipeline_cache, 1, &ci, NULL, &pipeline));
 
     vkDestroyShaderModule(renderer->device, module, NULL);
 
