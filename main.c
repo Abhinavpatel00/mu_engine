@@ -26,6 +26,11 @@ static bool take_screenshot = true;
 static bool wireframe_mode  = false;
 #define VALIDATION false
 // imp gpu validation shows false positives may be bacause of data races
+/*
+only prolems in api design is i guess how to e pose the interface 
+how to decide lifetime and memory managent for efficient caching
+
+*/
 
 #define PRINT_FIELD(type, field)                                                                                       \
     printf("%-20s offset = %3zu  align = %2zu  size = %2zu\n", #field, offsetof(type, field),                          \
@@ -783,7 +788,7 @@ int main()
                 push.mat_ptr    = material_pointer;
                 glm_vec3_copy(cam.cam_dir, push.cam_dir);
                 glm_vec3_copy(cam.position, push.cam_pos);
-                glm_mat4_copy(cam.view_proj, push.view_proj);  // this one was already correct
+                glm_mat4_copy(cam.view_proj, push.view_proj);
 
                 vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(Push), &push);
 
@@ -1008,9 +1013,9 @@ int main()
         if(take_screenshot)
         {
             renderer_save_screenshot(&renderer);
-        
+
             take_screenshot = false;
-	}
+        }
 
         TracyCZoneEnd(frame_loop_zone);
     }
