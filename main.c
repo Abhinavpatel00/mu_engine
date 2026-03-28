@@ -1,7 +1,5 @@
-#include "external/debugbreak/debugbreak.h"
-#include "mu/mu.h"
+#include "external/cglm/include/cglm/vec2.h"
 #include "tinytypes.h"
-#include "vk_default.h"
 #include "vk.h"
 #include <GLFW/glfw3.h>
 #include <dirent.h>
@@ -9,22 +7,20 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <time.h>
-#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <vulkan/vulkan_core.h>
 #include "stb/stb_perlin.h"
-#include "voxel.h"
 #define DMON_IMPL
 #include "external/dmon/dmon.h"
+
+#include "voxel.h"
 #include "external/tracy/public/tracy/TracyC.h"
 
 #define RUN_ONCE_N(name) for(static bool name = true; name; name = false)
 static bool voxel_debug     = true;
 static bool take_screenshot = true;
 static bool wireframe_mode  = false;
-#define VALIDATION false
 
 #define PRINT_FIELD(type, field)                                                                                       \
     printf("%-20s offset = %3zu  align = %2zu  size = %2zu\n", #field, offsetof(type, field),                          \
@@ -51,164 +47,169 @@ static inline void mu_unravel_index(size_t index, const size_t* dims, size_t ndi
         index /= dims[i];
     }
 }
-
-static GPUMaterial gpu_materials[VOXEL_COUNT];
-void               voxel_materials_init(Renderer* r)
+typedef struct Sprite2D
 {
+    // Rendering
+    TextureID texture_id;
+    vec2      position;
+    vec2      scale;
+    float     rotation;
+
+    // Appearance
+    vec4  tint_color;  // For color modulation
+    float depth;       // Z-order (0.0 to 1.0)
+
+    // Texture mapping
+    vec4 uv_rect;  // x,y = min UV, z,w = max UV (for atlas)
+
+    // Transform
+    uint32_t transform_offset;  // Push constant offset
+    bool     dirty;
+} Sprite2D;
+typedef struct GPU_Quad2D
+{
+    // Instance data (vec4 aligned)
+    vec2 position;
+    vec2 scale;
+
+    float    rotation;
+    float    depth;
+    float    opacity;
+    uint32_t texture_id;
+
+    // UV coordinates
+    vec4 uv_rect;  // min_u, min_v, max_u, max_v
+
+    // Color tint
+    vec4 tint;
+} GPU_Quad2D;
 
 
-    for(size_t i = 0; i < VOXEL_COUNT; i++)
+typedef struct Camera2D
+{
+    vec2  position;  // World position
+    float zoom;      // Scale factor
+    float rotation;  // Rotation in radians
+
+    uint32_t viewport_width;
+    uint32_t viewport_height;
+
+    // Cached matrix (update when dirty)
+    mat4 view_matrix;
+    mat4 projection_matrix;
+    mat4 view_projection;
+    bool dirty;
+} Camera2D;
+
+void camera2d_update_matrices(Camera2D* cam);
+#define MAX_DRAWS 1024
+#define MAX_SPRITES 10000
+
+typedef struct SpriteIndirectSystem
+{
+    GPU_Quad2D* instances;
+    uint32_t    instance_count;
+
+    VkDrawIndirectCommand* draws;
+    uint32_t               draw_count;
+
+    BufferSlice instance_buffer;
+    BufferSlice indirect_buffer;
+    BufferSlice count_buffer;
+
+} SpriteIndirectSystem;
+
+static SpriteIndirectSystem g_sprite_sys;
+void                        sprite_indirect_init()
+{
+    g_sprite_sys.instance_buffer = buffer_pool_alloc(&renderer.cpu_pool, sizeof(GPU_Quad2D) * MAX_SPRITES, 16);
+
+    g_sprite_sys.indirect_buffer = buffer_pool_alloc(&renderer.cpu_pool, sizeof(VkDrawIndirectCommand) * MAX_DRAWS, 16);
+
+    g_sprite_sys.count_buffer = buffer_pool_alloc(&renderer.cpu_pool, sizeof(uint32_t), 4);
+
+    g_sprite_sys.instances = g_sprite_sys.instance_buffer.mapped;
+    g_sprite_sys.draws     = g_sprite_sys.indirect_buffer.mapped;
+}
+void draw_sprite(Sprite2D* s)
+{
+    uint32_t id = g_sprite_sys.instance_count++;
+
+    GPU_Quad2D* q = &g_sprite_sys.instances[id];
+
+    glm_vec2_copy(s->position, q->position);
+    q->scale      = s->scale;
+    q->rotation   = s->rotation;
+    q->depth      = s->depth;
+    q->texture_id = s->texture_id;
+    q->uv_rect    = s->uv_rect;
+    q->tint       = s->tint_color;
+    q->opacity    = s->tint_color.w;
+}
+void build_indirect_commands_2d()
+{
+    g_sprite_sys.draw_count = 0;
+
+    uint32_t start = 0;
+
+    while(start < g_sprite_sys.instance_count)
     {
-        VoxelMaterial* src = &voxel_materials[i];
-        GPUMaterial*   dst = &gpu_materials[i];
+        uint32_t tex = g_sprite_sys.instances[start].texture_id;
 
-        dst->tex_side   = 0;
-        dst->tex_top    = 0;
-        dst->tex_bottom = 0;
+        uint32_t count = 1;
 
-        if(src->face_tex[TEX_SIDE])
-            dst->tex_side = load_texture(r, src->face_tex[TEX_SIDE]);
-
-        if(src->face_tex[TEX_TOP])
-            dst->tex_top = load_texture(r, src->face_tex[TEX_TOP]);
-
-        if(src->face_tex[TEX_BOTTOM])
-            dst->tex_bottom = load_texture(r, src->face_tex[TEX_BOTTOM]);
-    }
-}
-
-
-typedef struct
-{
-    vec3  position;
-    float radius;
-
-    vec3  direction;
-    float angle;
-
-    vec3  color;
-    float intensity;
-} SpotLight;
-typedef struct LightBeam
-{
-    float pos_width[4];   // xyz = position, w = width
-    float sun_height[4];  // xyz = sun_dir,  w = height
-    float misc[4];        // x = opacity
-} LightBeam;
-/*
- if(editing mode of light)
- {
-may be just cast a ray from mouse pointer to screen and if it matches then activate cimgui gizmo to capture stuff from it
-
-and also there should be save position to file option for that light so that     we can them just load it from from when editing isnt enabled and dmon watches for file changes anyway
- }
-
-*/
-
-
-static bool upload_once_done = false;
-
-
-static const VoxelType terrain_voxels[] = {VOXEL_STONE, VOXEL_GRASS
-
-};
-typedef struct
-{
-    float pos[3];
-    float uv[2];
-} Vertex;
-
-
-static volatile bool shader_changed = false;
-static char          changed_shader[256];
-static void inline watch_cb(dmon_watch_id id, dmon_action action, const char* root, const char* filepath, const char* oldfilepath, void* user)
-{
-    if(action == DMON_ACTION_MODIFY || action == DMON_ACTION_CREATE)
-    {
-        if(strstr(filepath, ".slang"))
+        // group same texture
+        for(uint32_t i = start + 1; i < g_sprite_sys.instance_count; i++)
         {
-            snprintf(changed_shader, sizeof(changed_shader), "%s", filepath);
-            shader_changed = true;
+            if(g_sprite_sys.instances[i].texture_id != tex)
+                break;
+            count++;
         }
+
+        VkDrawIndirectCommand* cmd =
+            &g_sprite_sys.draws[g_sprite_sys.draw_count++];
+
+        cmd->vertexCount   = 6;
+        cmd->instanceCount = count;
+        cmd->firstVertex   = 0;
+        cmd->firstInstance = start;
+
+        start += count;
     }
+
+    *(uint32_t*)g_sprite_sys.count_buffer.mapped =
+        g_sprite_sys.draw_count;
 }
 
-/* voxel part starts  */
-
-// instance data (packed)
-//         │
-//         ▼
-// vertex shader
-//         │
-//         ├─ unpack bits
-//         ├─ build face quad
-//         ├─ rotate by normal
-//         └─ add chunk position
-
-// 31   26   21   16   13   10   7        0
-// +----+----+----+----+----+----+-------------------+
-// | x  | y  | z  | n  | h  | w  |material/texture id|
-// +----+----+----+----+----+----+-------------------+
-//  5b   5b   5b   3b   4b   4b      6b
-//
-//
-static inline uint32_t pack_voxel_face(uint32_t x, uint32_t y, uint32_t z, uint32_t normal, uint32_t height, uint32_t width, uint32_t material)
+void render_sprites(VkCommandBuffer cmd)
 {
-    return ((x & 31) << 27) | ((y & 31) << 22) | ((z & 31) << 17) | ((normal & 7) << 14) | ((height & 15) << 10)
-           | ((width & 15) << 6) | ((material & 63));
+    if(g_sprite_sys.instance_count == 0)
+        return;
+
+    build_indirect_commands_2d();
+
+    vkCmdBindPipeline(cmd,
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        g_render_pipelines.pipelines[pipelines.sprite]);
+
+    vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
+
+sprite_push_constant here 
+    vkCmdDrawIndirectCount(
+        cmd,
+        g_sprite_sys.indirect_buffer.buffer,
+        g_sprite_sys.indirect_buffer.offset,
+        g_sprite_sys.count_buffer.buffer,
+        g_sprite_sys.count_buffer.offset,
+        MAX_DRAWS,
+        sizeof(VkDrawIndirectCommand));
 }
-
-
-#define CHUNK_SIZE 32
-#define CHUNK_AREA (CHUNK_SIZE * CHUNK_SIZE)
-#define CHUNK_VOLUME (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE)
-
-#define MU_FOR_3D(x, y, z, sx, sy, sz)                                                                                 \
-    for(size_t z = 0; z < (sz); z++)                                                                                   \
-        for(size_t y = 0; y < (sy); y++)                                                                               \
-            for(size_t x = 0; x < (sx); x++)
-
-static FORCE_INLINE int voxel_index(int x, int y, int z)
-{
-    return x + y * CHUNK_SIZE + z * CHUNK_AREA;
-}
-
-static const int voxel_neighbors[6][3] = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
-
-
-void generate_chunk(Voxel* chunk)
-{
-    for(int z = 0; z < CHUNK_SIZE; z++)
-        for(int x = 0; x < CHUNK_SIZE; x++)
-        {
-            float wx = x;
-            float wz = z;
-
-            float h = stb_perlin_noise3(wx * 0.05f, 0, wz * 0.05f, 0, 0, 0);
-
-            int height = (int)((h * 0.5f + 0.5f) * 20) + 10;
-
-            for(int y = 0; y < CHUNK_SIZE; y++)
-            {
-                int idx = voxel_index(x, y, z);
-
-                if(y < height - 1)
-                    chunk[idx].type = VOXEL_STONE;
-                else if(y == height - 1)
-                    chunk[idx].type = VOXEL_DIAMOND_BLOCK;
-                else
-                    chunk[idx].type = VOXEL_AIR;
-            }
-        }
-}
-
-/* voxel part ends  */
-
 
 #include "renderer.h"
 int main(void)
 {
     graphics_init();
+
     /* buffer slices start  */
 
     BufferSlice indirect_slice = buffer_pool_alloc(&renderer.cpu_pool, sizeof(VkDrawIndirectCommand), 16);
@@ -216,7 +217,7 @@ int main(void)
     BufferSlice count_slice = buffer_pool_alloc(&renderer.cpu_pool, sizeof(uint32_t), 4);
     /* initialise voxel face storage then fill it with data and upload on gpu */
 
-
+#if 0
     voxel_materials_init(&renderer);
     BufferSlice material_slice = buffer_pool_alloc(&renderer.gpu_pool, sizeof(gpu_materials), 16);
 
@@ -227,7 +228,6 @@ int main(void)
 
     generate_chunk(chunk);
     MU_FOR_3D(x, y, z, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE)
-
     {
         size_t idx = voxel_index(x, y, z);
 
@@ -287,6 +287,13 @@ int main(void)
 
     // number of draws
     *cpu_count = 1;
+ 
+    VkDeviceAddress face_pointer     = renderer.gpu_base_addr + gpu_faces.offset;
+    VkDeviceAddress material_pointer = renderer.gpu_base_addr + material_slice.offset;
+
+
+#endif
+
     Camera cam = {
 
         .position   = {33.0f, 55.3f, 53.6f},
@@ -311,10 +318,6 @@ int main(void)
          view_proj=32, texture_id=96, sampler_id=100 */
     // may be all push constant can be defined in one header that both gpu and cpu share
 
-
-    VkDeviceAddress face_pointer     = renderer.gpu_base_addr + gpu_faces.offset;
-    VkDeviceAddress material_pointer = renderer.gpu_base_addr + material_slice.offset;
-
     PUSH_CONSTANT(Push, VkDeviceAddress face_ptr;            //8
                   VkDeviceAddress mat_ptr; uint face_count;  //
                   float                         aspect;      //4
@@ -336,272 +339,249 @@ int main(void)
     uint32_t pp_frame_counter = 0;
     while(!glfwWindowShouldClose(renderer.window))
     {
-//MU_SCOPE_TIMER("GAME")
-{
-// drawsprite funtion for 2d
-
-
-
-
-}
-
-
-
-
-
-
-//    MU_SCOPE_TIMER("GRAPHICS CPU")
-	    {
-        TracyCFrameMark;
-        TracyCZoneN(frame_loop_zone, "Frame Loop", 1);
-
-        TracyCZoneN(hot_reload_zone, "Hot Reload + Pipeline Rebuild", 1);
-        if(shader_changed)
+        //MU_SCOPE_TIMER("GAME")
         {
-            shader_changed = false;
-            printf("hello");
-            system("./compileslang.sh");
-
-            pipeline_mark_dirty(changed_shader);
-        }
-        pipeline_rebuild(&renderer);
-        TracyCZoneEnd(hot_reload_zone);
-
-        TracyCZoneN(frame_start_zone, "frame_start", 1);
-        frame_start(&renderer, &cam);
-        TracyCZoneEnd(frame_start_zone);
-
-        TracyCZoneN(streaming_zone, "Frame Loop", 1);
-        if(!voxel_debug)
-        {
-     
-	}
-        TracyCZoneEnd(streaming_zone);
-
-        VkCommandBuffer cmd        = renderer.frames[renderer.current_frame].cmdbuf;
-        GpuProfiler*    frame_prof = &renderer.gpuprofiler[renderer.current_frame];
-
-        uint32_t current_image = renderer.swapchain.current_image;
-        TracyCZoneN(record_cmd_zone, "Record Command Buffer", 1);
-        vk_cmd_begin(cmd, false);
-        {
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer.bindless_system.pipeline_layout, 0,
-                                    1, &renderer.bindless_system.set, 0, NULL);
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, renderer.bindless_system.pipeline_layout, 0, 1,
-                                    &renderer.bindless_system.set, 0, NULL);
-            rt_transition_all(cmd, &renderer.depth[renderer.swapchain.current_image], VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-                              VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
-                              VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT);
-            rt_transition_all(cmd, &renderer.hdr_color[renderer.swapchain.current_image], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                              VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
-
-            image_transition_swapchain(cmd, &renderer.swapchain, VK_IMAGE_LAYOUT_GENERAL,
-                                       VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
-            flush_barriers(cmd);
+            // drawsprite funtion for 2d
         }
 
 
-        TracyCZoneN(imgui_zone, "ImGui CPU", 1);
+        //    MU_SCOPE_TIMER("GRAPHICS CPU")
         {
-            imgui_begin_frame();
+            TracyCFrameMark;
+            TracyCZoneN(frame_loop_zone, "Frame Loop", 1);
 
-
-            igBegin("Renderer Debug", NULL, 0);
-
-            double cpu_frame_ms  = renderer.cpu_frame_ns / 1000000.0;
-            double cpu_active_ms = renderer.cpu_active_ns / 1000000.0;
-            double cpu_wait_ms   = renderer.cpu_wait_ns / 1000000.0;
-
-            igText("CPU frame (wall): %.3f ms", cpu_frame_ms);
-            igText("CPU active: %.3f ms", cpu_active_ms);
-            igText("CPU wait: %.3f ms", cpu_wait_ms);
-            igText("FPS: %.1f", cpu_frame_ms > 0.0 ? 1000.0 / cpu_frame_ms : 0.0);
-
-            igSeparator();
-            igSeparator();
-
-            igText("Camera Position");
-            igText("x: %.3f", cam.position[0]);
-            igText("y: %.3f", cam.position[1]);
-            igText("z: %.3f", cam.position[2]);
-
-            igSeparator();
-
-            igText("Yaw: %.3f", cam.yaw);
-            igText("Pitch: %.3f", cam.pitch);
-
-            igSeparator();
-            igText("GPU Profiler");
-            if(frame_prof->pass_count == 0)
+            TracyCZoneN(hot_reload_zone, "Hot Reload + Pipeline Rebuild", 1);
+            if(shader_changed)
             {
-                igText("No GPU samples collected yet.");
+                shader_changed = false;
+                printf("hello");
+                system("./compileslang.sh");
+
+                pipeline_mark_dirty(changed_shader);
             }
-            for(uint32_t i = 0; i < frame_prof->pass_count; i++)
+            pipeline_rebuild(&renderer);
+            TracyCZoneEnd(hot_reload_zone);
+
+            TracyCZoneN(frame_start_zone, "frame_start", 1);
+            frame_start(&renderer, &cam);
+            TracyCZoneEnd(frame_start_zone);
+
+            TracyCZoneN(streaming_zone, "Frame Loop", 1);
+            if(!voxel_debug)
             {
-                GpuPass* pass = &frame_prof->passes[i];
-                igText("%s: %.3f ms", pass->name, pass->time_ms);
-                if(frame_prof->enable_pipeline_stats)
+            }
+            TracyCZoneEnd(streaming_zone);
+
+            VkCommandBuffer cmd        = renderer.frames[renderer.current_frame].cmdbuf;
+            GpuProfiler*    frame_prof = &renderer.gpuprofiler[renderer.current_frame];
+
+            uint32_t current_image = renderer.swapchain.current_image;
+            TracyCZoneN(record_cmd_zone, "Record Command Buffer", 1);
+            vk_cmd_begin(cmd, false);
+            {
+                vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer.bindless_system.pipeline_layout,
+                                        0, 1, &renderer.bindless_system.set, 0, NULL);
+                vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, renderer.bindless_system.pipeline_layout,
+                                        0, 1, &renderer.bindless_system.set, 0, NULL);
+                rt_transition_all(cmd, &renderer.depth[renderer.swapchain.current_image], VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+                                  VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+                                  VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT);
+                rt_transition_all(cmd, &renderer.hdr_color[renderer.swapchain.current_image], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                  VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
+
+                image_transition_swapchain(cmd, &renderer.swapchain, VK_IMAGE_LAYOUT_GENERAL,
+                                           VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
+                flush_barriers(cmd);
+            }
+
+
+            TracyCZoneN(imgui_zone, "ImGui CPU", 1);
+            {
+                imgui_begin_frame();
+
+
+                igBegin("Renderer Debug", NULL, 0);
+
+                double cpu_frame_ms  = renderer.cpu_frame_ns / 1000000.0;
+                double cpu_active_ms = renderer.cpu_active_ns / 1000000.0;
+                double cpu_wait_ms   = renderer.cpu_wait_ns / 1000000.0;
+
+                igText("CPU frame (wall): %.3f ms", cpu_frame_ms);
+                igText("CPU active: %.3f ms", cpu_active_ms);
+                igText("CPU wait: %.3f ms", cpu_wait_ms);
+                igText("FPS: %.1f", cpu_frame_ms > 0.0 ? 1000.0 / cpu_frame_ms : 0.0);
+
+                igSeparator();
+                igSeparator();
+
+                igText("Camera Position");
+                igText("x: %.3f", cam.position[0]);
+                igText("y: %.3f", cam.position[1]);
+                igText("z: %.3f", cam.position[2]);
+
+                igSeparator();
+
+                igText("Yaw: %.3f", cam.yaw);
+                igText("Pitch: %.3f", cam.pitch);
+
+                igSeparator();
+                igText("GPU Profiler");
+                if(frame_prof->pass_count == 0)
                 {
-                    igText("  VS: %llu | FS: %llu | Prim: %llu", (unsigned long long)pass->vs_invocations,
-                           (unsigned long long)pass->fs_invocations, (unsigned long long)pass->primitives);
+                    igText("No GPU samples collected yet.");
                 }
-            }
-
-            igEnd();
-            igRender();
-        }
-        TracyCZoneEnd(imgui_zone);
-
-
-        if(!upload_once_done)
-        {
-            upload_once_done = true;
-
-            {
-                VkBufferCopy copy = {.srcOffset = cpu_faces.offset,
-                                     .dstOffset = gpu_faces.offset,
-                                     .size      = voxel_face_count * sizeof(uint32_t)};
-
-                vkCmdCopyBuffer(cmd, cpu_faces.buffer, gpu_faces.buffer, 1, &copy);
-            }
-            {
-                renderer_upload_buffer_to_slice(&renderer, cmd, material_slice, gpu_materials, sizeof(gpu_materials), 16);
-            }
-        }
-
-        gpu_profiler_begin_frame(frame_prof, cmd);
-        {
-          
-        VkRenderingAttachmentInfo color = {.sType     = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-                                           .imageView = renderer.hdr_color[renderer.swapchain.current_image].view,
-                                           .imageLayout =
-                                               renderer.hdr_color[renderer.swapchain.current_image].mip_states[0].layout,
-                                           .loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR,
-                                           .storeOp          = VK_ATTACHMENT_STORE_OP_STORE,
-                                           .clearValue.color = {{0.1f, 0.1f, 0.1f, 1.0f}}};
-        VkRenderingAttachmentInfo depth = {
-            .sType                   = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-            .imageView               = renderer.depth[renderer.swapchain.current_image].view,
-            .imageLayout             = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-            .loadOp                  = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp                 = VK_ATTACHMENT_STORE_OP_STORE,
-            .clearValue.depthStencil = {0.0f, 0},
-        };
-
-        VkRenderingInfo rendering = {
-            .sType                = VK_STRUCTURE_TYPE_RENDERING_INFO,
-            .renderArea.extent    = renderer.swapchain.extent,
-            .layerCount           = 1,
-            .colorAttachmentCount = 1,
-            .pColorAttachments    = &color,
-            .pDepthAttachment     = &depth,
-        };
-
-
-		vkCmdBeginRendering(cmd, &rendering);
-            GPU_SCOPE(frame_prof, cmd, "Main Pass", VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT)
-            {
-
-
-                           static int prev_space = GLFW_RELEASE;
-
-                int space = glfwGetKey(renderer.window, GLFW_KEY_SPACE);
-
-                if(space == GLFW_PRESS && prev_space == GLFW_RELEASE)
+                for(uint32_t i = 0; i < frame_prof->pass_count; i++)
                 {
-                    wireframe_mode = !wireframe_mode;
+                    GpuPass* pass = &frame_prof->passes[i];
+                    igText("%s: %.3f ms", pass->name, pass->time_ms);
+                    if(frame_prof->enable_pipeline_stats)
+                    {
+                        igText("  VS: %llu | FS: %llu | Prim: %llu", (unsigned long long)pass->vs_invocations,
+                               (unsigned long long)pass->fs_invocations, (unsigned long long)pass->primitives);
+                    }
                 }
 
-                prev_space = space;
+                igEnd();
+                igRender();
+            }
+            TracyCZoneEnd(imgui_zone);
 
-                // prev_space = (wireframe_mode ^= (space = glfwGetKey(renderer.window, GLFW_KEY_SPACE)) == GLFW_PRESS && prev_space == GLFW_RELEASE, space);
+            gpu_profiler_begin_frame(frame_prof, cmd);
+            {
 
-                if(!wireframe_mode)
-                {
-                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.triangle]);
-                }
-                else
-                {
+                VkRenderingAttachmentInfo color = {
+                    .sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+                    .imageView        = renderer.hdr_color[renderer.swapchain.current_image].view,
+                    .imageLayout      = renderer.hdr_color[renderer.swapchain.current_image].mip_states[0].layout,
+                    .loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                    .storeOp          = VK_ATTACHMENT_STORE_OP_STORE,
+                    .clearValue.color = {{0.1f, 0.1f, 0.1f, 1.0f}}};
+                VkRenderingAttachmentInfo depth = {
+                    .sType                   = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+                    .imageView               = renderer.depth[renderer.swapchain.current_image].view,
+                    .imageLayout             = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+                    .loadOp                  = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                    .storeOp                 = VK_ATTACHMENT_STORE_OP_STORE,
+                    .clearValue.depthStencil = {0.0f, 0},
+                };
 
-                    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                      g_render_pipelines.pipelines[pipelines.triangle_wireframe]);
+                VkRenderingInfo rendering = {
+                    .sType                = VK_STRUCTURE_TYPE_RENDERING_INFO,
+                    .renderArea.extent    = renderer.swapchain.extent,
+                    .layerCount           = 1,
+                    .colorAttachmentCount = 1,
+                    .pColorAttachments    = &color,
+                    .pDepthAttachment     = &depth,
                 };
 
 
-                vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
+                vkCmdBeginRendering(cmd, &rendering);
 
-                Push push = {0};
 
-                push.aspect     = (float)renderer.swapchain.extent.width / (float)renderer.swapchain.extent.height;
-                push.texture_id = renderer.dummy_texture;
-                push.sampler_id = renderer.default_samplers.samplers[SAMPLER_LINEAR_WRAP_ANISO];
-                push.face_ptr   = face_pointer;
-                push.face_count = voxel_face_count;
-                push.mat_ptr    = material_pointer;
-                glm_vec3_copy(cam.cam_dir, push.cam_dir);
-                glm_vec3_copy(cam.position, push.cam_pos);
-                glm_mat4_copy(cam.view_proj, push.view_proj);
+                //                 GPU_SCOPE(frame_prof, cmd, "Main Pass", VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT)
+                //                 {
+                //
+                //b              RUN_ONCE_N(buffer_uplad)
+                //             {
+                //                 {
+                //                     VkBufferCopy copy = {.srcOffset = cpu_faces.offset,
+                //                                          .dstOffset = gpu_faces.offset,
+                //                                          .size      = voxel_face_count * sizeof(uint32_t)};
+                //                     vkCmdCopyBuffer(cmd, cpu_faces.buffer, gpu_faces.buffer, 1, &copy);
+                //                 }
+                //                 {
+                //                     renderer_upload_buffer_to_slice(&renderer, cmd, material_slice, gpu_materials, sizeof(gpu_materials), 16);
+                //                 }
+                //             }
+                //
+                //
+                //                     static int prev_space = GLFW_RELEASE;
+                //
+                //                     int space = glfwGetKey(renderer.window, GLFW_KEY_SPACE);
+                //
+                //                     if(space == GLFW_PRESS && prev_space == GLFW_RELEASE)
+                //                     {
+                //                         wireframe_mode = !wireframe_mode;
+                //                     }
+                //
+                //                     prev_space = space;
+                //
+                //                     // prev_space = (wireframe_mode ^= (space = glfwGetKey(renderer.window, GLFW_KEY_SPACE)) == GLFW_PRESS && prev_space == GLFW_RELEASE, space);
+                //
+                //                     if(!wireframe_mode)
+                //                     {
+                //                         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.triangle]);
+                //                     }
+                //                     else
+                //                     {
+                //
+                //                         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                //                                           g_render_pipelines.pipelines[pipelines.triangle_wireframe]);
+                //                     };
+                //
+                //
+                //                     vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
+                //
+                //                     Push push = {0};
+                //
+                //                     push.aspect     = (float)renderer.swapchain.extent.width / (float)renderer.swapchain.extent.height;
+                //                     push.texture_id = renderer.dummy_texture;
+                //                     push.sampler_id = renderer.default_samplers.samplers[SAMPLER_LINEAR_WRAP_ANISO];
+                //                     push.face_ptr   = face_pointer;
+                //                     push.face_count = voxel_face_count;
+                //                     push.mat_ptr    = material_pointer;
+                //                     glm_vec3_copy(cam.cam_dir, push.cam_dir);
+                //                     glm_vec3_copy(cam.position, push.cam_pos);
+                //                     glm_mat4_copy(cam.view_proj, push.view_proj);
+                //
+                //                     vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(Push), &push);
+                //
+                //                     vkCmdDrawIndirectCount(cmd, indirect_slice.buffer, indirect_slice.offset, count_slice.buffer,
+                //                                            count_slice.offset, 1024, sizeof(VkDrawIndirectCommand));
+                //                 }
+                //
+                //                 vkCmdEndRendering(cmd);
+            }
+            //
+#include "passes.h"
+            post_pass();
+            pass_smaa();
+            pass_ldr_to_swapchain();
+            pass_imgui();
 
-                vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(Push), &push);
 
-                vkCmdDrawIndirectCount(cmd, indirect_slice.buffer, indirect_slice.offset, count_slice.buffer,
-                                       count_slice.offset, 1024, sizeof(VkDrawIndirectCommand));
+            if(take_screenshot)
+            {
+                renderer_record_screenshot(&renderer, cmd);
+            }
+            image_transition_swapchain(renderer.frames[renderer.current_frame].cmdbuf, &renderer.swapchain,
+                                       VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, 0);
+            flush_barriers(cmd);
+
+            vk_cmd_end(renderer.frames[renderer.current_frame].cmdbuf);
+            TracyCZoneEnd(record_cmd_zone);
+
+
+            TracyCZoneN(submit_zone, "Submit + Present", 1);
+            submit_frame(&renderer);
+            TracyCZoneEnd(submit_zone);
+
+            if(take_screenshot)
+            {
+                renderer_save_screenshot(&renderer);
+
+                take_screenshot = false;
             }
 
-               vkCmdEndRendering(cmd);
+            TracyCZoneEnd(frame_loop_zone);
         }
-
-#include "passes.h"
-        post_pass();
-        pass_smaa();
-        pass_ldr_to_swapchain();
-        pass_imgui();
-
-
-        if(take_screenshot)
-        {
-            renderer_record_screenshot(&renderer, cmd);
-        }
-        image_transition_swapchain(renderer.frames[renderer.current_frame].cmdbuf, &renderer.swapchain,
-                                   VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, 0);
-        flush_barriers(cmd);
-
-        vk_cmd_end(renderer.frames[renderer.current_frame].cmdbuf);
-        TracyCZoneEnd(record_cmd_zone);
-
-
-        TracyCZoneN(submit_zone, "Submit + Present", 1);
-        submit_frame(&renderer);
-        TracyCZoneEnd(submit_zone);
-
-        if(take_screenshot)
-        {
-            renderer_save_screenshot(&renderer);
-
-            take_screenshot = false;
-        }
-
-        TracyCZoneEnd(frame_loop_zone);
-	    }
-	    }
+    }
 
 
     printf(" renderer size is %zu", sizeof(Renderer));
     printf("Push size = %zu\n", sizeof(Push));
     printf("view_proj offset = %zu\n", offsetof(Push, view_proj));
-    //
-    // PRINT_FIELD(Push, face_ptr);
-    // PRINT_FIELD(Push, mat_ptr);
-    // PRINT_FIELD(Push, face_count);
-    // PRINT_FIELD(Push, aspect);
-    // PRINT_FIELD(Push, cam_pos);
-    // PRINT_FIELD(Push, pad1);
-    // PRINT_FIELD(Push, cam_dir);
-    // PRINT_FIELD(Push, pad2);
-    // PRINT_FIELD(Push, view_proj);
-    // PRINT_FIELD(Push, texture_id);
-    // PRINT_FIELD(Push, sampler_id);
-    //    ANALYZE_STRUCT(ImageState);
+
     renderer_destroy(&renderer);
     return 0;
 }

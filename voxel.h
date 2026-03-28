@@ -18,6 +18,7 @@ we can sacrifice some precision from h ,w because just rendering few triangle mo
 but for starting above thing looks good
 
 */
+#include "renderer.h"
 #include <unistd.h>
 typedef enum
 {
@@ -428,3 +429,146 @@ VoxelMaterial voxel_materials[VOXEL_COUNT] = {
 //
 
 // clang-format on
+//
+
+static GPUMaterial gpu_materials[VOXEL_COUNT];
+void               voxel_materials_init(Renderer* r)
+{
+
+
+    for(size_t i = 0; i < VOXEL_COUNT; i++)
+    {
+        VoxelMaterial* src = &voxel_materials[i];
+        GPUMaterial*   dst = &gpu_materials[i];
+
+        dst->tex_side   = 0;
+        dst->tex_top    = 0;
+        dst->tex_bottom = 0;
+
+        if(src->face_tex[TEX_SIDE])
+            dst->tex_side = load_texture(r, src->face_tex[TEX_SIDE]);
+
+        if(src->face_tex[TEX_TOP])
+            dst->tex_top = load_texture(r, src->face_tex[TEX_TOP]);
+
+        if(src->face_tex[TEX_BOTTOM])
+            dst->tex_bottom = load_texture(r, src->face_tex[TEX_BOTTOM]);
+    }
+}
+
+
+typedef struct
+{
+    vec3  position;
+    float radius;
+
+    vec3  direction;
+    float angle;
+
+    vec3  color;
+    float intensity;
+} SpotLight;
+/*
+ if(editing mode of light)
+ {
+may be just cast a ray from mouse pointer to screen and if it matches then activate cimgui gizmo to capture stuff from it
+
+and also there should be save position to file option for that light so that     we can them just load it from from when editing isnt enabled and dmon watches for file changes anyway
+ }
+
+*/
+
+
+static const VoxelType terrain_voxels[] = {VOXEL_STONE, VOXEL_GRASS};
+typedef struct
+{
+    float pos[3];
+    float uv[2];
+} Vertex;
+
+
+static volatile bool shader_changed = false;
+static char          changed_shader[256];
+static void inline watch_cb(dmon_watch_id id, dmon_action action, const char* root, const char* filepath, const char* oldfilepath, void* user)
+{
+    if(action == DMON_ACTION_MODIFY || action == DMON_ACTION_CREATE)
+    {
+        if(strstr(filepath, ".slang"))
+        {
+            snprintf(changed_shader, sizeof(changed_shader), "%s", filepath);
+            shader_changed = true;
+        }
+    }
+}
+
+/* voxel part starts  */
+
+// instance data (packed)
+//         │
+//         ▼
+// vertex shader
+//         │
+//         ├─ unpack bits
+//         ├─ build face quad
+//         ├─ rotate by normal
+//         └─ add chunk position
+
+// 31   26   21   16   13   10   7        0
+// +----+----+----+----+----+----+-------------------+
+// | x  | y  | z  | n  | h  | w  |material/texture id|
+// +----+----+----+----+----+----+-------------------+
+//  5b   5b   5b   3b   4b   4b      6b
+//
+//
+static inline uint32_t pack_voxel_face(uint32_t x, uint32_t y, uint32_t z, uint32_t normal, uint32_t height, uint32_t width, uint32_t material)
+{
+    return ((x & 31) << 27) | ((y & 31) << 22) | ((z & 31) << 17) | ((normal & 7) << 14) | ((height & 15) << 10)
+           | ((width & 15) << 6) | ((material & 63));
+}
+
+
+#define CHUNK_SIZE 32
+#define CHUNK_AREA (CHUNK_SIZE * CHUNK_SIZE)
+#define CHUNK_VOLUME (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE)
+
+#define MU_FOR_3D(x, y, z, sx, sy, sz)                                                                                 \
+    for(size_t z = 0; z < (sz); z++)                                                                                   \
+        for(size_t y = 0; y < (sy); y++)                                                                               \
+            for(size_t x = 0; x < (sx); x++)
+
+static FORCE_INLINE int voxel_index(int x, int y, int z)
+{
+    return x + y * CHUNK_SIZE + z * CHUNK_AREA;
+}
+
+static const int voxel_neighbors[6][3] = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+
+
+void generate_chunk(Voxel* chunk)
+{
+    for(int z = 0; z < CHUNK_SIZE; z++)
+        for(int x = 0; x < CHUNK_SIZE; x++)
+        {
+            float wx = x;
+            float wz = z;
+
+            float h = stb_perlin_noise3(wx * 0.05f, 0, wz * 0.05f, 0, 0, 0);
+
+            int height = (int)((h * 0.5f + 0.5f) * 20) + 10;
+
+            for(int y = 0; y < CHUNK_SIZE; y++)
+            {
+                int idx = voxel_index(x, y, z);
+
+                if(y < height - 1)
+                    chunk[idx].type = VOXEL_STONE;
+                else if(y == height - 1)
+                    chunk[idx].type = VOXEL_DIAMOND_BLOCK;
+                else
+                    chunk[idx].type = VOXEL_AIR;
+            }
+        }
+}
+
+/* voxel part ends  */
+

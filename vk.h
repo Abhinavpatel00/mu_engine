@@ -26,9 +26,6 @@
 #include "external/cimgui/cimgui.h"
 #include "helpers.h"
 #include "external/cimgui/cimgui_impl.h"
-#define internal static
-#define global static
-#define local_persist static
 
 #include "offset_allocator.h"
 

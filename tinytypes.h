@@ -22,7 +22,6 @@
 #include "external/logger-c/logger/logger.h"
 
 #include <stdbool.h>
-#define MU_API
 #define u32 uint32_t
 #define MAX_FRAME_IN_FLIGHT 3
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))

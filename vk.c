@@ -3568,7 +3568,7 @@ void destroy_sampler(Renderer* r, SamplerID id)
 //
 
 
-internal uint32_t rt_compute_mip_count(uint32_t w, uint32_t h)
+static uint32_t rt_compute_mip_count(uint32_t w, uint32_t h)
 {
     uint32_t max_dim = w > h ? w : h;
     uint32_t mips    = 1;
