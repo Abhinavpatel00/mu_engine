@@ -8,9 +8,11 @@
 #include <stdint.h>
 #include <time.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "stb/stb_perlin.h"
+#include "text_baker.h"
 #define DMON_IMPL
 #include "external/dmon/dmon.h"
 
@@ -128,19 +130,184 @@ typedef struct SpriteIndirectSystem
 } SpriteIndirectSystem;
 
 static SpriteIndirectSystem g_sprite_sys;
+static GPU_Quad2D           g_sprite_instances_cpu[MAX_SPRITES];
+
+typedef struct TextSystem
+{
+    TextureID atlas_texture;
+    BakedGlyph glyphs[96];
+    uint32_t atlas_width;
+    uint32_t atlas_height;
+    float    pixel_height;
+    bool     ready;
+} TextSystem;
+
+static TextSystem g_text_sys;
+
+void draw_sprite(Sprite2D* s);
+
+static bool text_system_init(const char* font_path, float pixel_height)
+{
+    memset(&g_text_sys, 0, sizeof(g_text_sys));
+    g_text_sys.atlas_texture = UINT32_MAX;
+    g_text_sys.pixel_height  = pixel_height;
+    g_text_sys.atlas_width   = 1024;
+    g_text_sys.atlas_height  = 1024;
+
+    uint8_t* atlas_rgba = NULL;
+    size_t   rgba_size  = 0;
+    if(!text_bake_font_rgba(font_path, pixel_height, g_text_sys.atlas_width, g_text_sys.atlas_height, g_text_sys.glyphs,
+                            &atlas_rgba, &rgba_size))
+    {
+        return false;
+    }
+
+    TextureCreateDesc desc = {
+        .width     = g_text_sys.atlas_width,
+        .height    = g_text_sys.atlas_height,
+        .mip_count = 1,
+        .format    = VK_FORMAT_R8G8B8A8_UNORM,
+        .usage     = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+    };
+
+    TextureID atlas_id = create_texture(&renderer, &desc);
+    if(atlas_id == UINT32_MAX)
+    {
+        free(atlas_rgba);
+        return false;
+    }
+
+    Texture*     atlas     = &textures[atlas_id];
+    VkDeviceSize image_size = (VkDeviceSize)rgba_size;
+    Buffer       staging    = {0};
+    if(!create_buffer(&renderer, image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, &staging))
+    {
+        destroy_texture(&renderer, atlas_id);
+        free(atlas_rgba);
+        return false;
+    }
+
+    memcpy(staging.mapping, atlas_rgba, rgba_size);
+
+    VkCommandBuffer      cmd      = vk_begin_one_time_cmd(renderer.device, renderer.one_time_gfx_pool);
+    VkImageMemoryBarrier barrier1 = {
+        .sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .srcAccessMask                   = 0,
+        .dstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .image                           = atlas->image,
+        .subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+        .subresourceRange.baseMipLevel   = 0,
+        .subresourceRange.levelCount     = 1,
+        .subresourceRange.baseArrayLayer = 0,
+        .subresourceRange.layerCount     = 1,
+    };
+
+    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1,
+                         &barrier1);
+
+    VkBufferImageCopy region = {
+        .bufferOffset                    = 0,
+        .bufferRowLength                 = 0,
+        .bufferImageHeight               = 0,
+        .imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT,
+        .imageSubresource.mipLevel       = 0,
+        .imageSubresource.baseArrayLayer = 0,
+        .imageSubresource.layerCount     = 1,
+        .imageOffset                     = {0, 0, 0},
+        .imageExtent                     = {g_text_sys.atlas_width, g_text_sys.atlas_height, 1},
+    };
+    vkCmdCopyBufferToImage(cmd, staging.buffer, atlas->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+    VkImageMemoryBarrier barrier2 = barrier1;
+    barrier2.oldLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier2.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier2.srcAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier2.dstAccessMask        = VK_ACCESS_SHADER_READ_BIT;
+    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL,
+                         1, &barrier2);
+
+    vk_end_one_time_cmd(renderer.device, renderer.graphics_queue, renderer.one_time_gfx_pool, cmd);
+    destroy_buffer(&renderer, &staging);
+    free(atlas_rgba);
+
+    g_text_sys.atlas_texture = atlas_id;
+    g_text_sys.ready         = true;
+    return true;
+}
+
+static void draw_text_2d(const char* text, float x, float y, float scale, vec4 color, float depth)
+{
+    if(!g_text_sys.ready || !text)
+        return;
+
+    float cursor_x = x;
+    float baseline = y + g_text_sys.pixel_height * scale;
+
+    for(const unsigned char* p = (const unsigned char*)text; *p; ++p)
+    {
+        if(*p == '\n')
+        {
+            cursor_x = x;
+            baseline += g_text_sys.pixel_height * scale;
+            continue;
+        }
+
+        if(*p == '\t')
+        {
+            cursor_x += g_text_sys.pixel_height * scale;
+            continue;
+        }
+
+        if(*p < 32 || *p >= 128)
+            continue;
+
+        const BakedGlyph* glyph = &g_text_sys.glyphs[*p - 32];
+
+        float x0 = cursor_x + glyph->xoff * scale;
+        float y0 = baseline + glyph->yoff * scale;
+        float x1 = x0 + (glyph->x1 - glyph->x0) * scale;
+        float y1 = y0 + (glyph->y1 - glyph->y0) * scale;
+
+        cursor_x += glyph->xadvance * scale;
+
+        if((glyph->x1 - glyph->x0) <= 0 || (glyph->y1 - glyph->y0) <= 0)
+            continue;
+
+        Sprite2D s = {
+            .texture_id = g_text_sys.atlas_texture,
+            .position   = {(x0 + x1) * 0.5f, (y0 + y1) * 0.5f},
+            .scale      = {x1 - x0, y1 - y0},
+            .rotation   = 0.0f,
+            .tint_color = {color[0], color[1], color[2], color[3]},
+            .depth      = depth,
+            .uv_rect    = {glyph->x0 / (float)g_text_sys.atlas_width, glyph->y1 / (float)g_text_sys.atlas_height,
+                           glyph->x1 / (float)g_text_sys.atlas_width, glyph->y0 / (float)g_text_sys.atlas_height},
+            .transform_offset = 0,
+            .dirty            = false,
+        };
+
+        draw_sprite(&s);
+    }
+}
+
 void                        sprite_indirect_init()
 {
-    g_sprite_sys.instance_buffer = buffer_pool_alloc(&renderer.cpu_pool, sizeof(GPU_Quad2D) * MAX_SPRITES, 16);
+    g_sprite_sys.instance_buffer = buffer_pool_alloc(&renderer.gpu_pool, sizeof(GPU_Quad2D) * MAX_SPRITES, 16);
 
     g_sprite_sys.indirect_buffer = buffer_pool_alloc(&renderer.cpu_pool, sizeof(VkDrawIndirectCommand) * MAX_DRAWS, 16);
 
     g_sprite_sys.count_buffer = buffer_pool_alloc(&renderer.cpu_pool, sizeof(uint32_t), 4);
 
-    g_sprite_sys.instances = g_sprite_sys.instance_buffer.mapped;
+    g_sprite_sys.instances = g_sprite_instances_cpu;
     g_sprite_sys.draws     = g_sprite_sys.indirect_buffer.mapped;
 }
 void draw_sprite(Sprite2D* s)
 {
+    if(g_sprite_sys.instance_count >= MAX_SPRITES)
+        return;
+
     uint32_t id = g_sprite_sys.instance_count++;
 
     GPU_Quad2D* q = &g_sprite_sys.instances[id];
@@ -194,8 +361,6 @@ void render_sprites(VkCommandBuffer cmd)
     if(g_sprite_sys.instance_count == 0)
         return;
 
-    build_indirect_commands_2d();
-
     vkCmdBindPipeline(cmd,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
         g_render_pipelines.pipelines[pipelines.sprite]);
@@ -227,11 +392,45 @@ void render_sprites(VkCommandBuffer cmd)
         sizeof(VkDrawIndirectCommand));
 }
 
+static bool sprite_prepare_gpu_data(VkCommandBuffer cmd)
+{
+    if(g_sprite_sys.instance_count == 0)
+        return true;
+
+    build_indirect_commands_2d();
+
+    VkDeviceSize instance_upload_bytes = sizeof(GPU_Quad2D) * g_sprite_sys.instance_count;
+    if(!renderer_upload_buffer_to_slice(&renderer, cmd, g_sprite_sys.instance_buffer, g_sprite_sys.instances, instance_upload_bytes, 16))
+        return false;
+
+    VkBufferMemoryBarrier2 instance_barrier = {
+        .sType         = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+        .srcStageMask  = VK_PIPELINE_STAGE_2_COPY_BIT,
+        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+        .dstStageMask  = VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT,
+        .dstAccessMask = VK_ACCESS_2_SHADER_STORAGE_READ_BIT,
+        .buffer        = g_sprite_sys.instance_buffer.buffer,
+        .offset        = g_sprite_sys.instance_buffer.offset,
+        .size          = instance_upload_bytes,
+    };
+
+    VkDependencyInfo dep = {
+        .sType                    = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .bufferMemoryBarrierCount = 1,
+        .pBufferMemoryBarriers    = &instance_barrier,
+    };
+    vkCmdPipelineBarrier2(cmd, &dep);
+
+    return true;
+}
+
 #include "renderer.h"
 int main(void)
 {
     graphics_init();
     sprite_indirect_init();
+
+    text_system_init("/home/lk/myprojects/voxelfun/clusteredshading/assets/font/ttf/FiraCode-Bold.ttf", 48.0f);
 
     TextureID sprite_sheet_texture = load_texture(&renderer, "data/Spritesheets/spritesheet_tiles.png");
     if(sprite_sheet_texture == UINT32_MAX)
@@ -391,6 +590,8 @@ int main(void)
         {
             g_sprite_sys.instance_count = 0;
             draw_sprite(&brick_sprite);
+            vec4 text_color = {1.0f, 1.0f, 1.0f, 1.0f};
+            draw_text_2d("Hello World", 40.0f, 40.0f, 0.5f, text_color, 0.0f);
         }
 
 
@@ -441,6 +642,8 @@ int main(void)
                 image_transition_swapchain(cmd, &renderer.swapchain, VK_IMAGE_LAYOUT_GENERAL,
                                            VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
                 flush_barriers(cmd);
+
+                sprite_prepare_gpu_data(cmd);
             }
 
 
