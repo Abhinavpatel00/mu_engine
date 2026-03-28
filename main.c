@@ -134,12 +134,12 @@ static GPU_Quad2D           g_sprite_instances_cpu[MAX_SPRITES];
 
 typedef struct TextSystem
 {
-    TextureID atlas_texture;
+    TextureID  atlas_texture;
     BakedGlyph glyphs[96];
-    uint32_t atlas_width;
-    uint32_t atlas_height;
-    float    pixel_height;
-    bool     ready;
+    uint32_t   atlas_width;
+    uint32_t   atlas_height;
+    float      pixel_height;
+    bool       ready;
 } TextSystem;
 
 static TextSystem g_text_sys;
@@ -177,7 +177,7 @@ static bool text_system_init(const char* font_path, float pixel_height)
         return false;
     }
 
-    Texture*     atlas     = &textures[atlas_id];
+    Texture*     atlas      = &textures[atlas_id];
     VkDeviceSize image_size = (VkDeviceSize)rgba_size;
     Buffer       staging    = {0};
     if(!create_buffer(&renderer, image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST, &staging))
@@ -204,8 +204,7 @@ static bool text_system_init(const char* font_path, float pixel_height)
         .subresourceRange.layerCount     = 1,
     };
 
-    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1,
-                         &barrier1);
+    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &barrier1);
 
     VkBufferImageCopy region = {
         .bufferOffset                    = 0,
@@ -225,8 +224,8 @@ static bool text_system_init(const char* font_path, float pixel_height)
     barrier2.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     barrier2.srcAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
     barrier2.dstAccessMask        = VK_ACCESS_SHADER_READ_BIT;
-    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL,
-                         1, &barrier2);
+    vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0,
+                         NULL, 1, &barrier2);
 
     vk_end_one_time_cmd(renderer.device, renderer.graphics_queue, renderer.one_time_gfx_pool, cmd);
     destroy_buffer(&renderer, &staging);
@@ -276,14 +275,14 @@ static void draw_text_2d(const char* text, float x, float y, float scale, vec4 c
             continue;
 
         Sprite2D s = {
-            .texture_id = g_text_sys.atlas_texture,
-            .position   = {(x0 + x1) * 0.5f, (y0 + y1) * 0.5f},
-            .scale      = {x1 - x0, y1 - y0},
-            .rotation   = 0.0f,
-            .tint_color = {color[0], color[1], color[2], color[3]},
-            .depth      = depth,
-            .uv_rect    = {glyph->x0 / (float)g_text_sys.atlas_width, glyph->y1 / (float)g_text_sys.atlas_height,
-                           glyph->x1 / (float)g_text_sys.atlas_width, glyph->y0 / (float)g_text_sys.atlas_height},
+            .texture_id       = g_text_sys.atlas_texture,
+            .position         = {(x0 + x1) * 0.5f, (y0 + y1) * 0.5f},
+            .scale            = {x1 - x0, y1 - y0},
+            .rotation         = 0.0f,
+            .tint_color       = {color[0], color[1], color[2], color[3]},
+            .depth            = depth,
+            .uv_rect          = {glyph->x0 / (float)g_text_sys.atlas_width, glyph->y1 / (float)g_text_sys.atlas_height,
+                                 glyph->x1 / (float)g_text_sys.atlas_width, glyph->y0 / (float)g_text_sys.atlas_height},
             .transform_offset = 0,
             .dirty            = false,
         };
@@ -292,7 +291,7 @@ static void draw_text_2d(const char* text, float x, float y, float scale, vec4 c
     }
 }
 
-void                        sprite_indirect_init()
+void sprite_indirect_init()
 {
     g_sprite_sys.instance_buffer = buffer_pool_alloc(&renderer.gpu_pool, sizeof(GPU_Quad2D) * MAX_SPRITES, 16);
 
@@ -341,8 +340,7 @@ void build_indirect_commands_2d()
             count++;
         }
 
-        VkDrawIndirectCommand* cmd =
-            &g_sprite_sys.draws[g_sprite_sys.draw_count++];
+        VkDrawIndirectCommand* cmd = &g_sprite_sys.draws[g_sprite_sys.draw_count++];
 
         cmd->vertexCount   = 6;
         cmd->instanceCount = count;
@@ -352,8 +350,7 @@ void build_indirect_commands_2d()
         start += count;
     }
 
-    *(uint32_t*)g_sprite_sys.count_buffer.mapped =
-        g_sprite_sys.draw_count;
+    *(uint32_t*)g_sprite_sys.count_buffer.mapped = g_sprite_sys.draw_count;
 }
 
 void render_sprites(VkCommandBuffer cmd)
@@ -361,9 +358,7 @@ void render_sprites(VkCommandBuffer cmd)
     if(g_sprite_sys.instance_count == 0)
         return;
 
-    vkCmdBindPipeline(cmd,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        g_render_pipelines.pipelines[pipelines.sprite]);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.sprite]);
 
     vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
 
@@ -379,17 +374,11 @@ void render_sprites(VkCommandBuffer cmd)
         ._pad         = 0,
     };
 
-    vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(SpritePushConstants),
-                       &sprite_push);
+    vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(SpritePushConstants), &sprite_push);
 
-    vkCmdDrawIndirectCount(
-        cmd,
-        g_sprite_sys.indirect_buffer.buffer,
-        g_sprite_sys.indirect_buffer.offset,
-        g_sprite_sys.count_buffer.buffer,
-        g_sprite_sys.count_buffer.offset,
-        MAX_DRAWS,
-        sizeof(VkDrawIndirectCommand));
+    vkCmdDrawIndirectCount(cmd, g_sprite_sys.indirect_buffer.buffer, g_sprite_sys.indirect_buffer.offset,
+                           g_sprite_sys.count_buffer.buffer, g_sprite_sys.count_buffer.offset, MAX_DRAWS,
+                           sizeof(VkDrawIndirectCommand));
 }
 
 static bool sprite_prepare_gpu_data(VkCommandBuffer cmd)
@@ -446,13 +435,13 @@ int main(void)
     const float atlas_h = (float)sprite_sheet->height;
 
     Sprite2D brick_sprite = {
-        .texture_id = sprite_sheet_texture,
-        .position   = {260.0f, 260.0f},
-        .scale      = {128.0f, 128.0f},
-        .rotation   = 0.0f,
-        .tint_color = {1.0f, 1.0f, 1.0f, 1.0f},
-        .depth      = 0.0f,
-        .uv_rect    = {512.0f / atlas_w, 256.0f / atlas_h, 640.0f / atlas_w, 384.0f / atlas_h},
+        .texture_id       = sprite_sheet_texture,
+        .position         = {260.0f, 260.0f},
+        .scale            = {128.0f, 128.0f},
+        .rotation         = 0.0f,
+        .tint_color       = {1.0f, 1.0f, 1.0f, 1.0f},
+        .depth            = 0.0f,
+        .uv_rect          = {512.0f / atlas_w, 256.0f / atlas_h, 640.0f / atlas_w, 384.0f / atlas_h},
         .transform_offset = 0,
         .dirty            = true,
     };
