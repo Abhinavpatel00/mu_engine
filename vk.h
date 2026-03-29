@@ -1277,180 +1277,84 @@ static MU_INLINE void frame_start(Renderer* renderer, Camera* cam)
     {
         camera_set_viewport(cam, (uint32_t)fb_w, (uint32_t)fb_h);
 
-        float aspect = (float)renderer->swapchain.extent.width / (float)renderer->swapchain.extent.height;
-        if(aspect <= 0.0f)
-            aspect = 1.0f;
+        if(cam->mode == CAMERA_MODE_3D)
+        {
+            if(glfwGetMouseButton(renderer->window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+            {
+                if(!cam->mouse_captured)
+                {
+                    glfwSetInputMode(renderer->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                    cam->mouse_captured = true;
+                    cam->first_mouse    = true;
+                }
+            }
+            else if(cam->mouse_captured)
+            {
+                glfwSetInputMode(renderer->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                cam->mouse_captured = false;
+                cam->first_mouse    = true;
+            }
 
-        camera_update_matrices(cam, aspect, true);
-        camera_extract_frustum(&renderer->frustum, cam->view_proj);
+            if(cam->mouse_captured)
+            {
+                double xpos, ypos;
+                glfwGetCursorPos(renderer->window, &xpos, &ypos);
+
+                if(cam->first_mouse)
+                {
+                    cam->last_mouse_x = xpos;
+                    cam->last_mouse_y = ypos;
+                    cam->first_mouse  = false;
+                }
+
+                float dx = (float)(xpos - cam->last_mouse_x);
+                float dy = (float)(ypos - cam->last_mouse_y);
+
+                cam->last_mouse_x = xpos;
+                cam->last_mouse_y = ypos;
+
+                cam->yaw += dx * cam->look_speed;
+                cam->pitch -= dy * cam->look_speed;
+
+                float limit = glm_rad(89.0f);
+                cam->pitch  = glm_clamp(cam->pitch, -limit, limit);
+            }
+
+            vec3 forward = {
+                cosf(cam->pitch) * sinf(cam->yaw),
+                sinf(cam->pitch),
+                -cosf(cam->pitch) * cosf(cam->yaw),
+            };
+            glm_vec3_normalize(forward);
+
+            vec3 world_up = {0.0f, 1.0f, 0.0f};
+            vec3 right    = {0.0f, 0.0f, 0.0f};
+            glm_vec3_cross(forward, world_up, right);
+            glm_vec3_normalize(right);
+
+            float speed = cam->move_speed;
+            if(glfwGetKey(renderer->window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+                speed *= 3.0f;
+
+            vec3 delta = {0.0f, 0.0f, 0.0f};
+            if(glfwGetKey(renderer->window, GLFW_KEY_W) == GLFW_PRESS)
+                glm_vec3_muladds(forward, speed * dt, delta);
+            if(glfwGetKey(renderer->window, GLFW_KEY_S) == GLFW_PRESS)
+                glm_vec3_muladds(forward, -speed * dt, delta);
+            if(glfwGetKey(renderer->window, GLFW_KEY_D) == GLFW_PRESS)
+                glm_vec3_muladds(right, speed * dt, delta);
+            if(glfwGetKey(renderer->window, GLFW_KEY_A) == GLFW_PRESS)
+                glm_vec3_muladds(right, -speed * dt, delta);
+            if(glfwGetKey(renderer->window, GLFW_KEY_E) == GLFW_PRESS)
+                glm_vec3_muladds(world_up, speed * dt, delta);
+            if(glfwGetKey(renderer->window, GLFW_KEY_Q) == GLFW_PRESS)
+                glm_vec3_muladds(world_up, -speed * dt, delta);
+
+            glm_vec3_add(cam->position, delta, cam->position);
+            glm_vec3_copy(forward, cam->cam_dir);
+        }
     }
 
-
-    // if(glfwGetMouseButton(renderer->window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-    // {
-    //     if(!cam->mouse_captured)
-    //     {
-    //         glfwSetInputMode(renderer->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    //         cam->mouse_captured = true;
-    //         glfwGetCursorPos(renderer->window, &cam->last_mouse_x, &cam->last_mouse_y);
-    //     }
-    // }
-    // else
-    // {
-    //     if(cam->mouse_captured)
-    //     {
-    //         glfwSetInputMode(renderer->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    //         cam->mouse_captured = false;
-    //     }
-    // }
-    // {
-    //     static bool up_prev   = false;
-    //     static bool down_prev = false;
-    //
-    //     bool up_now   = glfwGetKey(renderer->window, GLFW_KEY_EQUAL) == GLFW_PRESS;  // +
-    //     bool down_now = glfwGetKey(renderer->window, GLFW_KEY_MINUS) == GLFW_PRESS;  // -
-    //
-    //     if(up_now && !up_prev)
-    //         cam->move_speed += 1.0f;
-    //
-    //     if(down_now && !down_prev)
-    //         cam->move_speed -= 1.0f;
-    //
-    //     if(cam->move_speed < 0.1f)
-    //         cam->move_speed = 0.1f;
-    //
-    //     up_prev   = up_now;
-    //     down_prev = down_now;
-    // } /* ---------------- camera ---------------- */
-    //
-    // if(cam->mouse_captured)
-    // {
-    //
-    //     double xpos, ypos;
-    //     glfwGetCursorPos(renderer->window, &xpos, &ypos);
-    //
-    //     if(cam->first_mouse)
-    //     {
-    //
-    //         cam->last_mouse_x = xpos;
-    //         cam->last_mouse_y = ypos;
-    //         cam->first_mouse  = false;
-    //     }
-    //
-    //     float dx = (float)(xpos - cam->last_mouse_x);
-    //     float dy = (float)(ypos - cam->last_mouse_y);
-    //
-    //     cam->last_mouse_x = xpos;
-    //     cam->last_mouse_y = ypos;
-    //     cam->yaw += dx * cam->look_speed;
-    //     cam->pitch -= dy * cam->look_speed;
-    //
-    //     float limit = glm_rad(89.0f);
-    //     cam->pitch  = glm_clamp(cam->pitch, -limit, limit);
-    // }
-    //
-    // vec3 forward = {
-    //     cosf(cam->pitch) * sinf(cam->yaw),
-    //     sinf(cam->pitch),
-    //     -cosf(cam->pitch) * cosf(cam->yaw),
-    // };
-    // glm_vec3_normalize(forward);
-    // glm_vec3_copy(forward, cam->cam_dir);
-    //
-    // vec3 world_up = {0, 1, 0};
-    // vec3 right = {0}, up = {0};
-    //
-    // glm_vec3_cross(forward, world_up, right);
-    // glm_vec3_normalize(right);
-    // glm_vec3_cross(right, forward, up);
-    //
-    // float speed = cam->move_speed;
-    //
-    // if(glfwGetKey(renderer->window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-    //     speed *= 3.0f;
-    //
-    // vec3 delta = {0};
-    //
-    // if(glfwGetKey(renderer->window, GLFW_KEY_W) == GLFW_PRESS)
-    //     glm_vec3_muladds(forward, speed * dt, delta);
-    // if(glfwGetKey(renderer->window, GLFW_KEY_S) == GLFW_PRESS)
-    //     glm_vec3_muladds(forward, -speed * dt, delta);
-    // if(glfwGetKey(renderer->window, GLFW_KEY_D) == GLFW_PRESS)
-    //     glm_vec3_muladds(right, speed * dt, delta);
-    // if(glfwGetKey(renderer->window, GLFW_KEY_A) == GLFW_PRESS)
-    //     glm_vec3_muladds(right, -speed * dt, delta);
-    // if(glfwGetKey(renderer->window, GLFW_KEY_E) == GLFW_PRESS)
-    //     glm_vec3_muladds(world_up, speed * dt, delta);
-    // if(glfwGetKey(renderer->window, GLFW_KEY_Q) == GLFW_PRESS)
-    //     glm_vec3_muladds(world_up, -speed * dt, delta);
-    //
-    // glm_vec3_add(cam->position, delta, cam->position);
-    //
-    // vec3 center;
-    // glm_vec3_add(cam->position, forward, center);
-    //
-    // mat4 view = GLM_MAT4_IDENTITY_INIT;
-    // mat4 proj = GLM_MAT4_IDENTITY_INIT;
-    //
-    // glm_lookat(cam->position, center, up, view);
-    //
-    // float aspect = (float)renderer->swapchain.extent.width / (float)renderer->swapchain.extent.height;
-    //
-    // camera_build_proj_reverse_z_infinite(proj, cam, aspect);
-    //
-    // proj[1][1] *= -1.0f;
-    //
-    // glm_mat4_mul(proj, view, cam->view_proj);
-    //
-    // /* ---------------- frustum ---------------- */
-    //
-    // mat4 m;
-    // glm_mat4_copy(cam->view_proj, m);
-    // // asthough its not hard to derive i got reference          https://fgiesen.wordpress.com/2012/08/31/frustum-planes-from-the-projection-matrix/
-    // renderer->frustum.planes[LeftPlane][0] = m[0][3] + m[0][0];
-    // renderer->frustum.planes[LeftPlane][1] = m[1][3] + m[1][0];
-    // renderer->frustum.planes[LeftPlane][2] = m[2][3] + m[2][0];
-    // renderer->frustum.planes[LeftPlane][3] = m[3][3] + m[3][0];
-    //
-    // renderer->frustum.planes[RightPlane][0] = m[0][3] - m[0][0];
-    // renderer->frustum.planes[RightPlane][1] = m[1][3] - m[1][0];
-    // renderer->frustum.planes[RightPlane][2] = m[2][3] - m[2][0];
-    // renderer->frustum.planes[RightPlane][3] = m[3][3] - m[3][0];
-    //
-    // renderer->frustum.planes[BottomPlane][0] = m[0][3] + m[0][1];
-    // renderer->frustum.planes[BottomPlane][1] = m[1][3] + m[1][1];
-    // renderer->frustum.planes[BottomPlane][2] = m[2][3] + m[2][1];
-    // renderer->frustum.planes[BottomPlane][3] = m[3][3] + m[3][1];
-    //
-    // renderer->frustum.planes[TopPlane][0] = m[0][3] - m[0][1];
-    // renderer->frustum.planes[TopPlane][1] = m[1][3] - m[1][1];
-    // renderer->frustum.planes[TopPlane][2] = m[2][3] - m[2][1];
-    // renderer->frustum.planes[TopPlane][3] = m[3][3] - m[3][1];
-    //
-    // renderer->frustum.planes[NearPlane][0] = m[0][3] + m[0][2];
-    // renderer->frustum.planes[NearPlane][1] = m[1][3] + m[1][2];
-    // renderer->frustum.planes[NearPlane][2] = m[2][3] + m[2][2];
-    // renderer->frustum.planes[NearPlane][3] = m[3][3] + m[3][2];
-    //
-    // renderer->frustum.planes[FarPlane][0] = m[0][3] - m[0][2];
-    // renderer->frustum.planes[FarPlane][1] = m[1][3] - m[1][2];
-    // renderer->frustum.planes[FarPlane][2] = m[2][3] - m[2][2];
-    // renderer->frustum.planes[FarPlane][3] = m[3][3] - m[3][2];
-    //
-    // forEach(i, FrustumPlaneCount)
-    // {
-    //     vec4* p = &renderer->frustum.planes[i];
-    //
-    //     float len = sqrtf((*p)[0] * (*p)[0] + (*p)[1] * (*p)[1] + (*p)[2] * (*p)[2]);
-    //
-    //     float inv = 1.0f / len;
-    //
-    //     (*p)[0] *= inv;
-    //     (*p)[1] *= inv;
-    //     (*p)[2] *= inv;
-    //     (*p)[3] *= inv;
-    // }
-    //
     /* ----------- window minimized ----------- */
 
     if(fb_w == 0 || fb_h == 0)
@@ -1480,6 +1384,16 @@ static MU_INLINE void frame_start(Renderer* renderer, Camera* cam)
 
 
         renderer->swapchain.needs_recreate = false;
+    }
+
+    if(cam)
+    {
+        float aspect = (float)renderer->swapchain.extent.width / (float)renderer->swapchain.extent.height;
+        if(aspect <= 0.0f)
+            aspect = 1.0f;
+
+        camera_update_matrices(cam, aspect, true);
+        camera_extract_frustum(&renderer->frustum, cam->view_proj);
     }
 
     /* -------- frame sync -------- */
