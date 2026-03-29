@@ -1,4 +1,5 @@
 #include "external/cglm/include/cglm/vec2.h"
+#include "renderer.h"
 #include "tinytypes.h"
 #include "vk.h"
 #include <GLFW/glfw3.h>
@@ -11,13 +12,24 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
 #include "stb/stb_perlin.h"
 #include "text_system.h"
 #define DMON_IMPL
 #include "external/dmon/dmon.h"
 
-#include "voxel.h"
+static volatile bool shader_changed = false;
+static char          changed_shader[256];
+static void inline watch_cb(dmon_watch_id id, dmon_action action, const char* root, const char* filepath, const char* oldfilepath, void* user)
+{
+    if(action == DMON_ACTION_MODIFY || action == DMON_ACTION_CREATE)
+    {
+        if(strstr(filepath, ".slang"))
+        {
+            snprintf(changed_shader, sizeof(changed_shader), "%s", filepath);
+            shader_changed = true;
+        }
+    }
+}
 #include "external/tracy/public/tracy/TracyC.h"
 
 #define RUN_ONCE_N(name) for(static bool name = true; name; name = false)
@@ -58,6 +70,7 @@ typedef struct Sprite2D
     vec2      scale;
     float     rotation;
 
+ vec2 velocity; 
     // Appearance
     vec4  tint_color;  // For color modulation
     float depth;       // Z-order (0.0 to 1.0)
@@ -86,14 +99,11 @@ typedef struct GPU_Quad2D
     // Color tint
     vec4 tint;
 } GPU_Quad2D;
+PUSH_CONSTANT(SpritePushConstants,
 
-typedef struct SpritePushConstants
-{
-    VkDeviceAddress instance_ptr;
-    vec2            screen_size;
-    uint32_t        sampler_id;
-    uint32_t        _pad;
-} SpritePushConstants;
+              VkDeviceAddress instance_ptr;
+              vec2            screen_size;
+              uint32_t        sampler_id;);
 
 typedef struct Camera2D
 {
@@ -115,10 +125,11 @@ void camera2d_update_matrices(Camera2D* cam);
 #define MAX_DRAWS 1024
 #define MAX_SPRITES 10000
 
-typedef struct SpriteIndirectSystem
+typedef struct SpriteRenderer
 {
     GPU_Quad2D* instances;
     uint32_t    instance_count;
+    uint32_t    capacity;
 
     VkDrawIndirectCommand* draws;
     uint32_t               draw_count;
@@ -127,143 +138,249 @@ typedef struct SpriteIndirectSystem
     BufferSlice indirect_buffer;
     BufferSlice count_buffer;
 
-} SpriteIndirectSystem;
+    bool dirty;
+} SpriteRenderer;
+// lifecycle
+void sprite_renderer_init(SpriteRenderer* r, uint32_t max_sprites);
+void sprite_renderer_destroy(SpriteRenderer* r);
 
-static SpriteIndirectSystem g_sprite_sys;
-static GPU_Quad2D           g_sprite_instances_cpu[MAX_SPRITES];
+// per-frame
+void sprite_begin(SpriteRenderer* r);
+void sprite_submit(SpriteRenderer* r, Sprite2D* s);
+void sprite_end(SpriteRenderer* r, VkCommandBuffer cmd);
 
-void draw_sprite(Sprite2D* s);
-
-void sprite_indirect_init()
+// rendering
+void sprite_render(SpriteRenderer* r, VkCommandBuffer cmd);
+void sprite_renderer_init(SpriteRenderer* r, uint32_t max_sprites)
 {
-    g_sprite_sys.instance_buffer = buffer_pool_alloc(&renderer.gpu_pool, sizeof(GPU_Quad2D) * MAX_SPRITES, 16);
+    r->capacity = max_sprites;
 
-    g_sprite_sys.indirect_buffer = buffer_pool_alloc(&renderer.cpu_pool, sizeof(VkDrawIndirectCommand) * MAX_DRAWS, 16);
+    r->instances = malloc(sizeof(GPU_Quad2D) * max_sprites);
+    r->draws     = malloc(sizeof(VkDrawIndirectCommand) * MAX_DRAWS);
 
-    g_sprite_sys.count_buffer = buffer_pool_alloc(&renderer.cpu_pool, sizeof(uint32_t), 4);
+    r->instance_buffer = buffer_pool_alloc(&renderer.gpu_pool, sizeof(GPU_Quad2D) * max_sprites, 16);
 
-    g_sprite_sys.instances = g_sprite_instances_cpu;
-    g_sprite_sys.draws     = g_sprite_sys.indirect_buffer.mapped;
+    r->indirect_buffer = buffer_pool_alloc(&renderer.gpu_pool, sizeof(VkDrawIndirectCommand) * MAX_DRAWS, 16);
+
+    r->count_buffer = buffer_pool_alloc(&renderer.cpu_pool, sizeof(uint32_t), 4);
 }
-void draw_sprite(Sprite2D* s)
+void sprite_begin(SpriteRenderer* r)
 {
-    if(g_sprite_sys.instance_count >= MAX_SPRITES)
-        return;
+    r->instance_count = 0;
+    r->draw_count     = 0;
+    r->dirty          = false;
+}
 
-    uint32_t id = g_sprite_sys.instance_count++;
 
-    GPU_Quad2D* q = &g_sprite_sys.instances[id];
+void sprite_submit(SpriteRenderer* r, Sprite2D* s)
+{
 
+
+    // may use dynamic array with stb
+    if(r->instance_count >= r->capacity)
+        return;  // or assert if you're serious about life
+
+    GPU_Quad2D* q = &r->instances[r->instance_count++];
+
+    // pack data
     glm_vec2_copy(s->position, q->position);
     glm_vec2_copy(s->scale, q->scale);
+    glm_vec4_copy(s->uv_rect, q->uv_rect);
+    glm_vec4_copy(s->tint_color, q->tint);
+
     q->rotation   = s->rotation;
     q->depth      = s->depth;
     q->texture_id = s->texture_id;
-    glm_vec4_copy(s->uv_rect, q->uv_rect);
-    glm_vec4_copy(s->tint_color, q->tint);
-    q->opacity = s->tint_color[3];
-}
-void build_indirect_commands_2d()
-{
-    g_sprite_sys.draw_count = 0;
+    q->opacity    = s->tint_color[3];
 
+    r->dirty = true;
+}
+static int compare_texture(const void* a, const void* b)
+{
+    const GPU_Quad2D* A = a;
+    const GPU_Quad2D* B = b;
+    return (int)A->texture_id - (int)B->texture_id;
+}
+
+void sprite_end(SpriteRenderer* r, VkCommandBuffer cmd)
+{
+    if(r->instance_count == 0)
+        return;
+
+    /*
+        STEP 1: SORT
+
+        Before:
+            [tex1][tex2][tex1][tex3]  -> garbage batching
+
+        After:
+            [tex1][tex1][tex2][tex3]  -> perfect batching
+    */
+    qsort(r->instances, r->instance_count, sizeof(GPU_Quad2D), compare_texture);
+
+    /*
+        STEP 2: BUILD INDIRECT COMMANDS
+
+        Each batch = one draw call
+    */
     uint32_t start = 0;
 
-    while(start < g_sprite_sys.instance_count)
+    while(start < r->instance_count)
     {
-        uint32_t tex = g_sprite_sys.instances[start].texture_id;
-
+        uint32_t tex   = r->instances[start].texture_id;
         uint32_t count = 1;
 
-        // group same texture
-        for(uint32_t i = start + 1; i < g_sprite_sys.instance_count; i++)
+        for(uint32_t i = start + 1; i < r->instance_count; i++)
         {
-            if(g_sprite_sys.instances[i].texture_id != tex)
+            if(r->instances[i].texture_id != tex)
                 break;
             count++;
         }
 
-        VkDrawIndirectCommand* cmd = &g_sprite_sys.draws[g_sprite_sys.draw_count++];
+        VkDrawIndirectCommand* cmdi = &r->draws[r->draw_count++];
 
-        cmd->vertexCount   = 6;
-        cmd->instanceCount = count;
-        cmd->firstVertex   = 0;
-        cmd->firstInstance = start;
+        cmdi->vertexCount   = 6;
+        cmdi->instanceCount = count;
+        cmdi->firstVertex   = 0;
+        cmdi->firstInstance = start;
 
         start += count;
     }
 
-    *(uint32_t*)g_sprite_sys.count_buffer.mapped = g_sprite_sys.draw_count;
-}
+    /*
+        STEP 3: UPLOAD
 
-void render_sprites(VkCommandBuffer cmd)
-{
-    if(g_sprite_sys.instance_count == 0)
-        return;
+        CPU → GPU
+    */
+    VkDeviceSize instance_size = sizeof(GPU_Quad2D) * r->instance_count;
 
-    if(!g_sprite_sys.instance_buffer.buffer)
-        return;
+    renderer_upload_buffer_to_slice(&renderer, cmd, r->instance_buffer, r->instances, instance_size, 16);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.sprite]);
+    VkDeviceSize indirect_size = sizeof(VkDrawIndirectCommand) * r->draw_count;
 
-    vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
+    renderer_upload_buffer_to_slice(&renderer, cmd, r->indirect_buffer, r->draws, indirect_size, 16);
+    /*
+        STEP 4: BARRIER
 
-    VkBufferDeviceAddressInfo addr_info = {
-        .sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-        .buffer = g_sprite_sys.instance_buffer.buffer,
-    };
+        COPY → SHADER READ
+    */
 
-    SpritePushConstants sprite_push = {
-        .instance_ptr = vkGetBufferDeviceAddress(renderer.device, &addr_info) + g_sprite_sys.instance_buffer.offset,
-        .screen_size  = {(float)renderer.swapchain.extent.width, (float)renderer.swapchain.extent.height},
-        .sampler_id   = renderer.default_samplers.samplers[SAMPLER_LINEAR_WRAP_ANISO],
-        ._pad         = 0,
-    };
 
-    vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(SpritePushConstants), &sprite_push);
+    VkBufferMemoryBarrier2 barriers[2] = {// instance buffer
+                                          {
+                                              .sType         = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                                              .srcStageMask  = VK_PIPELINE_STAGE_2_COPY_BIT,
+                                              .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                                              .dstStageMask  = VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
+                                              .dstAccessMask = VK_ACCESS_2_SHADER_STORAGE_READ_BIT,
+                                              .buffer        = r->instance_buffer.buffer,
+                                              .offset        = r->instance_buffer.offset,
+                                              .size          = instance_size,
+                                          },
 
-    vkCmdDrawIndirectCount(cmd, g_sprite_sys.indirect_buffer.buffer, g_sprite_sys.indirect_buffer.offset,
-                           g_sprite_sys.count_buffer.buffer, g_sprite_sys.count_buffer.offset, MAX_DRAWS,
-                           sizeof(VkDrawIndirectCommand));
-}
-
-static bool sprite_prepare_gpu_data(VkCommandBuffer cmd)
-{
-    if(g_sprite_sys.instance_count == 0)
-        return true;
-
-    build_indirect_commands_2d();
-
-    VkDeviceSize instance_upload_bytes = sizeof(GPU_Quad2D) * g_sprite_sys.instance_count;
-    if(!renderer_upload_buffer_to_slice(&renderer, cmd, g_sprite_sys.instance_buffer, g_sprite_sys.instances, instance_upload_bytes, 16))
-        return false;
-
-    VkBufferMemoryBarrier2 instance_barrier = {
-        .sType         = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
-        .srcStageMask  = VK_PIPELINE_STAGE_2_COPY_BIT,
-        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
-        .dstStageMask  = VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT,
-        .dstAccessMask = VK_ACCESS_2_SHADER_STORAGE_READ_BIT,
-        .buffer        = g_sprite_sys.instance_buffer.buffer,
-        .offset        = g_sprite_sys.instance_buffer.offset,
-        .size          = instance_upload_bytes,
-    };
+                                          // INDIRECT BUFFER (this one you ignored)
+                                          {
+                                              .sType         = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+                                              .srcStageMask  = VK_PIPELINE_STAGE_2_COPY_BIT,
+                                              .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                                              .dstStageMask  = VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT,
+                                              .dstAccessMask = VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT,
+                                              .buffer        = r->indirect_buffer.buffer,
+                                              .offset        = r->indirect_buffer.offset,
+                                              .size          = indirect_size,
+                                          }};
 
     VkDependencyInfo dep = {
         .sType                    = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-        .bufferMemoryBarrierCount = 1,
-        .pBufferMemoryBarriers    = &instance_barrier,
+        .bufferMemoryBarrierCount = 2,
+        .pBufferMemoryBarriers    = barriers,
     };
+
     vkCmdPipelineBarrier2(cmd, &dep);
 
-    return true;
+    /*
+        STEP 5: WRITE DRAW COUNT
+    */
+    *(uint32_t*)r->count_buffer.mapped = r->draw_count;
 }
+void sprite_render(SpriteRenderer* r, VkCommandBuffer cmd)
+{
+    if(r->draw_count == 0)
+        return;
+    VkBufferDeviceAddressInfo addr_info = {
+        .sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .buffer = r->instance_buffer.buffer,
+    };
 
+    SpritePushConstants push = {
+        .instance_ptr = vkGetBufferDeviceAddress(renderer.device, &addr_info) + r->instance_buffer.offset,
+
+        .screen_size = {(float)renderer.swapchain.extent.width, (float)renderer.swapchain.extent.height},
+
+        .sampler_id = renderer.default_samplers.samplers[SAMPLER_LINEAR_WRAP_ANISO],
+    };
+
+    vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(SpritePushConstants), &push);
+    vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.sprite]);
+
+    vkCmdDrawIndirectCount(cmd, r->indirect_buffer.buffer, r->indirect_buffer.offset, r->count_buffer.buffer,
+                           r->count_buffer.offset, r->draw_count, sizeof(VkDrawIndirectCommand));
+}
+static void update_sprite_movement(Sprite2D* s, float speed)
+{
+    /*
+    =========================================================
+        INPUT → VELOCITY → NORMALIZE → APPLY → POSITION
+    =========================================================
+
+           W
+           ↑
+       A ← + → D
+           ↓
+           S
+
+    velocity = direction vector from input
+    normalize = prevents faster diagonal movement
+    position += velocity * speed * dt
+    */
+
+    vec2 velocity = {0.0f, 0.0f};
+ GLFWwindow* window = renderer.window;
+    // --- INPUT ---
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        velocity[1] -= 1.0f;
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        velocity[1] += 1.0f;
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        velocity[0] -= 1.0f;
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        velocity[0] += 1.0f;
+
+    // --- NORMALIZE ---
+    float len = sqrtf(velocity[0]*velocity[0] + velocity[1]*velocity[1]);
+
+    if (len > 0.0f)
+    {
+        velocity[0] /= len;
+        velocity[1] /= len;
+    }
+
+    // --- APPLY MOVEMENT ---
+    float dt = renderer.dt;
+    s->position[0] += velocity[0] * speed * dt;
+    s->position[1] += velocity[1] * speed * dt;
+}
 int main(void)
 {
     graphics_init();
-    sprite_indirect_init();
 
+    SpriteRenderer sprites;
+
+    sprite_renderer_init(&sprites, 10000);
     text_system_init("/home/lk/myprojects/voxelfun/clusteredshading/assets/font/ttf/FiraCode-Bold.ttf", 48.0f);
 
     TextureID sprite_sheet_texture = load_texture(&renderer, "data/Spritesheets/spritesheet_tiles.png");
@@ -290,90 +407,6 @@ int main(void)
         .transform_offset = 0,
         .dirty            = true,
     };
-
-    /* buffer slices start  */
-
-    BufferSlice indirect_slice = buffer_pool_alloc(&renderer.cpu_pool, sizeof(VkDrawIndirectCommand), 16);
-
-    BufferSlice count_slice = buffer_pool_alloc(&renderer.cpu_pool, sizeof(uint32_t), 4);
-    /* initialise voxel face storage then fill it with data and upload on gpu */
-
-#if 0
-    voxel_materials_init(&renderer);
-    BufferSlice material_slice = buffer_pool_alloc(&renderer.gpu_pool, sizeof(gpu_materials), 16);
-
-
-    static Voxel chunk[CHUNK_VOLUME];
-
-    uint32_t* faces = NULL;
-
-    generate_chunk(chunk);
-    MU_FOR_3D(x, y, z, CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE)
-    {
-        size_t idx = voxel_index(x, y, z);
-
-        VoxelType type = chunk[idx].type;
-
-        if(type == VOXEL_AIR)
-            continue;
-
-        for(int n = 0; n < 6; n++)
-        {
-            int nx = x + voxel_neighbors[n][0];
-            int ny = y + voxel_neighbors[n][1];
-            int nz = z + voxel_neighbors[n][2];
-
-            bool visible = false;
-
-            if(nx < 0 || ny < 0 || nz < 0 || nx >= CHUNK_SIZE || ny >= CHUNK_SIZE || nz >= CHUNK_SIZE)
-            {
-                visible = true;
-            }
-            else
-            {
-                int nidx = voxel_index(nx, ny, nz);
-
-                if(chunk[nidx].type == VOXEL_AIR)
-                    visible = true;
-            }
-
-            if(visible)
-            {
-                uint32_t packed = pack_voxel_face(x, y, z, n, 1, 1, type);
-
-                arrput(faces, packed);
-            }
-        }
-    }
-
-    uint32_t    voxel_face_count = arrlen(faces);
-    BufferSlice cpu_faces        = buffer_pool_alloc(&renderer.cpu_pool, voxel_face_count * sizeof(uint32_t), 4);
-
-    uint32_t* cpu_face_data = cpu_faces.mapped;
-    memcpy(cpu_faces.mapped, faces, voxel_face_count * sizeof(uint32_t));
-
-
-    BufferSlice gpu_faces = buffer_pool_alloc(&renderer.gpu_pool, voxel_face_count * sizeof(uint32_t), 16);
-    /* buffer slices ends  */
-
-    VkDrawIndirectCommand* cpu_indirect = (VkDrawIndirectCommand*)indirect_slice.mapped;
-    uint32_t*              cpu_count    = (uint32_t*)count_slice.mapped;
-
-
-    // describe ONE draw call
-    cpu_indirect[0].vertexCount   = 4;
-    cpu_indirect[0].instanceCount = voxel_face_count;
-    cpu_indirect[0].firstVertex   = 0;
-    cpu_indirect[0].firstInstance = 0;
-
-    // number of draws
-    *cpu_count = 1;
- 
-    VkDeviceAddress face_pointer     = renderer.gpu_base_addr + gpu_faces.offset;
-    VkDeviceAddress material_pointer = renderer.gpu_base_addr + material_slice.offset;
-
-
-#endif
 
     Camera cam = {
 
@@ -422,15 +455,18 @@ int main(void)
     {
         //MU_SCOPE_TIMER("GAME")
         {
-            g_sprite_sys.instance_count = 0;
             text_system_begin_frame();
-            draw_sprite(&brick_sprite);
-            vec4 text_color = {1.0f, 1.0f, 1.0f, 1.0f};
+            sprite_begin(&sprites);
+
+            sprite_submit(&sprites, &brick_sprite);
+    update_sprite_movement(&brick_sprite, 202.2);
+
+            vec4 text_color = {1.0f, 2.0f, 2.0f, 1.0f};
             draw_text_2d("Hello World", 40.0f, 40.0f, 0.5f, text_color, 0.0f);
         }
 
 
-        //    MU_SCOPE_TIMER("GRAPHICS CPU")
+        //     MU_SCOPE_TIMER("GRAPHICS CPU")
         {
             TracyCFrameMark;
             TracyCZoneN(frame_loop_zone, "Frame Loop", 1);
@@ -478,13 +514,12 @@ int main(void)
                                            VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
                 flush_barriers(cmd);
 
-                bool sprites_ready = sprite_prepare_gpu_data(cmd);
-                bool text_ready    = text_system_prepare_gpu_data(cmd);
-
-                if(!sprites_ready)
+                //  MU_SCOPE_TIMER("SPRITE CPU")
                 {
-                    g_sprite_sys.instance_count = 0;
+                    sprite_end(&sprites, cmd);
                 }
+                bool text_ready = text_system_prepare_gpu_data(cmd);
+
                 if(!text_ready)
                 {
                     text_system_handle_prepare_failure();
@@ -575,71 +610,13 @@ int main(void)
                 vkCmdBeginRendering(cmd, &rendering);
 
 
-                //                 GPU_SCOPE(frame_prof, cmd, "Main Pass", VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT)
-                //                 {
-                //
-                //b              RUN_ONCE_N(buffer_uplad)
-                //             {
-                //                 {
-                //                     VkBufferCopy copy = {.srcOffset = cpu_faces.offset,
-                //                                          .dstOffset = gpu_faces.offset,
-                //                                          .size      = voxel_face_count * sizeof(uint32_t)};
-                //                     vkCmdCopyBuffer(cmd, cpu_faces.buffer, gpu_faces.buffer, 1, &copy);
-                //                 }
-                //                 {
-                //                     renderer_upload_buffer_to_slice(&renderer, cmd, material_slice, gpu_materials, sizeof(gpu_materials), 16);
-                //                 }
-                //             }
-                //
-                //
-                //                     static int prev_space = GLFW_RELEASE;
-                //
-                //                     int space = glfwGetKey(renderer.window, GLFW_KEY_SPACE);
-                //
-                //                     if(space == GLFW_PRESS && prev_space == GLFW_RELEASE)
-                //                     {
-                //                         wireframe_mode = !wireframe_mode;
-                //                     }
-                //
-                //                     prev_space = space;
-                //
-                //                     // prev_space = (wireframe_mode ^= (space = glfwGetKey(renderer.window, GLFW_KEY_SPACE)) == GLFW_PRESS && prev_space == GLFW_RELEASE, space);
-                //
-                //                     if(!wireframe_mode)
-                //                     {
-                //                         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.triangle]);
-                //                     }
-                //                     else
-                //                     {
-                //
-                //                         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                //                                           g_render_pipelines.pipelines[pipelines.triangle_wireframe]);
-                //                     };
-                //
-                //
-                //                     vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
-                //
-                //                     Push push = {0};
-                //
-                //                     push.aspect     = (float)renderer.swapchain.extent.width / (float)renderer.swapchain.extent.height;
-                //                     push.texture_id = renderer.dummy_texture;
-                //                     push.sampler_id = renderer.default_samplers.samplers[SAMPLER_LINEAR_WRAP_ANISO];
-                //                     push.face_ptr   = face_pointer;
-                //                     push.face_count = voxel_face_count;
-                //                     push.mat_ptr    = material_pointer;
-                //                     glm_vec3_copy(cam.cam_dir, push.cam_dir);
-                //                     glm_vec3_copy(cam.position, push.cam_pos);
-                //                     glm_mat4_copy(cam.view_proj, push.view_proj);
-                //
-                //                     vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(Push), &push);
-                //
-                //                     vkCmdDrawIndirectCount(cmd, indirect_slice.buffer, indirect_slice.offset, count_slice.buffer,
-                //                                            count_slice.offset, 1024, sizeof(VkDrawIndirectCommand));
-                //                 }
-                //
-                //                 vkCmdEndRendering(cmd);
-                render_sprites(cmd);
-                text_system_render(cmd);
+                // --- RENDER ---
+
+                //     MU_SCOPE_TIMER("SP and TE CPU")
+                {
+                    sprite_render(&sprites, cmd);
+                    text_system_render(cmd);
+                }
                 vkCmdEndRendering(cmd);
             }
             //

@@ -487,19 +487,6 @@ typedef struct
 } Vertex;
 
 
-static volatile bool shader_changed = false;
-static char          changed_shader[256];
-static void inline watch_cb(dmon_watch_id id, dmon_action action, const char* root, const char* filepath, const char* oldfilepath, void* user)
-{
-    if(action == DMON_ACTION_MODIFY || action == DMON_ACTION_CREATE)
-    {
-        if(strstr(filepath, ".slang"))
-        {
-            snprintf(changed_shader, sizeof(changed_shader), "%s", filepath);
-            shader_changed = true;
-        }
-    }
-}
 
 /* voxel part starts  */
 

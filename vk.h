@@ -1337,3 +1337,15 @@ void pipeline_mark_dirty(const char* changed_shader);
 void pipeline_rebuild(Renderer* r);
 
 void pipeline_cache_save(VkDevice device, VkPhysicalDevice phys, VkPipelineCache cache, const char* path);
+
+
+
+
+
+
+
+
+
+
+
+

@@ -23,6 +23,4 @@ extern EnginePipelines pipelines;
 
 void graphics_init(void);
 
- void gfx_pipelines();
-
-
+void gfx_pipelines();
