@@ -101,10 +101,17 @@ typedef struct GPU_Quad2D
     // Color tint
     vec4 tint;
 } GPU_Quad2D;
-PUSH_CONSTANT(SpritePushConstants, VkDeviceAddress instance_ptr; vec2 screen_size; uint32_t sampler_id; float view_proj[4][4];
+PUSH_CONSTANT(SpritePushConstants,
+    VkDeviceAddress instance_ptr; // 8
+    vec2 screen_size;             // 8 → 16 total
 
+    uint32_t sampler_id;          // 4
+    uint32_t ok;                  // 4 → 24
+
+    float _padC[2];                // 8 → NOW offset = 32 ✅
+
+    float view_proj[4][4];        // aligned to 16
 );
-
 typedef struct Camera2D
 {
     vec2  position;  // World position
@@ -529,8 +536,7 @@ int main(void)
             update_sprite_movement(&brick_sprite, 233.00);
             entities[0]     = brick_sprite;
             entity_count    = 1;
-            cam.position[0] = brick_sprite.position[0] - cam.viewport_width * 0.5f;
-            cam.position[1] = brick_sprite.position[1] - cam.viewport_height * 0.5f;
+            camera2d_set_position(&cam, brick_sprite.position[0], brick_sprite.position[1]);
 
             for(int i = 0; i < entity_count; i++)
             {

@@ -1064,16 +1064,11 @@ static FORCE_INLINE void camera_update_matrices(Camera* cam, float aspect, bool 
         float half_h       = ortho_height * 0.5f;
         float half_w       = half_h * aspect;
 
-        float left   = cam->position2d[0] - half_w;
-        float right  = cam->position2d[0] + half_w;
-        float bottom = cam->position2d[1] - half_h;
-        float top    = cam->position2d[1] + half_h;
-
         glm_mat4_identity(cam->view);
         glm_translate(cam->view, (vec3){-cam->position2d[0], -cam->position2d[1], 0.0f});
         glm_rotate(cam->view, -cam->rotation2d, (vec3){0.0f, 0.0f, 1.0f});
 
-        glm_ortho(left, right, bottom, top, cam->near_z, cam->far_z, cam->proj);
+        glm_ortho(-half_w, half_w, -half_h, half_h, cam->near_z, cam->far_z, cam->proj);
         cam->proj[1][1] *= -1.0f;
 
         glm_mat4_mul(cam->proj, cam->view, cam->view_proj);
