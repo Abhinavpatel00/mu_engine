@@ -1,3 +1,4 @@
+#include "external/cglm/include/cglm/types.h"
 #include "external/cglm/include/cglm/vec2.h"
 #include "renderer.h"
 #include "tinytypes.h"
@@ -120,7 +121,7 @@ PUSH_CONSTANT(SpritePushConstants,
 #define MAX_SPRITES 10000
 #define MAX_SNAKE 256
 #define CELL 32.0f
-
+#define MAX_EATEN_FOOD 2048
 typedef struct SpriteRenderer
 {
     GPU_Quad2D* instances;
@@ -142,7 +143,8 @@ typedef struct Snake
     vec2 body[MAX_SNAKE];
     vec2 prev_body[MAX_SNAKE];
     int  length;
-
+    vec2 food_eaten[MAX_EATEN_FOOD];
+    u32  eaten_count;
     vec2 dir;
     vec2 next_dir;
 
@@ -238,7 +240,7 @@ void sprite_end(SpriteRenderer* r, VkCommandBuffer cmd)
     uint32_t start = 0;
 
     while(start < r->instance_count)
-  
+
     {
         uint32_t tex   = r->instances[start].texture_id;
         uint32_t count = 1;
@@ -369,9 +371,22 @@ static void snake_init(Snake* s)
     s->just_reset = true;
 }
 
+static bool is_eaten(Snake* s, int x, int y)
+{
+    for(int i = 0; i < s->eaten_count; i++)
+    {
+        if(s->food_eaten[i][0] == x && s->food_eaten[i][1] == y)
+            return true;
+    }
+    return false;
+}
+
+
 static void snake_input(Snake* s)
 {
-    if(glfwGetKey(renderer.window, GLFW_KEY_S) == GLFW_PRESS)
+    // UP (W or ↑)
+    if(glfwGetKey(renderer.window, GLFW_KEY_W) == GLFW_PRESS ||
+       glfwGetKey(renderer.window, GLFW_KEY_UP) == GLFW_PRESS)
     {
         if(s->dir[1] != 1.0f)
         {
@@ -380,7 +395,9 @@ static void snake_input(Snake* s)
         }
     }
 
-    if(glfwGetKey(renderer.window, GLFW_KEY_W) == GLFW_PRESS)
+    // DOWN (S or ↓)
+    if(glfwGetKey(renderer.window, GLFW_KEY_S) == GLFW_PRESS ||
+       glfwGetKey(renderer.window, GLFW_KEY_DOWN) == GLFW_PRESS)
     {
         if(s->dir[1] != -1.0f)
         {
@@ -389,7 +406,9 @@ static void snake_input(Snake* s)
         }
     }
 
-    if(glfwGetKey(renderer.window, GLFW_KEY_A) == GLFW_PRESS)
+    // LEFT (A or ←)
+    if(glfwGetKey(renderer.window, GLFW_KEY_A) == GLFW_PRESS ||
+       glfwGetKey(renderer.window, GLFW_KEY_LEFT) == GLFW_PRESS)
     {
         if(s->dir[0] != 1.0f)
         {
@@ -398,7 +417,9 @@ static void snake_input(Snake* s)
         }
     }
 
-    if(glfwGetKey(renderer.window, GLFW_KEY_D) == GLFW_PRESS)
+    // RIGHT (D or →)
+    if(glfwGetKey(renderer.window, GLFW_KEY_D) == GLFW_PRESS ||
+       glfwGetKey(renderer.window, GLFW_KEY_RIGHT) == GLFW_PRESS)
     {
         if(s->dir[0] != -1.0f)
         {
@@ -408,6 +429,18 @@ static void snake_input(Snake* s)
     }
 }
 
+static uint32_t snake_hash2d(int x, int y)
+{
+    uint32_t h = (uint32_t)(x * 374761393u + y * 668265263u);
+    h          = (h ^ (h >> 13)) * 1274126177u;
+    return h;
+}
+
+
+bool snake_is_food_at(int x, int y)
+{
+    return (snake_hash2d(x, y) % 20u) == 0u;
+}
 static void snake_step(Snake* s)
 {
     for(int i = 0; i < s->length; i++)
@@ -437,15 +470,23 @@ static void snake_step(Snake* s)
         }
     }
 
-    int head_x = (int)s->body[0][0];
-    int head_y = (int)s->body[0][1];
-    uint32_t h = (uint32_t)(head_x * 374761393u + head_y * 668265263u);
-    h          = (h ^ (h >> 13)) * 1274126177u;
+    int      head_x = (int)s->body[0][0];
+    int      head_y = (int)s->body[0][1];
+    uint32_t h      = (uint32_t)(head_x * 374761393u + head_y * 668265263u);
+    h               = (h ^ (h >> 13)) * 1274126177u;
 
-    if((h % 50u) == 0u)
+    if(snake_is_food_at(head_x, head_y) && !is_eaten(s, head_x, head_y))
     {
         if(s->length < MAX_SNAKE)
             s->length++;
+
+        // store eaten food
+        if(s->eaten_count < MAX_EATEN_FOOD)
+        {
+            s->food_eaten[s->eaten_count][0] = head_x;
+            s->food_eaten[s->eaten_count][1] = head_y;
+            s->eaten_count++;
+        }
     }
 }
 
@@ -487,18 +528,6 @@ static void snake_head_render_position(const Snake* s, float* out_x, float* out_
 
     *out_x = head_x * CELL;
     *out_y = head_y * CELL;
-}
-
-static uint32_t snake_hash2d(int x, int y)
-{
-    uint32_t h = (uint32_t)(x * 374761393u + y * 668265263u);
-    h          = (h ^ (h >> 13)) * 1274126177u;
-    return h;
-}
-
-static bool snake_is_food_at(int x, int y)
-{
-    return (snake_hash2d(x, y) % 20u) == 0u;
 }
 
 static void snake_render(SpriteRenderer* r, Snake* s)
@@ -547,7 +576,7 @@ static void snake_render(SpriteRenderer* r, Snake* s)
     }
 }
 
-static void snake_render_visible_food(SpriteRenderer* r, float cam_x, float cam_y)
+static void snake_render_visible_food(SpriteRenderer* r, float cam_x, float cam_y, Snake* snake)
 {
     int half_cells_x = (int)ceilf(((float)renderer.swapchain.extent.width * 0.5f) / CELL);
     int half_cells_y = (int)ceilf(((float)renderer.swapchain.extent.height * 0.5f) / CELL);
@@ -566,24 +595,25 @@ static void snake_render_visible_food(SpriteRenderer* r, float cam_x, float cam_
         {
             if(!snake_is_food_at(x, y))
                 continue;
-
+            if(is_eaten(snake, x, y))
+                continue;
             Sprite2D food = {0};
 
-            food.texture_id = renderer.dummy_texture;
-            food.position[0] = (float)x * CELL;
-            food.position[1] = (float)y * CELL;
-            food.scale[0] = CELL;
-            food.scale[1] = CELL;
-            food.rotation = 0.0f;
-            food.depth    = 0.0f;
+            food.texture_id    = renderer.dummy_texture;
+            food.position[0]   = (float)x * CELL;
+            food.position[1]   = (float)y * CELL;
+            food.scale[0]      = CELL;
+            food.scale[1]      = CELL;
+            food.rotation      = 0.0f;
+            food.depth         = 0.0f;
             food.tint_color[0] = 1.0f;
             food.tint_color[1] = 0.2f;
             food.tint_color[2] = 0.2f;
             food.tint_color[3] = 1.0f;
-            food.uv_rect[0] = 0.0f;
-            food.uv_rect[1] = 0.0f;
-            food.uv_rect[2] = 1.0f;
-            food.uv_rect[3] = 1.0f;
+            food.uv_rect[0]    = 0.0f;
+            food.uv_rect[1]    = 0.0f;
+            food.uv_rect[2]    = 1.0f;
+            food.uv_rect[3]    = 1.0f;
 
             sprite_submit(r, &food);
         }
@@ -635,7 +665,7 @@ int main(void)
             float camera_y = 0.0f;
             snake_head_render_position(&snake, &camera_x, &camera_y);
             camera2d_set_position(&cam, camera_x, camera_y);
-            snake_render_visible_food(&sprites, camera_x, camera_y);
+            snake_render_visible_food(&sprites, camera_x, camera_y,&snake);
             snake_render(&sprites, &snake);
             snake_end_frame(&snake);
             vec4 text_color = {1.0f, 2.0f, 2.0f, 1.0f};
