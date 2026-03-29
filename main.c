@@ -7,6 +7,7 @@
 #include <stdalign.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <math.h>
 #include <time.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -63,7 +64,6 @@ static inline void mu_unravel_index(size_t index, const size_t* dims, size_t ndi
     }
 }
 
-// TODO: memory bandwidth is crucial as fuck so we will optimize it for that
 typedef struct Sprite2D
 {
     // Rendering
@@ -84,6 +84,9 @@ typedef struct Sprite2D
     uint32_t transform_offset;  // Push constant offset
     bool     dirty;
 } Sprite2D;
+
+
+// TODO: memory bandwidth is crucial as fuck so we will optimize it for that
 typedef struct GPU_Quad2D
 {
     // Instance data (vec4 aligned)
@@ -102,97 +105,21 @@ typedef struct GPU_Quad2D
     vec4 tint;
 } GPU_Quad2D;
 PUSH_CONSTANT(SpritePushConstants,
-    VkDeviceAddress instance_ptr; // 8
-    vec2 screen_size;             // 8 → 16 total
+              VkDeviceAddress instance_ptr;  // 8
+              vec2            screen_size;   // 8 → 16 total
 
-    uint32_t sampler_id;          // 4
-    uint32_t ok;                  // 4 → 24
+              uint32_t sampler_id;  // 4
+              uint32_t ok;          // 4 → 24
 
-    float _padC[2];                // 8 → NOW offset = 32 ✅
+              float _padC[2];  // 8 → NOW offset = 32 ✅
 
-    float view_proj[4][4];        // aligned to 16
+              float view_proj[4][4];  // aligned to 16
 );
-typedef struct Camera2D
-{
-    vec2  position;  // World position
-    float zoom;      // Scale factor
-    float rotation;  // Rotation in radians
-
-    uint32_t viewport_width;
-    uint32_t viewport_height;
-
-    // Cached matrix (update when dirty)
-    mat4 view_matrix;
-    mat4 projection_matrix;
-    mat4 view_projection;
-    bool dirty;
-} Camera2D;
-
-void camera2d_update_matrices(Camera2D* cam);
-void camera2d_update_matrices(Camera2D* cam)
-{
-    if(!cam->dirty)
-        return;
-
-    /*
-    =========================================================
-        CAMERA MATH (aka move world, not camera)
-    =========================================================
-
-    If camera moves RIGHT →
-    world must move LEFT ←
-
-    So we NEGATE camera position.
-
-          Camera
-            ↓
-       +-----------+
-       |   YOU     |
-       +-----------+
-
-    World shifts opposite direction
-    */
-
-    mat4 view = GLM_MAT4_IDENTITY_INIT;
-
-    // translate world opposite of camera
-    glm_translate(view, (vec3){-cam->position[0], -cam->position[1], 0.0f});
-
-    // optional rotation (rare for 2D but you're fancy)
-    glm_rotate(view, -cam->rotation, (vec3){0, 0, 1});
-
-    glm_mat4_copy(view, cam->view_matrix);
-
-    /*
-    =========================================================
-        ORTHOGRAPHIC PROJECTION
-    =========================================================
-
-        (0,0) top-left → (width,height)
-
-        No perspective. No drama.
-    */
-
-    mat4 proj;
-    glm_ortho(0.0f, (float)cam->viewport_width, (float)cam->viewport_height, 0.0f, -1.0f, 1.0f, proj);
-
-    glm_mat4_copy(proj, cam->projection_matrix);
-
-    /*
-    =========================================================
-        FINAL MATRIX
-    =========================================================
-
-        screen = projection * view * world
-    */
-
-    glm_mat4_mul(proj, view, cam->view_projection);
-
-    cam->dirty = false;
-}
 
 #define MAX_DRAWS 1024
 #define MAX_SPRITES 10000
+#define MAX_SNAKE 256
+#define CELL 32.0f
 
 typedef struct SpriteRenderer
 {
@@ -209,6 +136,21 @@ typedef struct SpriteRenderer
 
     bool dirty;
 } SpriteRenderer;
+
+typedef struct Snake
+{
+    vec2 body[MAX_SNAKE];
+    vec2 prev_body[MAX_SNAKE];
+    int  length;
+
+    vec2 dir;
+    vec2 next_dir;
+
+    float timer;
+    float delay;
+
+    bool just_reset;
+} Snake;
 // lifecycle
 void sprite_renderer_init(SpriteRenderer* r, uint32_t max_sprites);
 void sprite_renderer_destroy(SpriteRenderer* r);
@@ -296,6 +238,7 @@ void sprite_end(SpriteRenderer* r, VkCommandBuffer cmd)
     uint32_t start = 0;
 
     while(start < r->instance_count)
+  
     {
         uint32_t tex   = r->instances[start].texture_id;
         uint32_t count = 1;
@@ -398,52 +341,253 @@ void sprite_render(SpriteRenderer* r, VkCommandBuffer cmd, const Camera* cam)
     vkCmdDrawIndirectCount(cmd, r->indirect_buffer.buffer, r->indirect_buffer.offset, r->count_buffer.buffer,
                            r->count_buffer.offset, r->draw_count, sizeof(VkDrawIndirectCommand));
 }
-static void update_sprite_movement(Sprite2D* s, float speed)
+static void snake_init(Snake* s)
 {
-    /*
-    =========================================================
-        INPUT → VELOCITY → NORMALIZE → APPLY → POSITION
-    =========================================================
+    s->length = 3;
 
-           W
-           ↑
-       A ← + → D
-           ↓
-           S
+    s->body[0][0] = 10.0f;
+    s->body[0][1] = 10.0f;
+    s->body[1][0] = 9.0f;
+    s->body[1][1] = 10.0f;
+    s->body[2][0] = 8.0f;
+    s->body[2][1] = 10.0f;
 
-    velocity = direction vector from input
-    normalize = prevents faster diagonal movement
-    position += velocity * speed * dt
-    */
-
-    vec2        velocity = {0.0f, 0.0f};
-    GLFWwindow* window   = renderer.window;
-    // --- INPUT ---
-    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        velocity[1] -= 1.0f;
-
-    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        velocity[1] += 1.0f;
-
-    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        velocity[0] -= 1.0f;
-
-    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        velocity[0] += 1.0f;
-
-    // --- NORMALIZE ---
-    float len = sqrtf(velocity[0] * velocity[0] + velocity[1] * velocity[1]);
-
-    if(len > 0.0f)
+    for(int i = 0; i < MAX_SNAKE; i++)
     {
-        velocity[0] /= len;
-        velocity[1] /= len;
+        s->prev_body[i][0] = s->body[0][0];
+        s->prev_body[i][1] = s->body[0][1];
     }
 
-    // --- APPLY MOVEMENT ---
-    float dt = renderer.dt;
-    s->position[0] += velocity[0] * speed * dt;
-    s->position[1] += velocity[1] * speed * dt;
+    s->dir[0]      = 1.0f;
+    s->dir[1]      = 0.0f;
+    s->next_dir[0] = s->dir[0];
+    s->next_dir[1] = s->dir[1];
+
+    s->timer = 0.0f;
+    s->delay = 0.12f;
+
+    s->just_reset = true;
+}
+
+static void snake_input(Snake* s)
+{
+    if(glfwGetKey(renderer.window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        if(s->dir[1] != 1.0f)
+        {
+            s->next_dir[0] = 0.0f;
+            s->next_dir[1] = -1.0f;
+        }
+    }
+
+    if(glfwGetKey(renderer.window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+        if(s->dir[1] != -1.0f)
+        {
+            s->next_dir[0] = 0.0f;
+            s->next_dir[1] = 1.0f;
+        }
+    }
+
+    if(glfwGetKey(renderer.window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        if(s->dir[0] != 1.0f)
+        {
+            s->next_dir[0] = -1.0f;
+            s->next_dir[1] = 0.0f;
+        }
+    }
+
+    if(glfwGetKey(renderer.window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+        if(s->dir[0] != -1.0f)
+        {
+            s->next_dir[0] = 1.0f;
+            s->next_dir[1] = 0.0f;
+        }
+    }
+}
+
+static void snake_step(Snake* s)
+{
+    for(int i = 0; i < s->length; i++)
+    {
+        s->prev_body[i][0] = s->body[i][0];
+        s->prev_body[i][1] = s->body[i][1];
+    }
+
+    s->dir[0] = s->next_dir[0];
+    s->dir[1] = s->next_dir[1];
+
+    for(int i = s->length - 1; i > 0; i--)
+    {
+        s->body[i][0] = s->body[i - 1][0];
+        s->body[i][1] = s->body[i - 1][1];
+    }
+
+    s->body[0][0] += s->dir[0];
+    s->body[0][1] += s->dir[1];
+
+    for(int i = 1; i < s->length; i++)
+    {
+        if((int)s->body[0][0] == (int)s->body[i][0] && (int)s->body[0][1] == (int)s->body[i][1])
+        {
+            snake_init(s);
+            return;
+        }
+    }
+
+    int head_x = (int)s->body[0][0];
+    int head_y = (int)s->body[0][1];
+    uint32_t h = (uint32_t)(head_x * 374761393u + head_y * 668265263u);
+    h          = (h ^ (h >> 13)) * 1274126177u;
+
+    if((h % 50u) == 0u)
+    {
+        if(s->length < MAX_SNAKE)
+            s->length++;
+    }
+}
+
+static void snake_update(Snake* s, float dt)
+{
+    s->timer += dt;
+
+    if(s->timer >= s->delay)
+    {
+        s->timer -= s->delay;
+        snake_step(s);
+    }
+}
+
+static float snake_interp_alpha(const Snake* s)
+{
+    if(s->just_reset)
+        return 0.0f;
+
+    float alpha = s->timer / s->delay;
+    if(alpha < 0.0f)
+        return 0.0f;
+    if(alpha > 1.0f)
+        return 1.0f;
+    return alpha;
+}
+
+static void snake_end_frame(Snake* s)
+{
+    s->just_reset = false;
+}
+
+static void snake_head_render_position(const Snake* s, float* out_x, float* out_y)
+{
+    float alpha = snake_interp_alpha(s);
+
+    float head_x = s->prev_body[0][0] + (s->body[0][0] - s->prev_body[0][0]) * alpha;
+    float head_y = s->prev_body[0][1] + (s->body[0][1] - s->prev_body[0][1]) * alpha;
+
+    *out_x = head_x * CELL;
+    *out_y = head_y * CELL;
+}
+
+static uint32_t snake_hash2d(int x, int y)
+{
+    uint32_t h = (uint32_t)(x * 374761393u + y * 668265263u);
+    h          = (h ^ (h >> 13)) * 1274126177u;
+    return h;
+}
+
+static bool snake_is_food_at(int x, int y)
+{
+    return (snake_hash2d(x, y) % 20u) == 0u;
+}
+
+static void snake_render(SpriteRenderer* r, Snake* s)
+{
+    float alpha = snake_interp_alpha(s);
+
+    for(int i = 0; i < s->length; i++)
+    {
+        Sprite2D spr = {0};
+
+        spr.texture_id = renderer.dummy_texture;
+
+        float grid_x = s->prev_body[i][0] + (s->body[i][0] - s->prev_body[i][0]) * alpha;
+        float grid_y = s->prev_body[i][1] + (s->body[i][1] - s->prev_body[i][1]) * alpha;
+
+        spr.position[0] = grid_x * CELL;
+        spr.position[1] = grid_y * CELL;
+
+        spr.scale[0] = CELL;
+        spr.scale[1] = CELL;
+
+        spr.uv_rect[0] = 0.0f;
+        spr.uv_rect[1] = 0.0f;
+        spr.uv_rect[2] = 1.0f;
+        spr.uv_rect[3] = 1.0f;
+        spr.depth      = 0.0f;
+        spr.rotation   = 0.0f;
+
+        if(i == 0)
+        {
+            spr.tint_color[0] = 0.3f;
+            spr.tint_color[1] = 1.0f;
+            spr.tint_color[2] = 0.3f;
+            spr.tint_color[3] = 1.0f;
+            spr.rotation      = atan2f(s->dir[1], s->dir[0]);
+        }
+        else
+        {
+            spr.tint_color[0] = 0.2f;
+            spr.tint_color[1] = 0.8f;
+            spr.tint_color[2] = 0.2f;
+            spr.tint_color[3] = 1.0f;
+        }
+
+        sprite_submit(r, &spr);
+    }
+}
+
+static void snake_render_visible_food(SpriteRenderer* r, float cam_x, float cam_y)
+{
+    int half_cells_x = (int)ceilf(((float)renderer.swapchain.extent.width * 0.5f) / CELL);
+    int half_cells_y = (int)ceilf(((float)renderer.swapchain.extent.height * 0.5f) / CELL);
+
+    int cam_cell_x = (int)floorf(cam_x / CELL);
+    int cam_cell_y = (int)floorf(cam_y / CELL);
+
+    int min_x = cam_cell_x - half_cells_x - 2;
+    int max_x = cam_cell_x + half_cells_x + 2;
+    int min_y = cam_cell_y - half_cells_y - 2;
+    int max_y = cam_cell_y + half_cells_y + 2;
+
+    for(int y = min_y; y <= max_y; y++)
+    {
+        for(int x = min_x; x <= max_x; x++)
+        {
+            if(!snake_is_food_at(x, y))
+                continue;
+
+            Sprite2D food = {0};
+
+            food.texture_id = renderer.dummy_texture;
+            food.position[0] = (float)x * CELL;
+            food.position[1] = (float)y * CELL;
+            food.scale[0] = CELL;
+            food.scale[1] = CELL;
+            food.rotation = 0.0f;
+            food.depth    = 0.0f;
+            food.tint_color[0] = 1.0f;
+            food.tint_color[1] = 0.2f;
+            food.tint_color[2] = 0.2f;
+            food.tint_color[3] = 1.0f;
+            food.uv_rect[0] = 0.0f;
+            food.uv_rect[1] = 0.0f;
+            food.uv_rect[2] = 1.0f;
+            food.uv_rect[3] = 1.0f;
+
+            sprite_submit(r, &food);
+        }
+    }
 }
 int main(void)
 {
@@ -471,78 +615,29 @@ int main(void)
     sprite_renderer_init(&sprites, 10000);
     text_system_init("/home/lk/myprojects/voxelfun/clusteredshading/assets/font/ttf/FiraCode-Bold.ttf", 48.0f);
 
-    TextureID sprite_sheet_texture = load_texture(&renderer, "data/Spritesheets/spritesheet_tiles.png");
-    if(sprite_sheet_texture == UINT32_MAX)
-    {
-        fprintf(stderr, "Failed to load sprite sheet data/Spritesheets/spritesheet_tiles.png\n");
-        renderer_destroy(&renderer);
-        return 1;
-    }
-
-    Texture* sprite_sheet = &textures[sprite_sheet_texture];
-
-    const float atlas_w = (float)sprite_sheet->width;
-    const float atlas_h = (float)sprite_sheet->height;
-
-    Sprite2D brick_sprite = {
-        .texture_id       = sprite_sheet_texture,
-        .position         = {260.0f, 260.0f},
-        .scale            = {128.0f, 128.0f},
-        .rotation         = 0.0f,
-        .tint_color       = {1.0f, 1.0f, 1.0f, 1.0f},
-        .depth            = 0.0f,
-        .uv_rect          = {512.0f / atlas_w, 256.0f / atlas_h, 640.0f / atlas_w, 384.0f / atlas_h},
-        .transform_offset = 0,
-        .dirty            = true,
-    };
-
-
     glfwSetInputMode(renderer.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-
-    /* Push layout shared with older geometry shaders
-         face_ptr=0, face_count=8, aspect=12, pad0=16, pad1=20, pad2=24, pad3=28,
-         view_proj=32, texture_id=96, sampler_id=100 */
-    // may be all push constant can be defined in one header that both gpu and cpu share
-
-    PUSH_CONSTANT(Push, VkDeviceAddress face_ptr;            //8
-                  VkDeviceAddress mat_ptr; uint face_count;  //
-                  float                         aspect;      //4
-
-                  float _pad0[2];  // 24 → 32
-                  vec3  cam_pos;   // camera world position
-                  uint  pad1;      // alignment
-                  vec3  cam_dir;   // camera forward (normalized)
-                  uint  pad2;
-
-                  float view_proj[4][4]; uint texture_id; uint sampler_id;
-
-    );
-
 
     dmon_init();
     dmon_watch("shaders", watch_cb, DMON_WATCHFLAGS_RECURSIVE, NULL);
-#define MAX_ENTITIES 100
 
-    Sprite2D entities[MAX_ENTITIES];
-    int      entity_count     = 0;
-    uint32_t pp_frame_counter = 0;
+    Snake snake = {0};
+    snake_init(&snake);
+
     while(!glfwWindowShouldClose(renderer.window))
     {
         //MU_SCOPE_TIMER("GAME")
         {
             text_system_begin_frame();
             sprite_begin(&sprites);
-            update_sprite_movement(&brick_sprite, 233.00);
-            entities[0]     = brick_sprite;
-            entity_count    = 1;
-            camera2d_set_position(&cam, brick_sprite.position[0], brick_sprite.position[1]);
-
-            for(int i = 0; i < entity_count; i++)
-            {
-                update_sprite_movement(&entities[i], 200.0f);
-                sprite_submit(&sprites, &entities[i]);
-            }
+            snake_input(&snake);
+            snake_update(&snake, renderer.dt);
+            float camera_x = 0.0f;
+            float camera_y = 0.0f;
+            snake_head_render_position(&snake, &camera_x, &camera_y);
+            camera2d_set_position(&cam, camera_x, camera_y);
+            snake_render_visible_food(&sprites, camera_x, camera_y);
+            snake_render(&sprites, &snake);
+            snake_end_frame(&snake);
             vec4 text_color = {1.0f, 2.0f, 2.0f, 1.0f};
             draw_text_2d("Hello World", 40.0f, 40.0f, 0.5f, text_color, 0.0f);
         }
@@ -738,8 +833,6 @@ int main(void)
 
 
     printf(" renderer size is %zu", sizeof(Renderer));
-    printf("Push size = %zu\n", sizeof(Push));
-    printf("view_proj offset = %zu\n", offsetof(Push, view_proj));
 
     renderer_destroy(&renderer);
     return 0;
