@@ -62,6 +62,8 @@ static inline void mu_unravel_index(size_t index, const size_t* dims, size_t ndi
         index /= dims[i];
     }
 }
+
+// TODO: memory bandwidth is crucial as fuck so we will optimize it for that
 typedef struct Sprite2D
 {
     // Rendering
@@ -70,7 +72,7 @@ typedef struct Sprite2D
     vec2      scale;
     float     rotation;
 
- vec2 velocity; 
+    vec2 velocity;
     // Appearance
     vec4  tint_color;  // For color modulation
     float depth;       // Z-order (0.0 to 1.0)
@@ -100,10 +102,12 @@ typedef struct GPU_Quad2D
     vec4 tint;
 } GPU_Quad2D;
 PUSH_CONSTANT(SpritePushConstants,
-
               VkDeviceAddress instance_ptr;
               vec2            screen_size;
-              uint32_t        sampler_id;);
+              uint32_t        sampler_id;
+              float           view_proj[4][4];
+
+);
 
 typedef struct Camera2D
 {
@@ -122,6 +126,68 @@ typedef struct Camera2D
 } Camera2D;
 
 void camera2d_update_matrices(Camera2D* cam);
+void camera2d_update_matrices(Camera2D* cam)
+{
+    if(!cam->dirty)
+        return;
+
+    /*
+    =========================================================
+        CAMERA MATH (aka move world, not camera)
+    =========================================================
+
+    If camera moves RIGHT →
+    world must move LEFT ←
+
+    So we NEGATE camera position.
+
+          Camera
+            ↓
+       +-----------+
+       |   YOU     |
+       +-----------+
+
+    World shifts opposite direction
+    */
+
+    mat4 view = GLM_MAT4_IDENTITY_INIT;
+
+    // translate world opposite of camera
+    glm_translate(view, (vec3){-cam->position[0], -cam->position[1], 0.0f});
+
+    // optional rotation (rare for 2D but you're fancy)
+    glm_rotate(view, -cam->rotation, (vec3){0, 0, 1});
+
+    glm_mat4_copy(view, cam->view_matrix);
+
+    /*
+    =========================================================
+        ORTHOGRAPHIC PROJECTION
+    =========================================================
+
+        (0,0) top-left → (width,height)
+
+        No perspective. No drama.
+    */
+
+    mat4 proj;
+    glm_ortho(0.0f, (float)cam->viewport_width, (float)cam->viewport_height, 0.0f, -1.0f, 1.0f, proj);
+
+    glm_mat4_copy(proj, cam->projection_matrix);
+
+    /*
+    =========================================================
+        FINAL MATRIX
+    =========================================================
+
+        screen = projection * view * world
+    */
+
+    glm_mat4_mul(proj, view, cam->view_projection);
+
+    cam->dirty = false;
+}
+
 #define MAX_DRAWS 1024
 #define MAX_SPRITES 10000
 
@@ -150,7 +216,8 @@ void sprite_submit(SpriteRenderer* r, Sprite2D* s);
 void sprite_end(SpriteRenderer* r, VkCommandBuffer cmd);
 
 // rendering
-void sprite_render(SpriteRenderer* r, VkCommandBuffer cmd);
+
+void sprite_render(SpriteRenderer* r, VkCommandBuffer cmd,Camera2D* cam);
 void sprite_renderer_init(SpriteRenderer* r, uint32_t max_sprites)
 {
     r->capacity = max_sprites;
@@ -303,7 +370,7 @@ void sprite_end(SpriteRenderer* r, VkCommandBuffer cmd)
     */
     *(uint32_t*)r->count_buffer.mapped = r->draw_count;
 }
-void sprite_render(SpriteRenderer* r, VkCommandBuffer cmd)
+void sprite_render(SpriteRenderer* r, VkCommandBuffer cmd,Camera2D* cam)
 {
     if(r->draw_count == 0)
         return;
@@ -320,6 +387,7 @@ void sprite_render(SpriteRenderer* r, VkCommandBuffer cmd)
         .sampler_id = renderer.default_samplers.samplers[SAMPLER_LINEAR_WRAP_ANISO],
     };
 
+glm_mat4_copy(cam->view_projection, push.view_proj);
     vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(SpritePushConstants), &push);
     vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.sprite]);
@@ -345,25 +413,25 @@ static void update_sprite_movement(Sprite2D* s, float speed)
     position += velocity * speed * dt
     */
 
-    vec2 velocity = {0.0f, 0.0f};
- GLFWwindow* window = renderer.window;
+    vec2        velocity = {0.0f, 0.0f};
+    GLFWwindow* window   = renderer.window;
     // --- INPUT ---
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         velocity[1] -= 1.0f;
 
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         velocity[1] += 1.0f;
 
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         velocity[0] -= 1.0f;
 
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         velocity[0] += 1.0f;
 
     // --- NORMALIZE ---
-    float len = sqrtf(velocity[0]*velocity[0] + velocity[1]*velocity[1]);
+    float len = sqrtf(velocity[0] * velocity[0] + velocity[1] * velocity[1]);
 
-    if (len > 0.0f)
+    if(len > 0.0f)
     {
         velocity[0] /= len;
         velocity[1] /= len;
@@ -408,22 +476,7 @@ int main(void)
         .dirty            = true,
     };
 
-    Camera cam = {
 
-        .position   = {33.0f, 55.3f, 53.6f},
-        .yaw        = glm_rad(5.7f),
-        .pitch      = glm_rad(0.0f),
-        .move_speed = 3.0f,
-        .look_speed = 0.0025f,
-        .fov_y      = glm_rad(75.0f),
-        .near_z     = 0.05f,
-        .far_z      = 2000.0f,
-
-        .view_proj = GLM_MAT4_IDENTITY_INIT,
-    };
-    {
-        glm_vec3_copy((vec3){11.0f, 3.3f, 8.6f}, cam.position);
-    }
     glfwSetInputMode(renderer.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 
@@ -449,7 +502,10 @@ int main(void)
 
     dmon_init();
     dmon_watch("shaders", watch_cb, DMON_WATCHFLAGS_RECURSIVE, NULL);
+#define MAX_ENTITIES 100
 
+    Sprite2D entities[MAX_ENTITIES];
+    int      entity_count     = 0;
     uint32_t pp_frame_counter = 0;
     while(!glfwWindowShouldClose(renderer.window))
     {
@@ -457,10 +513,14 @@ int main(void)
         {
             text_system_begin_frame();
             sprite_begin(&sprites);
-
-            sprite_submit(&sprites, &brick_sprite);
-    update_sprite_movement(&brick_sprite, 202.2);
-
+            update_sprite_movement(&brick_sprite, 233.00);
+            entities[0]  = brick_sprite;
+            entity_count = 1;
+            for(int i = 0; i < entity_count; i++)
+            {
+                update_sprite_movement(&entities[i], 200.0f);
+                sprite_submit(&sprites, &entities[i]);
+            }
             vec4 text_color = {1.0f, 2.0f, 2.0f, 1.0f};
             draw_text_2d("Hello World", 40.0f, 40.0f, 0.5f, text_color, 0.0f);
         }
