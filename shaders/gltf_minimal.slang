@@ -1,30 +1,52 @@
 struct Push
 {
+    uint64_t model_table_ptr;
+    uint64_t instance_ptr;
+    float4x4 view_proj;
+};
+
+struct ModelMeta
+{
     uint64_t pos_ptr;
     uint64_t idx_ptr;
-
-    float4x4 model;
-    float4x4 view_proj;
-
-    float4 color;
     uint index_count;
+    uint material_id;
+    uint _pad0;
+    uint _pad1;
+};
+
+struct InstanceData
+{
+    uint model_id;
+    uint _pad0;
+    uint _pad1;
+    uint _pad2;
+    float4x4 model;
+    float4 color;
 };
 
 struct VSOutput
 {
     float4 position : SV_Position;
+    float4 color : COLOR0;
 };
 
 [[vk::push_constant]]
 Push push;
 
 [shader("vertex")]
-VSOutput vs_main(uint vertexID : SV_VertexID)
+VSOutput vs_main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
 {
     VSOutput o;
 
-    uint* indices = (uint*)push.idx_ptr;
-    float* positions = (float*)push.pos_ptr;
+    InstanceData* instances = (InstanceData*)push.instance_ptr;
+    InstanceData inst = instances[instanceID];
+
+    ModelMeta* model_table = (ModelMeta*)push.model_table_ptr;
+    ModelMeta meta = model_table[inst.model_id];
+
+    uint* indices = (uint*)meta.idx_ptr;
+    float* positions = (float*)meta.pos_ptr;
 
     uint idx = indices[vertexID];
 
@@ -34,13 +56,14 @@ VSOutput vs_main(uint vertexID : SV_VertexID)
         positions[idx * 3 + 2]
     );
 
-    float4 world = mul(push.model, float4(p, 1.0));
+    float4 world = mul(inst.model, float4(p, 1.0));
     o.position = mul(push.view_proj, world);
+    o.color = inst.color;
     return o;
 }
 
 [shader("fragment")]
-float4 fs_main() : SV_Target0
+float4 fs_main(VSOutput input) : SV_Target0
 {
-    return push.color;
+    return input.color;
 }

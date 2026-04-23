@@ -25,3 +25,14 @@ extern EnginePipelines pipelines;
 void graphics_init(void);
 
 void gfx_pipelines();
+
+
+FORCE_INLINE VkDeviceAddress slice_device_address(const Renderer* r, BufferSlice slice)
+{
+    VkBufferDeviceAddressInfo info = {
+        .sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .buffer = slice.buffer,
+    };
+    return vkGetBufferDeviceAddress(r->device, &info) + slice.offset;
+}
+
