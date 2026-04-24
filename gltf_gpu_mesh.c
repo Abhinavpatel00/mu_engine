@@ -8,7 +8,7 @@
 #include "gltfloader_minimal.h"
 #include "passes.h"
 
-PUSH_CONSTANT(GltfIndirectPush, VkDeviceAddress model_table_ptr; VkDeviceAddress material_table_ptr; VkDeviceAddress instance_ptr; float view_proj[4][4];
+PUSH_CONSTANT(GltfIndirectPush, VkDeviceAddress model_table_ptr; VkDeviceAddress material_table_ptr; VkDeviceAddress instance_ptr; uint64_t pad0; float view_proj[4][4];
 );
 
 #define GLTF_INVALID_TEXTURE_ID UINT32_MAX

@@ -6,19 +6,6 @@
 
 #define GLTF_MODEL_PATH "assets/cubepets/Models/GLB format/animal-beaver.glb"
 
-/*
- asset pipeline 
-
- we need to use mesh optimizer to store mesh data and animation in a format suitable for rendering in oour engine 
-// File Layout:
-//
-// [Header]
-// [Vertex Buffer]
-// [Index Buffer]
-// [Meshlets / Submeshes]
-// [Optional: Materials]
-
-*/
 
 int main(void)
 {
@@ -46,6 +33,9 @@ int main(void)
     while(!glfwWindowShouldClose(renderer.window))
     {
         TracyCFrameMark;
+        pipeline_rebuild(&renderer);
+        frame_start(&renderer, &cam);
+
         model_api_begin_frame(&cam);
         {
             float model[4][4];
@@ -53,8 +43,6 @@ int main(void)
             glm_mat4_identity(model);
             draw3d(beaver, model, color);
         }
-        pipeline_rebuild(&renderer);
-        frame_start(&renderer, &cam);
 
         VkCommandBuffer cmd        = renderer.frames[renderer.current_frame].cmdbuf;
         GpuProfiler*    frame_prof = &renderer.gpuprofiler[renderer.current_frame];

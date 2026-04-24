@@ -3,6 +3,7 @@ struct Push
     uint64_t model_table_ptr;
     uint64_t material_table_ptr;
     uint64_t instance_ptr;
+    uint64_t _pad0;
     float4x4 view_proj;
 };
 
