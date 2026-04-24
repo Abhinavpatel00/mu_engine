@@ -4,7 +4,14 @@
 
 #include <string.h>
 
-#define GLTF_MODEL_PATH "assets/cubepets/Models/GLB format/animal-beaver.glb"
+static const char* GLTF_MODEL_PATHS[] = {
+    "assets/cubepets/Models/GLB format/animal-beaver.glb",
+    "assets/cubepets/Models/GLB format/animal-bee.glb",
+    "assets/cubepets/Models/GLB format/animal-bunny.glb",
+    "assets/cubepets/Models/GLB format/animal-cat.glb",
+};
+
+#define GLTF_MODEL_COUNT (sizeof(GLTF_MODEL_PATHS) / sizeof(GLTF_MODEL_PATHS[0]))
 
 
 int main(void)
@@ -22,12 +29,18 @@ int main(void)
     camera3d_set_position(&cam, 0.0f, 0.6f, 4.0f);
     camera3d_set_rotation_yaw_pitch(&cam, 0.0f, 0.0f);
 
-    ModelHandle beaver = MODEL_HANDLE_INVALID;
-    if(!model_api_load_gltf(GLTF_MODEL_PATH, &beaver))
+    ModelHandle models[GLTF_MODEL_COUNT];
+    memset(models, 0, sizeof(models));
+
+    for(size_t i = 0; i < GLTF_MODEL_COUNT; i++)
     {
-        model_api_shutdown();
-        renderer_destroy(&renderer);
-        return 1;
+        models[i] = MODEL_HANDLE_INVALID;
+        if(!model_api_load_gltf(GLTF_MODEL_PATHS[i], &models[i]))
+        {
+            model_api_shutdown();
+            renderer_destroy(&renderer);
+            return 1;
+        }
     }
 
     while(!glfwWindowShouldClose(renderer.window))
@@ -38,10 +51,17 @@ int main(void)
 
         model_api_begin_frame(&cam);
         {
-            float model[4][4];
             float color[4] = {0.86f, 0.78f, 0.63f, 1.0f};
-            glm_mat4_identity(model);
-            draw3d(beaver, model, color);
+            float spacing = 1.6f;
+            float start_x = -0.5f * spacing * (float)(GLTF_MODEL_COUNT - 1);
+
+            for(size_t i = 0; i < GLTF_MODEL_COUNT; i++)
+            {
+                float model[4][4];
+                glm_mat4_identity(model);
+                glm_translate(model, (vec3){start_x + spacing * (float)i, 0.0f, 0.0f});
+                draw3d(models[i], model, color);
+            }
         }
 
         VkCommandBuffer cmd        = renderer.frames[renderer.current_frame].cmdbuf;

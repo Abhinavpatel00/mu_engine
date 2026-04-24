@@ -55,12 +55,16 @@ Texture2D textures[];
 SamplerState samplers[];
 
 [shader("vertex")]
-VSOutput vs_main(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
+VSOutput vs_main(
+    uint vertexID : SV_VertexID,
+    uint instanceID : SV_InstanceID,
+    uint instanceBase : SV_StartInstanceLocation)
 {
     VSOutput o;
 
     InstanceData* instances = (InstanceData*)push.instance_ptr;
-    InstanceData inst = instances[instanceID];
+    uint globalInstanceID = instanceBase + instanceID;
+    InstanceData inst = instances[globalInstanceID];
 
     ModelMeta* model_table = (ModelMeta*)push.model_table_ptr;
     ModelMeta meta = model_table[inst.model_id];
