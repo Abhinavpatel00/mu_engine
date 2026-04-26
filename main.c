@@ -6,8 +6,8 @@
 static const char* GLTF_MODEL_PATHS[] = {
 //     "gameassets/Barbarian.meshx",
 
-"assets/Kaykitadv/Characters/gltf/Barbarian.glb"
-
+"assets/Kaykitadv/Characters/gltf/Barbarian.glb",
+ "gameassets/blockychar/character-a.meshx"
   //  "assets/cubepets/Models/GLB format/animal-bunny.glb",
    // "assets/cubepets/Models/GLB format/animal-cat.glb",
 };

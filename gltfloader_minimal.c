@@ -39,6 +39,71 @@ static cgltf_accessor* find_texcoord0_accessor(const cgltf_primitive* prim)
     return NULL;
 }
 
+static bool uri_has_extension(const char* uri)
+{
+    if(!uri)
+        return false;
+
+    const char* slash = strrchr(uri, '/');
+    const char* base  = slash ? slash + 1 : uri;
+    return strchr(base, '.') != NULL;
+}
+
+static const char* extension_for_mime_type(const char* mime_type)
+{
+    if(!mime_type || mime_type[0] == '\0')
+        return NULL;
+
+    if(strcmp(mime_type, "image/png") == 0)
+        return ".png";
+    if(strcmp(mime_type, "image/jpeg") == 0)
+        return ".jpg";
+    if(strcmp(mime_type, "image/webp") == 0)
+        return ".webp";
+    if(strcmp(mime_type, "image/ktx2") == 0)
+        return ".ktx2";
+
+    return NULL;
+}
+
+static bool copy_base_color_image_ref(const cgltf_image* image, char** out_uri)
+{
+    if(!image || !out_uri)
+        return true;
+
+    if(image->uri && image->uri[0] != '\0')
+    {
+        size_t len = strlen(image->uri);
+        char*  uri = (char*)malloc(len + 1u);
+        if(!uri)
+            return false;
+        memcpy(uri, image->uri, len + 1u);
+        *out_uri = uri;
+        return true;
+    }
+
+    // GLB images are commonly embedded and omit URI; use image name as a path hint.
+    if(image->name && image->name[0] != '\0')
+    {
+        const char* ext     = extension_for_mime_type(image->mime_type);
+        bool        has_ext = uri_has_extension(image->name);
+        size_t      name_len = strlen(image->name);
+        size_t      ext_len  = (!has_ext && ext) ? strlen(ext) : 0u;
+
+        char* uri = (char*)malloc(name_len + ext_len + 1u);
+        if(!uri)
+            return false;
+
+        memcpy(uri, image->name, name_len);
+        if(ext_len > 0)
+            memcpy(uri + name_len, ext, ext_len);
+        uri[name_len + ext_len] = '\0';
+        *out_uri                = uri;
+    }
+
+    return true;
+}
+
 static bool maybe_capture_base_color_material(const cgltf_primitive* prim, char** out_uri, float out_factor[4], bool* captured)
 {
     if(*captured || !prim->material)
@@ -51,14 +116,10 @@ static bool maybe_capture_base_color_material(const cgltf_primitive* prim, char*
     out_factor[3]                  = material->pbr_metallic_roughness.base_color_factor[3];
 
     const cgltf_texture* tex = material->pbr_metallic_roughness.base_color_texture.texture;
-    if(tex && tex->image && tex->image->uri)
+    if(tex && tex->image)
     {
-        size_t len = strlen(tex->image->uri);
-        char*  uri = (char*)malloc(len + 1u);
-        if(!uri)
+        if(!copy_base_color_image_ref(tex->image, out_uri))
             return false;
-        memcpy(uri, tex->image->uri, len + 1u);
-        *out_uri = uri;
     }
 
     *captured = true;

@@ -1,33 +1,70 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Convert all GLTF/GLB files in a folder to meshx format
-# Usage: ./convert_gltf_to_meshx.sh <input_folder> [output_folder]
-
-set -e
+# -----------------------------------------------------------------------------
+# convert_assets.sh
+#
+# Convert all .gltf/.glb files in INPUT_FOLDER into .meshx files in OUTPUT_FOLDER
+#
+# Usage:
+#   ./convert_assets.sh [input_folder] [output_folder]
+#
+# Examples:
+#   ./convert_assets.sh
+#   ./convert_assets.sh ./assets
+#   ./convert_assets.sh ./assets ./gameassets
+#
+# -----------------------------------------------------------------------------
+#
+# VISUAL FLOW
+#
+#   input folder
+#       |
+#       v
+#   find *.gltf / *.glb
+#       |
+#       v
+#   meshx_converter
+#       |
+#       v
+#   output .meshx
+#       |
+#       v
+#   scan meshx for texture refs
+#       |
+#       v
+#   copy textures beside output
+#
+# This script exists because manually converting assets one-by-one is how people
+# waste entire afternoons and then call it "pipeline work".
+# -----------------------------------------------------------------------------
 
 INPUT_FOLDER="${1:-.}"
 OUTPUT_FOLDER="${2:-./gameassets}"
 
-# Ensure output folder exists
+# Normalize paths so relative nonsense does not become future suffering
+INPUT_FOLDER="$(realpath "$INPUT_FOLDER")"
+OUTPUT_FOLDER="$(realpath -m "$OUTPUT_FOLDER")"
+
 mkdir -p "$OUTPUT_FOLDER"
 
-# Check if meshx_converter exists
-if [ ! -f "./build/meshx_converter" ]; then
-    echo "Error: ./build/meshx_converter not found. Please build the project first."
+CONVERTER="./build/meshx_converter"
+
+if [ ! -x "$CONVERTER" ]; then
+    echo "Error: $CONVERTER not found or not executable. Build the project first."
     exit 1
 fi
 
-CONVERTER="./build/meshx_converter"
 CONVERTED_COUNT=0
 FAILED_COUNT=0
 TEXTURES_COPIED=0
 TEXTURES_MISSING=0
+FOUND_ANY=0
 
 copy_meshx_textures() {
     local gltf_file="$1"
     local meshx_file="$2"
-    local source_dir
-    local output_dir
+    local source_dir output_dir
 
     source_dir="$(dirname "$gltf_file")"
     output_dir="$(dirname "$meshx_file")"
@@ -36,14 +73,13 @@ copy_meshx_textures() {
         [ -z "$texture_uri" ] && continue
         [ "$texture_uri" = "__none__" ] && continue
 
-        # Skip remote URIs; only copy local sidecar texture files.
         if [[ "$texture_uri" == *"://"* ]]; then
             echo "  - Skipping remote texture URI: $texture_uri"
             continue
         fi
 
-        local src_tex
-        local dst_tex
+        local src_tex dst_tex
+
         if [[ "$texture_uri" == /* ]]; then
             src_tex="$texture_uri"
             dst_tex="$output_dir/$(basename "$texture_uri")"
@@ -61,24 +97,29 @@ copy_meshx_textures() {
             TEXTURES_MISSING=$((TEXTURES_MISSING + 1))
             echo "  - Missing texture: $texture_uri (expected at $src_tex)"
         fi
-    done < <(grep -E '^[[:space:]]*(base_color_tex|normal_tex|orm_tex)[[:space:]]+"' "$meshx_file" | sed -E 's/^[[:space:]]*(base_color_tex|normal_tex|orm_tex)[[:space:]]+"([^"]+)".*$/\2/')
+    done < <(
+        grep -E '^[[:space:]]*(base_color_tex|normal_tex|orm_tex)[[:space:]]+"' "$meshx_file" \
+        | sed -E 's/^[[:space:]]*(base_color_tex|normal_tex|orm_tex)[[:space:]]+"([^"]+)".*$/\2/'
+    )
 }
 
 echo "Converting GLTF/GLB files from: $INPUT_FOLDER"
 echo "Output folder: $OUTPUT_FOLDER"
 echo ""
 
-FOUND_ANY=0
-
-# Find and convert all .glb and .gltf files (null-delimited for space-safe paths)
 while IFS= read -r -d '' gltf_file; do
     FOUND_ANY=1
-    # Get the basename without extension
-    basename_no_ext=$(basename "$gltf_file" | sed 's/\.[^.]*$//')
-    output_meshx="$OUTPUT_FOLDER/${basename_no_ext}.meshx"
-    
+
+    # Preserve relative folder structure inside output
+    rel_path="${gltf_file#$INPUT_FOLDER/}"
+    rel_dir="$(dirname "$rel_path")"
+    base_name="$(basename "$gltf_file" | sed 's/\.[^.]*$//')"
+
+    mkdir -p "$OUTPUT_FOLDER/$rel_dir"
+    output_meshx="$OUTPUT_FOLDER/$rel_dir/${base_name}.meshx"
+
     echo "Converting: $gltf_file -> $output_meshx"
-    
+
     if "$CONVERTER" "$gltf_file" "$output_meshx"; then
         echo "  ✓ Success"
         CONVERTED_COUNT=$((CONVERTED_COUNT + 1))
@@ -93,13 +134,17 @@ echo ""
 echo "Conversion complete!"
 echo "Converted: $CONVERTED_COUNT files"
 echo "Copied textures: $TEXTURES_COPIED"
-if [ $TEXTURES_MISSING -gt 0 ]; then
+
+if [ "$TEXTURES_MISSING" -gt 0 ]; then
     echo "Missing textures: $TEXTURES_MISSING"
 fi
-if [ $FAILED_COUNT -gt 0 ]; then
+
+if [ "$FAILED_COUNT" -gt 0 ]; then
     echo "Failed: $FAILED_COUNT files"
 fi
 
-if [ $FOUND_ANY -eq 0 ]; then
+if [ "$FOUND_ANY" -eq 0 ]; then
     echo "No .gltf/.glb files found in: $INPUT_FOLDER"
 fi
+
+
