@@ -70,6 +70,8 @@ typedef struct GltfModelApiState
     uint32_t max_models;
     uint32_t instance_capacity;
 
+    mu_id_pool model_id_pool;
+
     GltfModelEntry*   models;
     char**            model_paths;
     GltfModelMetaGpu* model_meta_cpu;
@@ -315,6 +317,8 @@ bool model_api_init(uint32_t max_models, uint32_t instance_capacity)
 
     g_model_api.max_models        = max_models;
     g_model_api.instance_capacity = instance_capacity;
+    mu_id_pool_init(&g_model_api.model_id_pool, max_models);
+
     g_model_api.models            = (GltfModelEntry*)calloc(max_models, sizeof(GltfModelEntry));
     g_model_api.model_paths       = (char**)calloc(max_models, sizeof(char*));
     g_model_api.model_meta_cpu    = (GltfModelMetaGpu*)calloc(max_models, sizeof(GltfModelMetaGpu));
@@ -348,6 +352,7 @@ bool model_api_init(uint32_t max_models, uint32_t instance_capacity)
 
     for(uint32_t i = 0; i < max_models; ++i)
     {
+        g_model_api.models[i].base_color_texture_id       = GLTF_INVALID_TEXTURE_ID;
         g_model_api.material_cpu[i].base_color_texture_id = GLTF_INVALID_TEXTURE_ID;
         g_model_api.material_cpu[i].sampler_id            = renderer.default_samplers.samplers[SAMPLER_LINEAR_WRAP];
         g_model_api.material_cpu[i].base_color_factor[0]  = 1.0f;
@@ -382,11 +387,16 @@ void model_api_shutdown(void)
                 buffer_pool_free(entry->uv_slice);
             if(entry->index_slice.buffer != VK_NULL_HANDLE)
                 buffer_pool_free(entry->index_slice);
-            if(entry->base_color_texture_id != GLTF_INVALID_TEXTURE_ID)
+            if(entry->alive && entry->base_color_texture_id != GLTF_INVALID_TEXTURE_ID)
                 destroy_texture(&renderer, entry->base_color_texture_id);
             gltf_minimal_free_mesh(&entry->cpu);
+            if(entry->alive)
+                mu_id_pool_destroy_id(&g_model_api.model_id_pool, i);
         }
     }
+
+    if(g_model_api.model_id_pool.ranges)
+        mu_id_pool_deinit(&g_model_api.model_id_pool);
 
     free(g_model_api.indirect_cpu);
     free(g_model_api.instance_gpu);
@@ -406,23 +416,19 @@ bool model_api_load_gltf(const char* path, ModelHandle* out_model)
         return false;
 
     uint32_t slot = MODEL_HANDLE_INVALID;
-    for(uint32_t i = 0; i < g_model_api.max_models; ++i)
-    {
-        if(!g_model_api.models[i].alive)
-        {
-            slot = i;
-            break;
-        }
-    }
-
-    if(slot == MODEL_HANDLE_INVALID)
+    if(!mu_id_pool_create_id(&g_model_api.model_id_pool, &slot))
         return false;
 
     GltfModelEntry* entry = &g_model_api.models[slot];
     memset(entry, 0, sizeof(*entry));
+    entry->base_color_texture_id = GLTF_INVALID_TEXTURE_ID;
 
     if(!gltf_minimal_load_first_mesh(path, &entry->cpu))
+    {
+        entry->base_color_texture_id = GLTF_INVALID_TEXTURE_ID;
+        mu_id_pool_destroy_id(&g_model_api.model_id_pool, slot);
         return false;
+    }
 
     VkDeviceSize pos_bytes = (VkDeviceSize)entry->cpu.vertex_count * 3u * sizeof(float);
     VkDeviceSize uv_bytes  = (VkDeviceSize)entry->cpu.vertex_count * 2u * sizeof(float);
@@ -441,6 +447,8 @@ bool model_api_load_gltf(const char* path, ModelHandle* out_model)
             buffer_pool_free(entry->index_slice);
         gltf_minimal_free_mesh(&entry->cpu);
         memset(entry, 0, sizeof(*entry));
+        entry->base_color_texture_id = GLTF_INVALID_TEXTURE_ID;
+        mu_id_pool_destroy_id(&g_model_api.model_id_pool, slot);
         return false;
     }
 
@@ -455,6 +463,8 @@ bool model_api_load_gltf(const char* path, ModelHandle* out_model)
         buffer_pool_free(entry->index_slice);
         gltf_minimal_free_mesh(&entry->cpu);
         memset(entry, 0, sizeof(*entry));
+        entry->base_color_texture_id = GLTF_INVALID_TEXTURE_ID;
+        mu_id_pool_destroy_id(&g_model_api.model_id_pool, slot);
         return false;
     }
 
@@ -507,6 +517,8 @@ void model_api_begin_frame(const Camera* cam)
 bool draw3d(ModelHandle model, const float model_matrix[4][4], const float color[4])
 {
     if(!g_model_api.initialized || model == MODEL_HANDLE_INVALID || model >= g_model_api.max_models)
+        return false;
+    if(!mu_id_pool_is_id(&g_model_api.model_id_pool, model))
         return false;
     if(g_model_api.draw_count >= g_model_api.instance_capacity)
         return false;
