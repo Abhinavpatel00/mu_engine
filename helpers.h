@@ -1,3 +1,5 @@
+#pragma once
+
 #include "vk_default.h"
 
 /*
@@ -235,3 +237,9 @@ static inline void vk_end_one_time_cmd(VkDevice device, VkQueue queue, VkCommand
 
     vkFreeCommandBuffers(device, pool, 1, &cmd);
 }
+
+bool helpers_read_text_file(const char* path, char** out_text, size_t* out_size);
+char* helpers_next_line(char** cursor);
+void helpers_trim_ascii(char* s);
+bool helpers_parse_u32(const char* token, uint32_t* out_value);
+bool helpers_parse_f32(const char* token, float* out_value);

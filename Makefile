@@ -1,5 +1,6 @@
 APP_DEBUG := build/app_debug
 TARGET    := build/app
+MESHX_CONVERTER := build/meshx_converter
 BUILD_DIR := build
 
 CC  := clang
@@ -26,6 +27,7 @@ SRC_CPP := vma.cpp \
            external/cimgui/imgui/backends/imgui_impl_vulkan.cpp \
            external/tracy/public/TracyClient.cpp
 OBJ := $(addprefix $(BUILD_DIR)/, $(SRC_C:.c=.o) $(SRC_CPP:.cpp=.o))
+MESHOPT_OBJ := $(filter $(BUILD_DIR)/external/meshoptimizer/src/%,$(OBJ))
 
 # -----------------------------
 # Includes
@@ -85,6 +87,12 @@ LDFLAGS  :=
 
 all: $(TARGET)
 
+meshx_converter: $(MESHX_CONVERTER)
+
+$(MESHX_CONVERTER): $(BUILD_DIR)/assetpipeline/meshx_converter.o $(BUILD_DIR)/gltfloader_minimal.o $(MESHOPT_OBJ)
+	@echo Linking $@
+	$(CXX) $(LDFLAGS) $^ -o $@ $(LIBS)
+
 $(TARGET): $(OBJ)
 	@echo Linking $@
 	$(CXX) $(LDFLAGS) $^ -o $@ $(LIBS)
@@ -120,4 +128,4 @@ clean:
 	@echo Cleaning...
 	rm -rf $(BUILD_DIR) $(TARGET)
 
-.PHONY: all clean release
+.PHONY: all clean release meshx_converter

@@ -17,7 +17,7 @@ I don't use vertex buffers and index buffers. I use offsets to buffer slice via 
 - Prefer straightforward C over abstraction-heavy patterns.
 - No new dependencies unless clearly justified.
 - Fix root cause, not superficial patches.
-
+- use cglm for math operations and types (vec3, mat4, etc.) to keep code clean and efficient. 
 ## Performance priorities
 
 - Optimize for reduced memory bandwidth, fewer texture reads/writes, and fewer barriers.

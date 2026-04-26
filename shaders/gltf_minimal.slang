@@ -1,6 +1,6 @@
 struct Push
 {
-    uint64_t model_table_ptr;
+    uint64_t submesh_table_ptr;
     uint64_t material_table_ptr;
     uint64_t instance_ptr;
     uint64_t _pad0;
@@ -30,9 +30,9 @@ struct MaterialData
 struct InstanceData
 {
     uint model_id;
-    uint _pad0;
-    uint _pad1;
-    uint _pad2;
+    uint submesh_id;
+    uint material_id;
+    uint flags;
     float4x4 model;
     float4 color;
 };
@@ -66,8 +66,8 @@ VSOutput vs_main(
     uint globalInstanceID = instanceBase + instanceID;
     InstanceData inst = instances[globalInstanceID];
 
-    ModelMeta* model_table = (ModelMeta*)push.model_table_ptr;
-    ModelMeta meta = model_table[inst.model_id];
+    ModelMeta* submesh_table = (ModelMeta*)push.submesh_table_ptr;
+    ModelMeta meta = submesh_table[inst.submesh_id];
 
     uint* indices = (uint*)meta.idx_ptr;
     float* positions = (float*)meta.pos_ptr;
@@ -87,7 +87,7 @@ VSOutput vs_main(
         uvs[idx * 2 + 0],
         uvs[idx * 2 + 1]
     );
-    o.material_id = meta.material_id;
+    o.material_id = inst.material_id;
     o.color = inst.color;
     return o;
 }
