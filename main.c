@@ -1,8 +1,7 @@
 #include "renderer.h"
 #include "passes.h"
 #include "gltf_gpu_mesh.h"
-
-#include <string.h>
+#include "tinytypes.h"
 
 static const char* GLTF_MODEL_PATHS[] = {
     "assets/cubepets/Models/GLB format/animal-beaver.glb",
@@ -29,20 +28,6 @@ int main(void)
     camera3d_set_position(&cam, 0.0f, 0.6f, 4.0f);
     camera3d_set_rotation_yaw_pitch(&cam, 0.0f, 0.0f);
 
-    ModelHandle models[GLTF_MODEL_COUNT];
-    memset(models, 0, sizeof(models));
-
-    for(size_t i = 0; i < GLTF_MODEL_COUNT; i++)
-    {
-        models[i] = MODEL_HANDLE_INVALID;
-        if(!model_api_load_gltf(GLTF_MODEL_PATHS[i], &models[i]))
-        {
-            model_api_shutdown();
-            renderer_destroy(&renderer);
-            return 1;
-        }
-    }
-
     while(!glfwWindowShouldClose(renderer.window))
     {
         TracyCFrameMark;
@@ -51,16 +36,15 @@ int main(void)
 
         model_api_begin_frame(&cam);
         {
-            float color[4] = {0.86f, 0.78f, 0.63f, 1.0f};
             float spacing = 1.6f;
             float start_x = -0.5f * spacing * (float)(GLTF_MODEL_COUNT - 1);
 
-            for(size_t i = 0; i < GLTF_MODEL_COUNT; i++)
+            forEach(i, GLTF_MODEL_COUNT)
             {
                 float model[4][4];
                 glm_mat4_identity(model);
                 glm_translate(model, (vec3){start_x + spacing * (float)i, 0.0f, 0.0f});
-                draw3d(models[i], model, color);
+                draw_model(GLTF_MODEL_PATHS[i], model);
             }
         }
 

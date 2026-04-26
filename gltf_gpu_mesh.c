@@ -71,6 +71,7 @@ typedef struct GltfModelApiState
     uint32_t instance_capacity;
 
     GltfModelEntry*   models;
+    char**            model_paths;
     GltfModelMetaGpu* model_meta_cpu;
     GltfMaterialGpu*  material_cpu;
     GltfDrawCallCpu*  draw_queue;
@@ -93,6 +94,32 @@ typedef struct GltfModelApiState
 } GltfModelApiState;
 
 static GltfModelApiState g_model_api = {0};
+
+static char* strdup_owned(const char* src)
+{
+    if(!src)
+        return NULL;
+
+    size_t len = strlen(src);
+    char* out  = (char*)malloc(len + 1u);
+    if(!out)
+        return NULL;
+    memcpy(out, src, len + 1u);
+    return out;
+}
+
+static ModelHandle find_model_by_path(const char* path)
+{
+    if(!path)
+        return MODEL_HANDLE_INVALID;
+
+    for(uint32_t i = 0; i < g_model_api.max_models; ++i)
+    {
+        if(g_model_api.models[i].alive && g_model_api.model_paths[i] && strcmp(g_model_api.model_paths[i], path) == 0)
+            return i;
+    }
+    return MODEL_HANDLE_INVALID;
+}
 
 static bool resolve_texture_path(const char* gltf_path, const char* texture_uri, char* out_path, size_t out_size)
 {
@@ -289,6 +316,7 @@ bool model_api_init(uint32_t max_models, uint32_t instance_capacity)
     g_model_api.max_models        = max_models;
     g_model_api.instance_capacity = instance_capacity;
     g_model_api.models            = (GltfModelEntry*)calloc(max_models, sizeof(GltfModelEntry));
+    g_model_api.model_paths       = (char**)calloc(max_models, sizeof(char*));
     g_model_api.model_meta_cpu    = (GltfModelMetaGpu*)calloc(max_models, sizeof(GltfModelMetaGpu));
     g_model_api.material_cpu      = (GltfMaterialGpu*)calloc(max_models, sizeof(GltfMaterialGpu));
     g_model_api.draw_queue        = (GltfDrawCallCpu*)calloc(instance_capacity, sizeof(GltfDrawCallCpu));
@@ -296,7 +324,7 @@ bool model_api_init(uint32_t max_models, uint32_t instance_capacity)
     g_model_api.instance_gpu      = (GltfDrawInstanceGpu*)calloc(instance_capacity, sizeof(GltfDrawInstanceGpu));
     g_model_api.indirect_cpu      = (VkDrawIndirectCommand*)calloc(instance_capacity, sizeof(VkDrawIndirectCommand));
 
-    if(!g_model_api.models || !g_model_api.model_meta_cpu || !g_model_api.material_cpu || !g_model_api.draw_queue || !g_model_api.draw_sorted || !g_model_api.instance_gpu || !g_model_api.indirect_cpu)
+    if(!g_model_api.models || !g_model_api.model_paths || !g_model_api.model_meta_cpu || !g_model_api.material_cpu || !g_model_api.draw_queue || !g_model_api.draw_sorted || !g_model_api.instance_gpu || !g_model_api.indirect_cpu)
     {
         model_api_shutdown();
         return false;
@@ -346,6 +374,8 @@ void model_api_shutdown(void)
         for(uint32_t i = 0; i < g_model_api.max_models; ++i)
         {
             GltfModelEntry* entry = &g_model_api.models[i];
+            if(g_model_api.model_paths[i])
+                free(g_model_api.model_paths[i]);
             if(entry->position_slice.buffer != VK_NULL_HANDLE)
                 buffer_pool_free(entry->position_slice);
             if(entry->uv_slice.buffer != VK_NULL_HANDLE)
@@ -364,6 +394,7 @@ void model_api_shutdown(void)
     free(g_model_api.draw_queue);
     free(g_model_api.material_cpu);
     free(g_model_api.model_meta_cpu);
+    free(g_model_api.model_paths);
     free(g_model_api.models);
 
     memset(&g_model_api, 0, sizeof(g_model_api));
@@ -416,6 +447,17 @@ bool model_api_load_gltf(const char* path, ModelHandle* out_model)
     entry->base_color_texture_id = GLTF_INVALID_TEXTURE_ID;
     entry->base_color_sampler_id = renderer.default_samplers.samplers[SAMPLER_LINEAR_WRAP];
 
+    char* owned_path = strdup_owned(path);
+    if(!owned_path)
+    {
+        buffer_pool_free(entry->position_slice);
+        buffer_pool_free(entry->uv_slice);
+        buffer_pool_free(entry->index_slice);
+        gltf_minimal_free_mesh(&entry->cpu);
+        memset(entry, 0, sizeof(*entry));
+        return false;
+    }
+
     if(entry->cpu.base_color_uri)
     {
         char texture_path[PATH_MAX];
@@ -430,8 +472,24 @@ bool model_api_load_gltf(const char* path, ModelHandle* out_model)
     entry->alive       = true;
     entry->uploaded    = false;
     entry->material_id = slot;
+    g_model_api.model_paths[slot] = owned_path;
     *out_model         = slot;
     return true;
+}
+
+bool model_api_find_or_load_gltf(const char* path, ModelHandle* out_model)
+{
+    if(!g_model_api.initialized || !path || !out_model)
+        return false;
+
+    ModelHandle existing = find_model_by_path(path);
+    if(existing != MODEL_HANDLE_INVALID)
+    {
+        *out_model = existing;
+        return true;
+    }
+
+    return model_api_load_gltf(path, out_model);
 }
 
 void model_api_begin_frame(const Camera* cam)
@@ -460,6 +518,16 @@ bool draw3d(ModelHandle model, const float model_matrix[4][4], const float color
     memcpy(call->model_matrix, model_matrix, sizeof(call->model_matrix));
     memcpy(call->color, color, sizeof(call->color));
     return true;
+}
+
+bool draw_model(const char* path, const float model_matrix[4][4])
+{
+    static const float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    ModelHandle model = MODEL_HANDLE_INVALID;
+    if(!model_api_find_or_load_gltf(path, &model))
+        return false;
+
+    return draw3d(model, model_matrix, white);
 }
 
 void model_api_prepare_frame(VkCommandBuffer cmd)
