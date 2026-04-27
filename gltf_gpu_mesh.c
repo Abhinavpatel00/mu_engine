@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "gltfloader_minimal.h"
 #include "helpers.h"
 #include "passes.h"
 
@@ -601,54 +600,6 @@ static void model_queue_shutdown(ModelRenderQueue* queue)
     free(queue->requests);
 
     memset(queue, 0, sizeof(*queue));
-}
-
-static bool model_source_from_gltf(const char* path, ModelSource* out_src)
-{
-    GltfMinimalMesh mesh = {0};
-    if(!gltf_minimal_load_first_mesh(path, &mesh))
-        return false;
-
-    ModelSource src = {0};
-
-    src.vertex_count = mesh.vertex_count;
-    src.index_count = mesh.index_count;
-    src.positions_xyz = mesh.positions_xyz;
-    src.uv0_xy = mesh.texcoord0_xy;
-    src.indices = mesh.indices;
-
-    src.material_count = 1;
-    src.materials = (ModelMaterialSource*)calloc(1, sizeof(ModelMaterialSource));
-    src.submesh_count = 1;
-    src.submeshes = (ModelSubmeshSource*)calloc(1, sizeof(ModelSubmeshSource));
-
-    if(!src.materials || !src.submeshes)
-    {
-        model_source_free(&src);
-        gltf_minimal_free_mesh(&mesh);
-        return false;
-    }
-
-    src.materials[0].base_color_tex = mesh.base_color_uri ? strdup_owned(mesh.base_color_uri) : NULL;
-    src.materials[0].normal_tex = NULL;
-    src.materials[0].orm_tex = NULL;
-    src.materials[0].base_color_factor[0] = mesh.base_color_factor[0];
-    src.materials[0].base_color_factor[1] = mesh.base_color_factor[1];
-    src.materials[0].base_color_factor[2] = mesh.base_color_factor[2];
-    src.materials[0].base_color_factor[3] = mesh.base_color_factor[3];
-    src.materials[0].metallic_factor = 1.0f;
-    src.materials[0].roughness_factor = 1.0f;
-
-    src.submeshes[0].material_index = 0;
-    src.submeshes[0].vertex_offset = 0;
-    src.submeshes[0].vertex_count = src.vertex_count;
-    src.submeshes[0].index_offset = 0;
-    src.submeshes[0].index_count = src.index_count;
-    aabb_make_default(&src.submeshes[0].bounds);
-    aabb_make_default(&src.bounds);
-
-    *out_src = src;
-    return true;
 }
 
 static bool meshx_reserve_vertices(ModelSource* out_src, uint32_t vertex_count)
@@ -1626,39 +1577,6 @@ bool model_api_find_or_load_meshx(const char* path, ModelHandle* out_model)
     return model_api_load_meshx(path, out_model);
 }
 
-bool model_api_load_gltf(const char* path, ModelHandle* out_model)
-{
-    if(!g_model_api.initialized || !path || !out_model)
-        return false;
-
-    char meshx_path[PATH_MAX];
-    if(path_try_meshx_sidecar(path, meshx_path, sizeof(meshx_path)))
-        return model_api_load_meshx(meshx_path, out_model);
-
-    ModelSource src = {0};
-    if(!model_source_from_gltf(path, &src))
-        return false;
-
-    bool ok = model_asset_create_from_source(&g_model_api.assets, path, &src, out_model);
-    model_source_free(&src);
-    return ok;
-}
-
-bool model_api_find_or_load_gltf(const char* path, ModelHandle* out_model)
-{
-    if(!g_model_api.initialized || !path || !out_model)
-        return false;
-
-    ModelHandle existing = model_asset_find_by_path(&g_model_api.assets, path);
-    if(existing != MODEL_HANDLE_INVALID)
-    {
-        *out_model = existing;
-        return true;
-    }
-
-    return model_api_load_gltf(path, out_model);
-}
-
 void model_api_begin_frame(const Camera* cam)
 {
     if(!g_model_api.initialized || !cam)
@@ -1714,14 +1632,14 @@ bool draw_model(const char* path, const float model_matrix[4][4])
 {
     static const float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
     ModelHandle model = MODEL_HANDLE_INVALID;
-    const char* ext = strrchr(path, '.');
-    bool loaded = false;
-    if(ext && strcmp(ext, ".meshx") == 0)
-        loaded = model_api_find_or_load_meshx(path, &model);
-    else
-        loaded = model_api_find_or_load_gltf(path, &model);
+    if(!path)
+        return false;
 
-    if(!loaded)
+    const char* ext = strrchr(path, '.');
+    if(!ext || strcmp(ext, ".meshx") != 0)
+        return false;
+
+    if(!model_api_find_or_load_meshx(path, &model))
         return false;
 
     return model_api_draw(model, model_matrix, white);

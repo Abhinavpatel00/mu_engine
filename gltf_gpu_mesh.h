@@ -14,8 +14,6 @@ void model_api_shutdown(void);
 
 bool model_api_load_meshx(const char* path, ModelHandle* out_model);
 bool model_api_find_or_load_meshx(const char* path, ModelHandle* out_model);
-bool model_api_load_gltf(const char* path, ModelHandle* out_model);
-bool model_api_find_or_load_gltf(const char* path, ModelHandle* out_model);
 void model_api_unload(ModelHandle model);
 
 void model_api_begin_frame(const Camera* cam);

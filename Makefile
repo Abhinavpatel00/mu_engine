@@ -10,7 +10,7 @@ CXX := clang++
 # Sources
 # -----------------------------
 
-SRC_C := main.c ext.c vk.c helpers.c offset_allocator.c passes.c renderer.c text_baker.c text_system.c gltfloader_minimal.c gltf_gpu_mesh.c
+SRC_C := main.c ext.c vk.c helpers.c offset_allocator.c passes.c renderer.c text_baker.c text_system.c gltf_gpu_mesh.c
 
 
 
@@ -89,7 +89,7 @@ all: $(TARGET)
 
 meshx_converter: $(MESHX_CONVERTER)
 
-$(MESHX_CONVERTER): $(BUILD_DIR)/assetpipeline/meshx_converter.o $(BUILD_DIR)/gltfloader_minimal.o $(MESHOPT_OBJ)
+$(MESHX_CONVERTER): $(BUILD_DIR)/assetpipeline/meshx_converter_full.o $(MESHOPT_OBJ)
 	@echo Linking $@
 	$(CXX) $(LDFLAGS) $^ -o $@ $(LIBS)
 

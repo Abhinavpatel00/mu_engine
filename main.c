@@ -4,12 +4,8 @@
 #include "tinytypes.h"
 
 static const char* GLTF_MODEL_PATHS[] = {
-//     "gameassets/Barbarian.meshx",
-
-"assets/Kaykitadv/Characters/gltf/Barbarian.glb",
- "gameassets/blockychar/character-a.meshx"
-  //  "assets/cubepets/Models/GLB format/animal-bunny.glb",
-   // "assets/cubepets/Models/GLB format/animal-cat.glb",
+    "gameassets/Barbarian.meshx",
+    "gameassets/blockychar/character-a.meshx",
 };
 
 #define GLTF_MODEL_COUNT (sizeof(GLTF_MODEL_PATHS) / sizeof(GLTF_MODEL_PATHS[0]))

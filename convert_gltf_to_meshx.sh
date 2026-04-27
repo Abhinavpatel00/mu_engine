@@ -88,6 +88,10 @@ copy_meshx_textures() {
             dst_tex="$output_dir/$texture_uri"
         fi
 
+        if [ -f "$dst_tex" ]; then
+            continue
+        fi
+
         if [ -f "$src_tex" ]; then
             mkdir -p "$(dirname "$dst_tex")"
             cp -f "$src_tex" "$dst_tex"
