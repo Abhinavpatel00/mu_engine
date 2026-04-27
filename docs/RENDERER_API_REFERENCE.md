@@ -1,47 +1,33 @@
-# Render API Reference
+# Renderer API Reference
 
-Complete documentation of the Vulkan-based renderer API including core structures, initialization, resource management, and rendering workmus.
+This document describes the current renderer API and runtime behavior in the codebase as of April 2026.
 
-## Table of Contents
+It is based on the actual public interfaces in:
+- `vk.h`
+- `renderer.h`
+- `passes.h`
+- `gltf_gpu_mesh.h`
 
-1. [Overview](#overview)
-2. [Core Concepts](#core-concepts)
-3. [Initialization](#initialization)
-4. [Resource Management](#resource-management)
-5. [Pipeline System](#pipeline-system)
-6. [Rendering Workmu](#rendering-workmu)
-7. [Advanced Topics](#advanced-topics)
+## 1. Renderer Model
 
----
+The renderer is a Vulkan dynamic-rendering backend with these core traits:
+- Single bindless descriptor set and single pipeline layout shared across all pipelines.
+- Resource indexing by bindless IDs (`TextureID`, `SamplerID`) and buffer device addresses.
+- Buffer suballocation through `BufferPool` (`LINEAR`, `RING`, `TLSF`).
+- Reverse-Z depth defaults for 3D perspective (`VK_COMPARE_OP_GREATER`).
+- Frame helpers that handle fences, swapchain acquire/present, camera update, and resize.
+- Render graph style done manually through explicit pass functions and explicit image transitions.
 
-## Overview
+Global renderer state is exposed as:
 
-This is a **bindless, single-descriptor-set** Vulkan renderer that prioritizes:
-- **GPU efficiency** through bindless resource access
-- **Memory efficiency** using offset allocators for suballocations
-- **Simplicity** with a single descriptor set layout and pipeline layout for all pipelines
-- **Performance** with reverse-Z infinite far plane and clustered shading support
+```c
+extern Renderer renderer;
+extern EnginePipelines pipelines;
+```
 
-### Key Features
+## 2. Key Limits and Bindless Bindings
 
-- ✓ Bindless textures (65,536 texture slots)
-- ✓ Bindless samplers (256 sampler slots)
-- ✓ Bindless storage images and buffers
-- ✓ Single descriptor set for all pipelines
-- ✓ Dynamic buffer suballocation via offset allocator
-- ✓ HDR/LDR rendering pipeline
-- ✓ SMAA integration
-- ✓ GPU-based profiling (vk_ext_query_result_status)
-- ✓ ImGui integration
-- ✓ Debug printf support (VK_KHR_shader_non_semantic_info)
-
----
-
-## Core Concepts
-
-### Bindless Model
-
-The renderer uses a **single descriptor set** for all resources:
+From `vk.h`:
 
 ```c
 #define BINDLESS_TEXTURE_BINDING 0
@@ -50,1006 +36,403 @@ The renderer uses a **single descriptor set** for all resources:
 
 #define MAX_BINDLESS_TEXTURES 65536
 #define MAX_BINDLESS_SAMPLERS 256
-#define MAX_BINDLESS_STORAGE_IMAGES 16384
 #define MAX_BINDLESS_STORAGE_BUFFERS 65536
+#define MAX_BINDLESS_UNIFORM_BUFFERS 16384
+#define MAX_BINDLESS_STORAGE_IMAGES 16384
+#define MAX_BINDLESS_VERTEX_BUFFERS 65536
+#define MAX_BINDLESS_INDEX_BUFFERS 65536
+#define MAX_BINDLESS_MATERIALS 65536
+#define MAX_BINDLESS_TRANSFORMS 65536
 ```
 
-This means **no pipeline layout changes** when accessing different resources—everything is indexed at draw time via push constants or shader parameters.
+## 3. Core Types You Use Most
 
-### Push Constants
+- `RendererDesc`: startup configuration for Vulkan instance/device/swapchain/features/pool sizes.
+- `Renderer`: runtime state (device, queues, swapchain, frame contexts, pools, render targets, samplers, bindless system, profiling).
+- `BufferPool` / `BufferSlice`: suballocated GPU/CPU/staging memory.
+- `Texture` + `TextureID`: bindless texture objects.
+- `RenderTarget`: managed offscreen image with per-mip state tracking.
+- `GraphicsPipelineConfig`: dynamic rendering pipeline creation config.
+- `Camera`: unified 2D/3D camera structure.
 
-All pipelines share a uniform 256-byte push constant block. Your shaders receive:
-- Transformation matrices
-- Buffer offsets (via offset allocator)
-- Texture IDs
-- Custom data (per-pipeline)
+## 4. Initialization and Shutdown
 
-### Offset Allocator
-
-Large GPU buffers are suballocated via the offset allocator. Rather than creating individual `VkBuffer` objects, you:
-1. Allocate from a pool (GPU, CPU, or staging)
-2. Get back an offset and size
-3. Pass the offset in push constants
-4. Shaders read from `bufferDeviceAddress + offset`
-
----
-
-## Initialization
-
-### Renderer Descriptor
-
-Configuration for renderer creation:
+### High-level entry points
 
 ```c
-typedef struct
-{
-    uint32_t width;
-    uint32_t height;
-    const char* app_name;
-
-    // Instance/Device extensions
-    const char** instance_layers;
-    const char** instance_extensions;
-    const char** device_extensions;
-    uint32_t instance_layer_count;
-    uint32_t instance_extension_count;
-    uint32_t device_extension_count;
-
-    // Validation
-    bool enable_validation;
-    bool enable_gpu_based_validation;
-    VkDebugUtilsMessageSeverityFlagsEXT validation_severity;
-    VkDebugUtilsMessageTypeFlagsEXT validation_types;
-
-    // Swapchain
-    VkPresentModeKHR swapchain_preferred_present_mode;
-    VkFormat swapchain_preferred_format;
-    VkColorSpaceKHR swapchain_preferred_color_space;
-    bool vsync;
-
-    // Features
-    bool use_custom_features;
-    VkFeatureChain custom_features;
-    bool enable_debug_printf;
-    bool enable_pipeline_stats;
-    VkImageUsageFlags swapchain_extra_usage_flags;
-
-    // Bindless counts
-    uint32_t bindless_sampled_image_count;
-    uint32_t bindless_sampler_count;
-    uint32_t bindless_storage_image_count;
-
-    // Memory pools
-    VkDeviceSize size_of_cpu_pool;     // CPU-accessible buffer
-    VkDeviceSize size_of_gpu_pool;     // GPU-only buffer
-    VkDeviceSize size_of_staging_pool; // Upload staging buffer
-} RendererDesc;
+void graphics_init(void);
+void gfx_pipelines(void);
 ```
 
-### Creating a Renderer
+`graphics_init()` currently:
+1. Initializes Volk and GLFW platform hints.
+2. Fills `RendererDesc` (bindless counts, swapchain prefs, pool sizes, validation flags).
+3. Calls `renderer_create(&renderer, &desc)`.
+4. Calls `gfx_pipelines()`.
+
+### Low-level renderer lifecycle
 
 ```c
-Renderer renderer = {0};
-
-RendererDesc desc = {
-    .width = 1920,
-    .height = 1080,
-    .app_name = "My Game",
-    .enable_validation = true,
-    .enable_gpu_based_validation = false,
-    .vsync = true,
-    .swapchain_preferred_present_mode = VK_PRESENT_MODE_FIFO_KHR,
-    .size_of_cpu_pool = 256 * 1024 * 1024,     // 256 MB
-    .size_of_gpu_pool = 512 * 1024 * 1024,     // 512 MB
-    .size_of_staging_pool = 64 * 1024 * 1024,  // 64 MB
-};
-
-renderer_create(&renderer, &desc);
+void renderer_create(Renderer* r, RendererDesc* desc);
+void renderer_destroy(Renderer* r);
 ```
 
-### Cleaning Up
+## 5. Frame Lifecycle API
+
+Frame helpers are inline in `vk.h`:
 
 ```c
-renderer_destroy(&renderer);
+static MU_INLINE void frame_start(Renderer* renderer, Camera* cam);
+static MU_INLINE void submit_frame(Renderer* r);
 ```
 
----
+### `frame_start` responsibilities
 
-## Resource Management
+- Advances `current_frame` modulo `MAX_FRAMES_IN_FLIGHT`.
+- Tracks CPU frame/wait/active timing.
+- Polls input/window events.
+- Detects resize and recreates swapchain/render targets.
+- Updates camera (including 3D mouse-look + movement handling).
+- Waits/reset fences and command pool.
+- Resets frame allocators:
+  - `buffer_pool_linear_reset(&renderer->cpu_pool)`
+  - `buffer_pool_ring_free_to(&renderer->staging_pool, frame->staging_tail)`
+- Acquires swapchain image.
 
-### Buffer Pools
+### `submit_frame` responsibilities
 
-Three types of buffer pools with different update patterns:
+- Saves ring-tail for staging lifetime tracking.
+- Submits command buffer with `vkQueueSubmit2`.
+- Signals swapchain render-finished semaphore.
+- Presents via `vk_swapchain_present`.
 
-#### Linear Pool
-Allocate-only, reset at frame boundaries. Ideal for per-frame CPU data.
+## 6. Buffer Pools and Uploads
+
+### Pool API
 
 ```c
-BufferPool cpu_pool;
-buffer_pool_init(
-    &renderer,
-    BUFFER_POOL_LINEAR,
-    &cpu_pool,
-    256 * 1024 * 1024,  // 256 MB
-    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-    VMA_MEMORY_USAGE_CPU_TO_GPU,
-    VMA_ALLOCATION_CREATE_MAPPED_BIT,
-    10000  // max allocations
-);
+bool buffer_pool_init(Renderer* r,
+                      BufferPoolType type,
+                      BufferPool* pool,
+                      VkDeviceSize size_bytes,
+                      VkBufferUsageFlags usage,
+                      VmaMemoryUsage memory_usage,
+                      VmaAllocationCreateFlags alloc_flags,
+                      oa_uint32 max_allocs);
 
-// Per frame
-buffer_pool_linear_reset(&cpu_pool);
-
-// Allocate
-BufferSlice slice = buffer_pool_alloc(&cpu_pool, 1024, 256);
-memcpy(slice.mapped, data, 1024);
+void buffer_pool_destroy(Renderer* r, BufferPool* pool);
+void buffer_pool_linear_reset(BufferPool* pool);
+void buffer_pool_ring_free_to(BufferPool* pool, uint32_t offset);
+BufferSlice buffer_pool_alloc(BufferPool* pool, VkDeviceSize size_bytes, VkDeviceSize alignment);
+void buffer_pool_free(BufferSlice slice);
 ```
 
-#### Ring Pool
-Circular buffer for streaming data. Track the tail offset as it cycles.
+### Upload helpers
 
 ```c
-buffer_pool_ring_free_to(&staging_pool, frame->staging_tail);
+bool renderer_upload_buffer_to_slice(Renderer* r,
+                                     VkCommandBuffer cmd,
+                                     BufferSlice dst_slice,
+                                     const void* src_data,
+                                     VkDeviceSize size_bytes,
+                                     VkDeviceSize staging_alignment);
+
+BufferSlice renderer_upload_buffer(Renderer* r,
+                                   VkCommandBuffer cmd,
+                                   const void* src_data,
+                                   VkDeviceSize size_bytes,
+                                   VkDeviceSize staging_alignment,
+                                   VkDeviceSize dst_alignment);
+
+bool renderer_upload_texture_2d(Renderer* r,
+                                VkCommandBuffer cmd,
+                                Texture* tex,
+                                const void* pixels,
+                                VkDeviceSize size_bytes,
+                                uint32_t width,
+                                uint32_t height,
+                                uint32_t mip_level);
 ```
 
-Frame-lifetime rule for staging ring slices:
+Staging slices are frame-lifetime transient. Do not cache staging mapped pointers across frames.
 
-- Staging slices are transient and frame-scoped.
-- They are valid only until the frame fence signals.
-- Do not keep `mapped` pointers or staging offsets across frames.
-
-Upload helper split:
-
-- `renderer_upload_buffer_to_slice(...)` for buffer-to-buffer staged copies.
-- `renderer_upload_buffer(...)` when destination allocation should also be handled.
-- `renderer_upload_texture_2d(...)` for texture copies (separate path due to image constraints).
-
-Example staged buffer upload:
-
-```c
-BufferSlice dst = buffer_pool_alloc(&renderer.gpu_pool, sizeof(MaterialGpu), 16);
-renderer_upload_buffer_to_slice(&renderer, cmd, dst, &material_gpu, sizeof(MaterialGpu), 16);
-```
-
-#### TLSF Pool
-Offset allocator-based pool for random allocation/deallocation.
-
-```c
-BufferPool gpu_pool;
-buffer_pool_init(
-    &renderer,
-    BUFFER_POOL_TLSF,
-    &gpu_pool,
-    512 * 1024 * 1024,
-    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-    VMA_MEMORY_USAGE_GPU_ONLY,
-    0,
-    65536  // max allocations
-);
-```
-
-### Direct Buffers
-
-For persistent GPU buffers (not suballocated):
-
-```c
-Buffer my_buffer;
-create_buffer(
-    &renderer,
-    1024,  // size
-    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-    VMA_MEMORY_USAGE_GPU_ONLY,
-    &my_buffer
-);
-
-// Use my_buffer.address in shaders via VK_KHR_buffer_device_address
-// ...
-
-destroy_buffer(&renderer, &my_buffer);
-```
+## 7. Texture and Sampler API
 
 ### Textures
 
-#### Texture Structure
+```c
+typedef uint32_t TextureID;
+
+TextureID create_texture(Renderer* r, const TextureCreateDesc* desc);
+void      destroy_texture(Renderer* r, TextureID id);
+TextureID load_texture(Renderer* r, const char* path);
+TextureID load_texture_id_in_range(Renderer* r, const char* path, uint32_t max_id);
+```
+
+`TextureCreateDesc`:
 
 ```c
 typedef struct
 {
-    VkImage image;
-    VkImageView view;
-    VmaAllocation allocation;
-
-    uint32_t width;
-    uint32_t height;
-    uint32_t mip_count;
-
-    VkFormat format;
-    bool valid;
-} Texture;
-
-typedef uint32_t TextureID;
-```
-
-#### Creating Textures
-
-From file:
-```c
-TextureID tex_id = load_texture(&renderer, "assets/texture.png");
-```
-
-Programmatic creation:
-```c
-TextureCreateDesc desc = {
-    .width = 512,
-    .height = 512,
-    .mip_count = 10,
-    .format = VK_FORMAT_R8G8B8A8_SRGB,
-    .usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-    .debug_name = "MyTexture"
-};
-
-TextureID tex_id = create_texture(&renderer, &desc);
-```
-
-#### Accessing Textures in Shaders
-
-All textures are bindless and indexed by `TextureID`:
-
-```glsl
-layout(set = 0, binding = 0) uniform sampler2D textures[];
-
-vec4 color = texture(textures[texture_id], uv);
-```
-
-#### Destroying Textures
-
-```c
-destroy_texture(&renderer, tex_id);
+    uint32_t          width;
+    uint32_t          height;
+    uint32_t          mip_count;
+    VkFormat          format;
+    VkImageUsageFlags usage;
+    const char*       debug_name;
+} TextureCreateDesc;
 ```
 
 ### Samplers
 
-#### Default Samplers
-
-Pre-created samplers available for immediate use:
-
 ```c
-typedef enum DefaultSamplerID
-{
-    SAMPLER_LINEAR_WRAP = 0,        // Linear filtering, wrapping
-    SAMPLER_LINEAR_CLAMP,            // Linear filtering, clamp to edge
-    SAMPLER_NEAREST_WRAP,            // Nearest filtering, wrapping
-    SAMPLER_NEAREST_CLAMP,           // Nearest filtering, clamp to edge
-    SAMPLER_LINEAR_WRAP_ANISO,       // Linear + anisotropic filtering
-    SAMPLER_SHADOW,                  // Comparison sampler for shadow maps
-    SAMPLER_COUNT
-} DefaultSamplerID;
+typedef uint32_t SamplerID;
 
-// Access via renderer->default_samplers.samplers[SAMPLER_LINEAR_WRAP]
+SamplerID create_sampler(Renderer* r, const SamplerCreateDesc* desc);
+void      destroy_sampler(Renderer* r, SamplerID id);
 ```
 
-#### Custom Samplers
+Default samplers are exposed in `renderer.default_samplers.samplers[...]` with enum `DefaultSamplerID`.
+
+## 8. Render Targets and Transitions
+
+### Render target lifecycle
 
 ```c
-typedef struct
-{
-    VkFilter mag_filter;
-    VkFilter min_filter;
-    VkSamplerAddressMode address_u;
-    VkSamplerAddressMode address_v;
-    VkSamplerAddressMode address_w;
-    VkSamplerMipmapMode mipmap_mode;
-    float max_lod;
-    const char* debug_name;
-} SamplerCreateDesc;
-
-SamplerCreateDesc desc = {
-    .mag_filter = VK_FILTER_LINEAR,
-    .min_filter = VK_FILTER_LINEAR,
-    .address_u = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-    .address_v = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-    .address_w = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-    .mipmap_mode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
-    .max_lod = 12.0f,
-    .debug_name = "PostProcessSampler"
-};
-
-SamplerID sampler_id = create_sampler(&renderer, &desc);
-destroy_sampler(&renderer, sampler_id);
+bool rt_create(Renderer* r, RenderTarget* rt, const RenderTargetSpec* spec);
+bool rt_resize(Renderer* r, RenderTarget* rt, uint32_t width, uint32_t height);
+void rt_destroy(Renderer* r, RenderTarget* rt);
 ```
 
----
-
-## Pipeline System
-
-### Graphics Pipelines
-
-#### Configuration Structure
+### Transition helpers
 
 ```c
-typedef struct
-{
-    // Shaders
-    const char* vert_path;
-    const char* frag_path;
+void image_transition_swapchain(VkCommandBuffer cmd,
+                                FlowSwapchain* sc,
+                                VkImageLayout new_layout,
+                                VkPipelineStageFlags2 new_stage,
+                                VkAccessFlags2 new_access);
+
+void image_transition_simple(VkCommandBuffer cmd,
+                             VkImage image,
+                             VkImageAspectFlags aspect,
+                             VkImageLayout old_layout,
+                             VkImageLayout new_layout);
 
-    // Rasterization
-    VkCullModeFlags cull_mode;
-    VkFrontFace front_face;
-    VkPolygonMode polygon_mode;
-
-    VkPrimitiveTopology topology;
-
-    // Depth
-    bool depth_test_enable;
-    bool depth_write_enable;
-    VkCompareOp depth_compare_op;
-
-    // Attachments and blending
-    uint32_t color_attachment_count;
-    const VkFormat* color_formats;
-    VkFormat depth_format;
-
-    ColorAttachmentBlend blends[MAX_COLOR_ATTACHMENTS];
-
-    // Vertex input (optional)
-    bool use_vertex_input;
-    VertexBinding vertex_binding;
-} GraphicsPipelineConfig;
-```
-
-#### Creating a Graphics Pipeline
-
-```c
-GraphicsPipelineConfig cfg = pipeline_config_default();
-
-cfg.vert_path = "shaders/myshader.vert";
-cfg.frag_path = "shaders/myshader.frag";
-cfg.cull_mode = VK_CULL_MODE_BACK_BIT;
-cfg.front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-
-cfg.depth_test_enable = true;
-cfg.depth_write_enable = true;
-cfg.depth_compare_op = VK_COMPARE_OP_GREATER;  // Reverse-Z
-
-cfg.color_attachment_count = 1;
-cfg.color_formats = (VkFormat[]){ VK_FORMAT_R16G16B16A16_SFLOAT };
-cfg.depth_format = VK_FORMAT_D32_SFLOAT;
-
-cfg.blends[0] = blend_disabled();  // No blending
-
-PipelineID pipeline_id = pipeline_create_graphics(&renderer, &cfg);
-VkPipeline pipeline = pipeline_get(pipeline_id);
-```
-
-#### Blend Helpers
-
-```c
-// Standard alpha blending
-ColorAttachmentBlend blend = blend_alpha();
-
-// Additive blending
-ColorAttachmentBlend blend = blend_additive();
-
-// No blending
-ColorAttachmentBlend blend = blend_disabled();
-```
-
-### Compute Pipelines
-
-```c
-PipelineID compute_id = pipeline_create_compute(&renderer, "shaders/compute.comp");
-VkPipeline compute_pipeline = pipeline_get(compute_id);
-```
-
-### Hot Reloading
-
-Shaders are automatically hot-reloaded when source files change:
-
-```c
-// Mark pipeline as needing rebuild
-pipeline_mark_dirty("shaders/myshader.vert");
-
-// Rebuild all dirty pipelines
-pipeline_rebuild(&renderer);
-```
-
----
-
-## Render Targets
-
-### Render Target Structure
-
-A render target is an off-screen image with optional mip chain, typically used for:
-- G-Buffer passes
-- HDR intermediate targets
-- Post-processing inputs
-
-```c
-typedef struct
-{
-    VkImage image;
-    VmaAllocation allocation;
-
-    VkImageView view;                    // Full mip chain
-    VkImageView mip_views[RT_MAX_MIPS];  // Per-mip views
-
-    VkFormat format;
-    uint32_t width;
-    uint32_t height;
-    uint32_t layers;
-    uint32_t mip_count;
-
-    VkImageUsageFlags usage;
-    VkImageAspectFlags aspect;
-
-    ImageState mip_states[RT_MAX_MIPS];  // Sync state per mip
-
-    uint32_t bindless_index;  // Shared for sampled/storage access
-
-    const char* debug_name;
-} RenderTarget;
-```
-
-### Creating Render Targets
-
-```c
-typedef struct
-{
-    uint32_t           width;
-    uint32_t           height;
-    uint32_t           layers;
-    VkFormat           format;
-    VkImageUsageFlags  usage;
-    VkImageAspectFlags aspect;     // 0 = infer from format
-    uint32_t           mip_count;  // 0 = auto-compute, 1 = no mips
-    const char*        debug_name;
-} RenderTargetSpec;
-
-RenderTarget hdr_target;
-RenderTargetSpec spec = {
-    .width = 1920,
-    .height = 1080,
-    .layers = 1,
-    .format = VK_FORMAT_R16G16B16A16_SFLOAT,
-    .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | 
-             VK_IMAGE_USAGE_SAMPLED_BIT |
-             VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-    .mip_count = 1,
-    .debug_name = "HDR_Color"
-};
-
-rt_create(&renderer, &hdr_target, &spec);
-
-// Resize on window resize
-rt_resize(&renderer, &hdr_target, new_width, new_height);
-
-// Clean up
-rt_destroy(&renderer, &hdr_target);
-```
-
-### Render Target Transitions
-
-Image layout transitions with synchronization tracking:
-
-```c
-// Transition full mip chain
-rt_transition_all(cmd, &hdr_target,
-    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-    VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
-
-// Transition single mip
-rt_transition_mip(cmd, &hdr_target, 0,
-    VK_IMAGE_LAYOUT_GENERAL,
-    VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
-    VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
-```
-
----
-
-## Swapchain Management
-
-### Swapchain Structure
-
-```c
-typedef struct
-{
-    // Hot data
-    ImageState states[MAX_SWAPCHAIN_IMAGES];
-    VkImage images[MAX_SWAPCHAIN_IMAGES];
-    uint32_t current_image;
-
-    VkImageView image_views[MAX_SWAPCHAIN_IMAGES];
-    VkSemaphore render_finished[MAX_SWAPCHAIN_IMAGES];
-    TextureID bindless_index[MAX_SWAPCHAIN_IMAGES];
-
-    // Cold data
-    VkSwapchainKHR swapchain;
-    VkSurfaceKHR surface;
-    VkFormat format;
-    VkColorSpaceKHR color_space;
-    VkPresentModeKHR present_mode;
-    VkExtent2D extent;
-    uint32_t image_count;
-
-    VkImageUsageFlags image_usage;
-
-    bool vsync;
-    bool needs_recreate;
-} FlowSwapchain;
-```
-
-### Acquiring and Presenting
-
-These are inline functions in the header:
-
-```c
-// Acquire next image
-bool acquired = vk_swapchain_acquire(
-    renderer.device,
-    &renderer.swapchain,
-    frame->image_available_semaphore,
-    VK_NULL_HANDLE,
-    UINT64_MAX);
-
-if (!acquired) {
-    // Swapchain needs recreation
-    renderer.swapchain.needs_recreate = true;
-}
-
-// Present after command submission
-vk_swapchain_present(renderer.present_queue,
-    &renderer.swapchain,
-    &renderer.swapchain.render_finished[renderer.swapchain.current_image],
-    1);
-```
-
-### Swapchain Transitions
-
-```c
-// Transition to rendering target
-image_transition_swapchain(cmd, &renderer.swapchain,
-    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-    VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
-
-// Transition to present
-image_transition_swapchain(cmd, &renderer.swapchain,
-    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-    VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT,
-    0);
-```
-
----
-
-## Rendering Workmu
-
-### Per-Frame Structure
-
-1. **Frame Start** - Synchronization, input, camera update
-2. **Command Recording** - Bind resources, record draw calls
-3. **Frame Submit** - Submit to GPU
-4. **Present** - Show on screen
-
-### Frame Start
-
-```c
-Camera cam = {
-    .position = {0, 5, 10},
-    .fov_y = glm_rad(45.0f),
-    .near_z = 0.1f,
-    .far_z = 1000.0f,
-    .move_speed = 10.0f,
-    .look_speed = 0.005f
-};
-
-// At frame start
-frame_start(&renderer, &cam);
-
-// frame_start handles:
-// - Frame synchronization (wait for fence)
-// - Input processing
-// - Camera updates (WASD, mouse look)
-// - Window resize detection
-// - Swapchain recreation
-// - Command buffer reset
-```
-
-### Recording Commands
-
-```c
-FrameContext* frame = &renderer.frames[renderer.current_frame];
-VkCommandBuffer cmd = frame->cmdbuf;
-
-VkCommandBufferBeginInfo begin_info = {
-    .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-    .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
-};
-vkBeginCommandBuffer(cmd, &begin_info);
-
-// Transition depth to attachment
-image_transition_simple(cmd, renderer.depth[renderer.swapchain.current_image].image,
-    VK_IMAGE_ASPECT_DEPTH_BIT,
-    VK_IMAGE_LAYOUT_UNDEFINED,
-    VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL);
-
-// Setup rendering
-VkRenderingAttachmentInfo color_attachment = {
-    .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-    .imageView = renderer.hdr_color[renderer.swapchain.current_image].view,
-    .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-    .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-    .clearValue = {.color = {0.0f, 0.0f, 0.0f, 0.0f}}
-};
-
-VkRenderingAttachmentInfo depth_attachment = {
-    .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-    .imageView = renderer.depth[renderer.swapchain.current_image].view,
-    .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-    .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-    .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-    .clearValue = {.depthStencil = {0.0f, 0}}  // Reverse-Z
-};
-
-VkRenderingInfo render_info = {
-    .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-    .renderArea = {.offset = {0, 0}, .extent = renderer.swapchain.extent},
-    .layerCount = 1,
-    .colorAttachmentCount = 1,
-    .pColorAttachments = &color_attachment,
-    .pDepthAttachment = &depth_attachment
-};
-
-vkCmdBeginRendering(cmd, &render_info);
-
-// Bind pipeline and descriptor set
-vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, my_pipeline);
-vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-    renderer.bindless_system.pipeline_layout, 0, 1,
-    &renderer.bindless_system.set, 0, NULL);
-
-// Setup viewport and scissor
-vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
-
-// Push constants
-typedef struct {
-    mat4 view_proj;
-    uint32_t vertex_buffer_offset;
-} PushConstants;
-
-PushConstants pc = {0};
-glm_mat4_copy(cam.view_proj, pc.view_proj);
-pc.vertex_buffer_offset = vertex_offset;
-
-vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout,
-    VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pc);
-
-// Draw
-vkCmdDraw(cmd, vertex_count, 1, 0, 0);
-
-vkCmdEndRendering(cmd);
-
-vkEndCommandBuffer(cmd);
-```
-
-### Frame Submit
-
-```c
-submit_frame(&renderer);
-
-// submit_frame:
-// - Submits command buffer to graphics queue
-// - Signals render_finished semaphore
-// - Waits on image_available semaphore
-// - Presents swapchain
-```
-
----
-
-## Advanced Topics
-
-### Frustum Culling
-
-The renderer computes a view-frustum from the camera's view-projection matrix:
-
-```c
-typedef struct
-{
-    vec4 planes[FrustumPlaneCount];  // ax + by + cz + d = 0
-} Frustum;
-
-// Updated automatically in frame_start()
-// Access via: renderer.frustum.planes[LeftPlane/RightPlane/etc]
-```
-
-### GPU Profiling
-
-Per-frame GPU command timing via `VkQueryResultStatusKHR`:
-
-```c
-typedef struct GpuProfiler {
-    // Internal profiling data
-} GpuProfiler;
-
-// Collected per frame in frame_start()
-GpuProfiler* frame_prof = &renderer.gpuprofiler[renderer.current_frame];
-```
-
-### Camera System
-
-```c
-typedef struct
-{
-    vec3 position;
-    float near_z;
-    vec3  cam_dir;
-
-    float yaw;    // radians
-    float pitch;  // radians
-
-    float move_speed;
-    float look_speed;
-    float fov_y;
-    float far_z;
-    mat4  view_proj;
-    
-    bool mouse_captured;
-    bool first_mouse;
-
-    double last_mouse_x;
-    double last_mouse_y;
-} Camera;
-
-// Controls:
-// - Right Mouse Button: Capture/release mouse
-// - WASD: Move
-// - E/Q: Up/Down
-// - =/-: Increase/decrease speed
-// - Shift: 3x speed multiplier
-```
-
-### ImGui Integration
-
-ImGui is automatically initialized and available:
-
-```c
-imgui_begin_frame();
-
-igText("Hello, World!");
-igSliderFloat("Some Value", &value, 0.0f, 1.0f, "%.3f", 0);
-
-if (igButton("Click Me", (ImVec2){0, 0})) {
-    // Handle button press
-}
-
-// Commands are recorded in the current render pass
-```
-
-### Image Transitions
-
-#### Simple Transition
-
-```c
-void image_transition_simple(VkCommandBuffer cmd, VkImage image,
-    VkImageAspectFlags aspect,
-    VkImageLayout old_layout,
-    VkImageLayout new_layout);
-```
-
-#### Advanced Transitions with Tracking
-
-For complex synchronization with mip-level tracking:
-
-```c
 void cmd_transition_all_mips(VkCommandBuffer cmd,
-    VkImage image,
-    ImageState* state,
-    VkImageAspectFlags aspect,
-    uint32_t mipCount,
-    VkPipelineStageFlags2 newStage,
-    VkAccessFlags2 newAccess,
-    VkImageLayout newLayout,
-    uint32_t newQueueFamily);
+                             VkImage image,
+                             ImageState* state,
+                             VkImageAspectFlags aspect,
+                             uint32_t mipCount,
+                             VkPipelineStageFlags2 newStage,
+                             VkAccessFlags2 newAccess,
+                             VkImageLayout newLayout,
+                             uint32_t newQueueFamilyi);
 
 void cmd_transition_mip(VkCommandBuffer cmd,
-    VkImage image,
-    ImageState* state,
-    VkImageAspectFlags aspect,
-    uint32_t mip,
-    VkPipelineStageFlags2 newStage,
-    VkAccessFlags2 newAccess,
-    VkImageLayout newLayout,
-    uint32_t newQueueFamily);
+                        VkImage image,
+                        ImageState* state,
+                        VkImageAspectFlags aspect,
+                        uint32_t mip,
+                        VkPipelineStageFlags2 newStage,
+                        VkAccessFlags2 newAccess,
+                        VkImageLayout newLayout,
+                        uint32_t newQueueFamily);
 ```
 
-### Push Constants Macro
+Inline wrappers:
+- `rt_transition_mip(...)`
+- `rt_transition_all(...)`
 
-For type-safe, 256-byte aligned push constants:
+Barrier flush helper:
 
 ```c
-PUSH_CONSTANT(MyShaderPC,
-    mat4 transform;
-    uint32_t texture_id;
-    float time;
-    uint32_t flags;
-);
-
-// Creates:
-// - MyShaderPC_init (minimal struct)
-// - MyShaderPC (padded to 256 bytes)
-
-MyShaderPC pc = {0};
-glm_mat4_copy(matrix, pc.transform);
-pc.texture_id = tex_id;
-
-vkCmdPushConstants(cmd, layout,
-    VK_SHADER_STAGE_ALL, 0, sizeof(MyShaderPC), &pc);
+void flush_barriers(VkCommandBuffer cmd);
 ```
 
-### Descriptor Set Layout
+## 9. Pipeline API
 
-Single descriptor set shared by all pipelines:
+### Pipeline creation
 
 ```c
-typedef struct Bindless
+typedef uint32_t PipelineID;
+
+PipelineID pipeline_create_graphics(Renderer* r, GraphicsPipelineConfig* cfg);
+PipelineID pipeline_create_compute(Renderer* r, const char* path);
+VkPipeline pipeline_get(PipelineID id);
+```
+
+### Rebuild/hot reload controls
+
+```c
+void pipeline_mark_dirty(const char* changed_shader);
+void pipeline_rebuild(Renderer* r);
+```
+
+### Cache save
+
+```c
+void pipeline_cache_save(VkDevice device,
+                         VkPhysicalDevice phys,
+                         VkPipelineCache cache,
+                         const char* path);
+```
+
+### Engine pipeline handles
+
+`EnginePipelines` currently tracks:
+- `fullscreen`
+- `postprocess` (compute)
+- `gltf_minimal`
+- `triangle`
+- `triangle_wireframe`
+- `sprite`
+- `slug_text`
+- `beam`
+- `sky`
+
+SMAA pipelines are tracked separately in `renderer.smaa_pipelines`.
+
+## 10. Camera API (2D/3D)
+
+Useful camera functions:
+
+```c
+static FORCE_INLINE void camera_defaults_3d(Camera* cam);
+static FORCE_INLINE void camera_defaults_2d(Camera* cam, uint32_t viewport_width, uint32_t viewport_height);
+static FORCE_INLINE void camera_set_mode(Camera* cam, CameraMode mode);
+static FORCE_INLINE void camera_set_projection(Camera* cam, CameraProjection projection);
+static FORCE_INLINE void camera_set_viewport(Camera* cam, uint32_t width, uint32_t height);
+
+static FORCE_INLINE void camera2d_set_bounds(Camera* cam, float min_x, float min_y, float max_x, float max_y);
+static FORCE_INLINE void camera2d_clear_bounds(Camera* cam);
+static FORCE_INLINE void camera2d_set_position(Camera* cam, float x, float y);
+static FORCE_INLINE void camera2d_pan(Camera* cam, float dx_world, float dy_world);
+static FORCE_INLINE void camera2d_zoom(Camera* cam, float zoom_delta);
+
+static FORCE_INLINE void camera3d_set_position(Camera* cam, float x, float y, float z);
+static FORCE_INLINE void camera3d_set_rotation_yaw_pitch(Camera* cam, float yaw, float pitch);
+
+static FORCE_INLINE void camera_update_matrices(Camera* cam, float aspect, bool reverse_z);
+static FORCE_INLINE void camera_extract_frustum(Frustum* out_frustum, const mat4 view_proj);
+```
+
+`frame_start` calls `camera_update_matrices(cam, aspect, true)` in the default flow.
+
+## 11. Model API (MeshX + GLTF)
+
+Public model API from `gltf_gpu_mesh.h`:
+
+```c
+bool model_api_init(uint32_t max_models, uint32_t instance_capacity);
+void model_api_shutdown(void);
+
+bool model_api_load_meshx(const char* path, ModelHandle* out_model);
+bool model_api_find_or_load_meshx(const char* path, ModelHandle* out_model);
+bool model_api_load_gltf(const char* path, ModelHandle* out_model);
+bool model_api_find_or_load_gltf(const char* path, ModelHandle* out_model);
+void model_api_unload(ModelHandle model);
+
+void model_api_begin_frame(const Camera* cam);
+bool model_api_draw(ModelHandle model, const float model_matrix[4][4], const float color[4]);
+bool draw3d(ModelHandle model, const float model_matrix[4][4], const float color[4]);
+bool draw_model(const char* path, const float model_matrix[4][4]);
+
+void model_api_prepare_frame(VkCommandBuffer cmd);
+void model_api_draw_queued(VkCommandBuffer cmd);
+void model_api_flush_frame(VkCommandBuffer cmd);
+```
+
+### Current draw path details
+
+- Draws are queued CPU-side, sorted/grouped per submesh.
+- Instance and indirect command arrays are uploaded each frame.
+- Draw uses `vkCmdDrawIndirect`.
+- Geometry/material/instance data is accessed in shader via push constants containing device addresses.
+- No per-draw vertex/index buffer binding in this model path.
+
+## 12. Pass API
+
+From `passes.h`:
+
+```c
+void post_pass();
+void pass_smaa();
+void pass_ldr_to_swapchain();
+void pass_imgui();
+```
+
+Current pass chain in `main.c`:
+1. Scene rendering to HDR (`model_api_draw_queued` inside dynamic rendering).
+2. `post_pass()` compute to LDR.
+3. `pass_smaa()` (edge/weight/blend passes).
+4. `pass_ldr_to_swapchain()` blit.
+5. Swapchain transition to present and submit.
+
+## 13. Push Constants Contract
+
+The engine enforces a 256-byte push constant layout via macro:
+
+```c
+#define PUSH_CONSTANT(name, BODY) ... _Static_assert(sizeof(name) == 256, "Push constant != 256");
+```
+
+Requirements:
+- Struct alignment uses `ALIGNAS(16)`.
+- Total pushed type size is always 256 bytes.
+- Keep fields 16-byte aware to avoid host/shader packing mismatch.
+
+## 14. Canonical Frame Skeleton
+
+```c
+graphics_init();
+model_api_init(256, 8192);
+
+Camera cam = {0};
+camera_defaults_3d(&cam);
+
+while(!glfwWindowShouldClose(renderer.window))
 {
-    VkDescriptorSetLayout set_layout;
-    VkDescriptorPool pool;
-    VkDescriptorSet set;
-    VkPipelineLayout pipeline_layout;
-} Bindless;
+    pipeline_rebuild(&renderer);
+    frame_start(&renderer, &cam);
 
-// Access via: renderer.bindless_system
-```
+    model_api_begin_frame(&cam);
+    // queue draw_model(...) / model_api_draw(...)
 
----
+    VkCommandBuffer cmd = renderer.frames[renderer.current_frame].cmdbuf;
+    vk_cmd_begin(cmd, false);
 
-## Example: Complete Render Loop
+    // transitions + dynamic rendering
+    model_api_prepare_frame(cmd);
+    model_api_draw_queued(cmd);
 
-```c
-#include "vk.h"
+    post_pass();
+    pass_smaa();
+    pass_ldr_to_swapchain();
 
-int main() {
-    Renderer renderer = {0};
-    RendererDesc desc = {
-        .width = 1920,
-        .height = 1080,
-        .app_name = "My Renderer",
-        .enable_validation = true,
-        .size_of_gpu_pool = 512 * 1024 * 1024,
-        .size_of_cpu_pool = 256 * 1024 * 1024,
-        .size_of_staging_pool = 64 * 1024 * 1024,
-    };
+    // transition swapchain -> present
+    flush_barriers(cmd);
+    vk_cmd_end(cmd);
 
-    renderer_create(&renderer, &desc);
-
-    // Create pipeline
-    GraphicsPipelineConfig cfg = pipeline_config_default();
-    cfg.vert_path = "shaders/mesh.vert";
-    cfg.frag_path = "shaders/mesh.frag";
-    cfg.color_attachment_count = 1;
-    cfg.color_formats = (VkFormat[]){ VK_FORMAT_R16G16B16A16_SFLOAT };
-    cfg.depth_format = VK_FORMAT_D32_SFLOAT;
-    cfg.depth_compare_op = VK_COMPARE_OP_GREATER;
-
-    PipelineID pipeline_id = pipeline_create_graphics(&renderer, &cfg);
-
-    // Load resources
-    TextureID texture = load_texture(&renderer, "assets/texture.png");
-
-    Camera camera = {
-        .position = {0, 5, 10},
-        .fov_y = glm_rad(45.0f),
-        .near_z = 0.1f,
-        .far_z = 1000.0f,
-        .move_speed = 10.0f,
-        .look_speed = 0.005f
-    };
-
-    // Main loop
-    while (!glfwWindowShouldClose(renderer.window)) {
-        frame_start(&renderer, &camera);
-
-        FrameContext* frame = &renderer.frames[renderer.current_frame];
-        VkCommandBuffer cmd = frame->cmdbuf;
-
-        // Begin command buffer
-        VkCommandBufferBeginInfo begin = {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
-        };
-        vkBeginCommandBuffer(cmd, &begin);
-
-        // Transition and render
-        VkRenderingAttachmentInfo color = {
-            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-            .imageView = renderer.hdr_color[renderer.swapchain.current_image].view,
-            .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .clearValue = {.color = {0, 0, 0, 0}}
-        };
-
-        VkRenderingInfo render_info = {
-            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-            .renderArea = {.offset = {0, 0}, .extent = renderer.swapchain.extent},
-            .layerCount = 1,
-            .colorAttachmentCount = 1,
-            .pColorAttachments = &color,
-        };
-
-        vkCmdBeginRendering(cmd, &render_info);
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_get(pipeline_id));
-        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-            renderer.bindless_system.pipeline_layout, 0, 1,
-            &renderer.bindless_system.set, 0, NULL);
-
-        vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
-
-        // Draw call
-        vkCmdDraw(cmd, 3, 1, 0, 0);
-
-        vkCmdEndRendering(cmd);
-        vkEndCommandBuffer(cmd);
-
-        submit_frame(&renderer);
-    }
-
-    destroy_texture(&renderer, texture);
-    renderer_destroy(&renderer);
-
-    return 0;
+    submit_frame(&renderer);
 }
+
+model_api_shutdown();
+renderer_destroy(&renderer);
 ```
 
----
+## 15. Notes and Constraints
 
-## Performance Tips
+- Renderer defaults to a bindless workflow; avoid per-pipeline descriptor layouts.
+- Suballocated slices are first-class and expected in most paths.
+- `renderer.bindless_system.set` is bound for both graphics and compute in the frame loop.
+- Render target transitions are explicit; call `flush_barriers(cmd)` after enqueuing transitions.
+- `model_api_load_gltf` attempts meshx sidecar first when available.
+- GLB base-color extraction now supports embedded image name + MIME fallback (no URI required).
 
-1. **Minimize Push Constant Changes** - Group data efficiently in 256-byte blocks
-2. **Batch by Texture** - Sort draw calls to minimize descriptor set changes
-3. **Use Ring Buffers** - For streaming data (geometry, transforms)
-4. **Leverage Reverse-Z** - More precision near camera, better for depth testing
-5. **GPU Timeline Profiling** - Use `VkQueryResultStatusKHR` for frame analysis
-6. **Avoid MIP Generation** - Pre-generate offline or use compute shaders
-7. **Reuse Samplers** - Default sampler table covers most use cases
+## 16. Related Headers
 
----
-
-## Debugging
-
-### Validation Layers
-Enable in `RendererDesc.enable_validation` for comprehensive error checking.
-
-### GPU-Based Validation
-Slower but catches data races:
-```c
-.enable_gpu_based_validation = true
-```
-
-### Debug Printf
-Enable shader debug output:
-```c
-.enable_debug_printf = true
-```
-
-Then in shaders:
-```glsl
-#extension GL_EXT_debug_printf : enable
-
-debugPrintfEXT("Value: %f", value);
-```
-
-### Named Objects
-Use `debug_name` parameters for better profiler/debugger output:
-```c
-rt.debug_name = "GBuffer_Albedo";
-```
-
----
-
-## API Stability
-
-This API prioritizes **correctness and performance** over stability guarantees. Some internal structures may change between revisions. The public functions listed in this document are the stable interface.
+- `vk.h`: core renderer API, types, inline frame/camera helpers.
+- `renderer.h`: global renderer + engine pipeline declarations, startup entry points.
+- `passes.h`: frame pass entry points.
+- `gltf_gpu_mesh.h`: model streaming, loading, and draw queue API.
