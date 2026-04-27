@@ -258,6 +258,194 @@ static void update_bounds(float bmin[3], float bmax[3], const float pos[3])
     if(pos[2] > bmax[2]) bmax[2] = pos[2];
 }
 
+static void write_escaped(FILE* out, const char* text);
+
+static const char* cgltf_interpolation_name(cgltf_interpolation_type interpolation)
+{
+    switch(interpolation)
+    {
+        case cgltf_interpolation_type_step: return "step";
+        case cgltf_interpolation_type_linear: return "linear";
+        case cgltf_interpolation_type_cubic_spline: return "cubic_spline";
+        default: return "linear";
+    }
+}
+
+static const char* cgltf_animation_path_name(cgltf_animation_path_type path_type)
+{
+    switch(path_type)
+    {
+        case cgltf_animation_path_type_translation: return "translation";
+        case cgltf_animation_path_type_rotation: return "rotation";
+        case cgltf_animation_path_type_scale: return "scale";
+        case cgltf_animation_path_type_weights: return "weights";
+        default: return "translation";
+    }
+}
+
+static uint32_t cgltf_animation_target_components(const cgltf_animation_channel* channel)
+{
+    if(!channel || !channel->target_node)
+        return 0u;
+
+    switch(channel->target_path)
+    {
+        case cgltf_animation_path_type_translation:
+        case cgltf_animation_path_type_scale:
+            return 3u;
+        case cgltf_animation_path_type_rotation:
+            return 4u;
+        case cgltf_animation_path_type_weights:
+        {
+            if(!channel->target_node->mesh || channel->target_node->mesh->primitives_count == 0)
+                return 0u;
+            return (uint32_t)channel->target_node->mesh->primitives[0].targets_count;
+        }
+        default:
+            return 0u;
+    }
+}
+
+static void cgltf_write_float_list(FILE* out, const float* values, size_t count)
+{
+    for(size_t i = 0; i < count; ++i)
+    {
+        fprintf(out, " %.9g", values[i]);
+    }
+}
+
+static bool write_animation_channel(FILE* out, const cgltf_data* data, const cgltf_animation* animation, const cgltf_animation_channel* channel)
+{
+    if(!out || !data || !animation || !channel || !channel->sampler || !channel->sampler->input || !channel->sampler->output)
+        return false;
+
+    uint32_t components = cgltf_animation_target_components(channel);
+    if(components == 0u)
+        return false;
+
+    cgltf_size key_count = channel->sampler->input->count;
+    if(key_count == 0)
+        return false;
+
+    size_t values_per_key = channel->sampler->interpolation == cgltf_interpolation_type_cubic_spline ? 3u : 1u;
+    size_t output_count = (size_t)key_count * components * values_per_key;
+    float* times = (float*)malloc((size_t)key_count * sizeof(float));
+    float* values = (float*)malloc(output_count * sizeof(float));
+    if(!times || !values)
+    {
+        free(times);
+        free(values);
+        return false;
+    }
+
+    cgltf_size unpacked_times = cgltf_accessor_unpack_floats(channel->sampler->input, times, key_count);
+    cgltf_size unpacked_values = cgltf_accessor_unpack_floats(channel->sampler->output, values, output_count);
+    if(unpacked_times < key_count || unpacked_values < output_count)
+    {
+        free(times);
+        free(values);
+        return false;
+    }
+
+    uint32_t channel_index = (uint32_t)cgltf_animation_channel_index(animation, channel);
+
+    fprintf(out, "    channel %u\n    {\n", channel_index);
+
+    fprintf(out, "        target node\n");
+    fprintf(out, "        target_index %u\n", (uint32_t)cgltf_node_index(data, channel->target_node));
+    if(channel->target_node && channel->target_node->name)
+    {
+        fprintf(out, "        target_name ");
+        write_escaped(out, channel->target_node->name);
+        fprintf(out, "\n");
+    }
+
+    fprintf(out, "        path %s\n", cgltf_animation_path_name(channel->target_path));
+    fprintf(out, "        interpolation %s\n", cgltf_interpolation_name(channel->sampler->interpolation));
+    fprintf(out, "        key_count %u\n", (uint32_t)key_count);
+    fprintf(out, "        keys\n        {\n");
+
+    for(cgltf_size i = 0; i < key_count; ++i)
+    {
+        fprintf(out, "            k %.9g", times[i]);
+        if(channel->sampler->interpolation == cgltf_interpolation_type_cubic_spline)
+        {
+            const float* in_tangent = &values[(size_t)i * components * 3u + 0u * components];
+            const float* center = &values[(size_t)i * components * 3u + 1u * components];
+            const float* out_tangent = &values[(size_t)i * components * 3u + 2u * components];
+            cgltf_write_float_list(out, in_tangent, components);
+            cgltf_write_float_list(out, center, components);
+            cgltf_write_float_list(out, out_tangent, components);
+        }
+        else
+        {
+            const float* frame_values = &values[(size_t)i * components];
+            cgltf_write_float_list(out, frame_values, components);
+        }
+        fprintf(out, "\n");
+    }
+
+    fprintf(out, "        }\n    }\n\n");
+
+    free(times);
+    free(values);
+    return true;
+}
+
+static bool write_animations(FILE* out, const cgltf_data* data)
+{
+    if(!out || !data || data->animations_count == 0)
+        return true;
+
+    fprintf(out, "animations\n{\n");
+    for(size_t i = 0; i < data->animations_count; ++i)
+    {
+        const cgltf_animation* animation = &data->animations[i];
+        double duration = 0.0;
+        for(size_t j = 0; j < animation->channels_count; ++j)
+        {
+            const cgltf_animation_channel* channel = &animation->channels[j];
+            if(channel->sampler && channel->sampler->input)
+            {
+                cgltf_size key_count = channel->sampler->input->count;
+                float* times = (float*)malloc((size_t)key_count * sizeof(float));
+                if(!times)
+                    return false;
+
+                cgltf_size unpacked_times = cgltf_accessor_unpack_floats(channel->sampler->input, times, key_count);
+                if(unpacked_times >= key_count)
+                {
+                    for(cgltf_size k = 0; k < key_count; ++k)
+                    {
+                        if((double)times[k] > duration)
+                            duration = times[k];
+                    }
+                }
+
+                free(times);
+            }
+        }
+
+        fprintf(out, "    clip %u\n    {\n", (uint32_t)i);
+        fprintf(out, "        name ");
+        write_escaped(out, animation->name ? animation->name : "animation");
+        fprintf(out, "\n");
+        fprintf(out, "        duration %.9g\n", duration);
+        fprintf(out, "        ticks_per_second 1.0\n");
+        fprintf(out, "        additive false\n\n");
+
+        for(size_t j = 0; j < animation->channels_count; ++j)
+        {
+            if(!write_animation_channel(out, data, animation, &animation->channels[j]))
+                return false;
+        }
+
+        fprintf(out, "    }\n\n");
+    }
+    fprintf(out, "}\n\n");
+    return true;
+}
+
 static const cgltf_accessor* find_position_accessor(const cgltf_primitive* prim)
 {
     for(size_t i = 0; i < prim->attributes_count; ++i)
@@ -1013,7 +1201,7 @@ static void write_escaped(FILE* out, const char* text)
     fputc('"', out);
 }
 
-static bool write_meshx(FILE* out, const char* input_path, const ExportMesh* mesh)
+static bool write_meshx(FILE* out, const cgltf_data* data, const char* input_path, const ExportMesh* mesh)
 {
     if(!out || !input_path || !mesh || mesh->vertex_count == 0 || mesh->index_count == 0)
         return false;
@@ -1093,6 +1281,9 @@ static bool write_meshx(FILE* out, const char* input_path, const ExportMesh* mes
         fprintf(out, "    }\n");
         fprintf(out, "}\n\n");
     }
+
+    if(!write_animations(out, data))
+        return false;
 
     fprintf(out, "vertices\n{\n");
     for(uint32_t i = 0; i < mesh->vertex_count; ++i)
@@ -1229,7 +1420,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    bool ok = write_meshx(out, input_path, &mesh);
+    bool ok = write_meshx(out, data, input_path, &mesh);
     fclose(out);
 
     export_mesh_free(&mesh);
