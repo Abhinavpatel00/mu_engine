@@ -1507,6 +1507,43 @@ typedef uint32_t         PipelineID;
 extern mu_id_pool      texture_pool;
 extern mu_id_pool      sampler_pool;
 extern Texture           textures[MAX_BINDLESS_TEXTURES];  // reference by textureid
+// Buffer slice helpers
+// Buffer slice helpers
+FORCE_INLINE VkDeviceAddress slice_device_address(const Renderer* r, BufferSlice slice)
+{
+    VkBufferDeviceAddressInfo info = {
+        .sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .buffer = slice.buffer,
+    };
+    return vkGetBufferDeviceAddress(r->device, &info) + slice.offset;
+}
+
+FORCE_INLINE void* buffer_slice_get_mapped(const BufferSlice* slice)
+{
+    return slice ? slice->mapped : NULL;
+}
+
+// Get GPU device address from a buffer slice
+FORCE_INLINE VkDeviceAddress buffer_slice_device_address(const BufferSlice* slice)
+{
+    if(!slice || !slice->pool)
+        return 0;
+    
+    // All slices should be from gpu_pool which has device address cached in renderer
+    extern Renderer renderer;
+    
+    // If this slice is from gpu_pool, use the cached gpu_base_addr
+    if(slice->buffer == renderer.gpu_pool.buffer)
+        return renderer.gpu_base_addr + slice->offset;
+    
+    // Fallback: compute device address (shouldn't normally reach here)
+    VkBufferDeviceAddressInfo info = {
+        .sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+        .buffer = slice->buffer,
+    };
+    return vkGetBufferDeviceAddress(renderer.device, &info) + slice->offset;
+}
+
 extern VkSampler         samplers[MAX_BINDLESS_SAMPLERS];  // reference by samplerid
 extern RendererPipelines g_render_pipelines;
 

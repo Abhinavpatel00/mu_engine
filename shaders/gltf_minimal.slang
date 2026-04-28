@@ -33,6 +33,7 @@ struct InstanceData
     uint submesh_id;
     uint material_id;
     uint flags;
+    uint64_t pos_ptr;
     float4x4 model;
     float4 color;
 };
@@ -70,7 +71,8 @@ VSOutput vs_main(
     ModelMeta meta = submesh_table[inst.submesh_id];
 
     uint* indices = (uint*)meta.idx_ptr;
-    float* positions = (float*)meta.pos_ptr;
+    // Allow per-instance override of positions (for skinned output)
+    float* positions = (float*)(inst.pos_ptr != 0 ? inst.pos_ptr : meta.pos_ptr);
     float* uvs = (float*)meta.uv_ptr;
 
     uint idx = indices[vertexID];

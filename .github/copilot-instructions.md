@@ -5,6 +5,9 @@
 I don't use vertex buffers and index buffers. I use offsets to buffer slice via push constant.
 - I use a single descriptor set for all resources, and bindless descriptors to access them. This simplifies resource management and allows for more flexible binding.
 - i use Pascalcase for types and snake case for functions 
+- /home/lk/myprojects/voxelfun/mu_engine/docs/RENDERER_API_REFERENCE.md has detailed API documentation and examples. Refer to it for function signatures and usage patterns and update it when you add new public API functions or change existing ones or if u see something important is missing.
+- minimize global state and side effects; prefer explicit parameter passing and return values for clarity and testability.
+
 
 # Copilot Instructions
 

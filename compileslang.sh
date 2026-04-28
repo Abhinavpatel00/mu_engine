@@ -33,6 +33,7 @@ compile_stage ()
             -entry "$entry" \
             -stage "$stage" \
             -I shaders \
+	    -I . \
 	    $SLANG_FLAGS \
             ${SLANG_DEFINES:-} \
             -o "$out"

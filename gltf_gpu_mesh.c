@@ -9,6 +9,12 @@
 #include "helpers.h"
 #include "passes.h"
 
+// New modular subsystems
+#include "model_assets.h"
+#include "model_instances.h"
+#include "animation_system.h"
+#include "model_render.h"
+
 typedef struct AABB
 {
     float min[3];
@@ -19,6 +25,7 @@ typedef struct Submesh
 {
     BufferSlice position_slice;
     BufferSlice uv_slice;
+    BufferSlice packed_slice;
     BufferSlice index_slice;
     uint32_t    vertex_offset;
     uint32_t    index_offset;
@@ -35,8 +42,20 @@ typedef struct ModelData
     uint32_t submesh_count;
     uint32_t first_material_id;
     uint32_t material_count;
+    uint32_t first_clip_id;
+    uint32_t clip_count;
+    uint8_t  has_skeleton;
+    uint8_t  has_skinning;
+    uint8_t  _pad0;
+    uint8_t  _pad1;
     AABB     bounds;
 } ModelData;
+
+typedef struct AnimationClipData
+{
+    char* name;
+    float duration;
+} AnimationClipData;
 
 typedef struct MaterialData
 {
@@ -80,6 +99,7 @@ typedef struct ModelInstanceGpu
     uint32_t submesh_id;
     uint32_t material_id;
     uint32_t flags;
+    VkDeviceAddress pos_ptr;
     float    transform[4][4];
     float    color[4];
 } ModelInstanceGpu;
@@ -104,14 +124,25 @@ typedef struct MaterialGpu
     float    base_color_factor[4];
 } MaterialGpu;
 
-typedef struct GltfIndirectPush
+typedef struct ModelIndirectPush
 {
     VkDeviceAddress submesh_table_ptr;
     VkDeviceAddress material_table_ptr;
     VkDeviceAddress instance_ptr;
     uint64_t        pad0;
     float           view_proj[4][4];
-} GltfIndirectPush;
+} ModelIndirectPush;
+
+typedef struct SkinningPush
+{
+    VkDeviceAddress src_vertex_ptr;
+    VkDeviceAddress dst_vertex_ptr;
+    VkDeviceAddress palette_ptr;
+    uint32_t        vertex_count;
+    uint32_t        joint_count;
+    uint32_t        _pad0;
+    uint32_t        _pad1;
+} SkinningPush;
 
 typedef struct ModelAssetSystem
 {
@@ -132,6 +163,10 @@ typedef struct ModelAssetSystem
     uint32_t      material_count;
     uint32_t      material_capacity;
 
+    AnimationClipData* clip_table;
+    uint32_t           clip_count;
+    uint32_t           clip_capacity;
+
     SubmeshMetaGpu* submesh_meta_table;
 
     char** debug_paths;
@@ -146,6 +181,31 @@ typedef struct ModelAssetSystem
     bool submesh_meta_dirty;
     bool material_dirty;
 } ModelAssetSystem;
+
+typedef struct ModelInstanceData
+{
+    ModelHandle          model;
+    float                transform[4][4];
+    float                color[4];
+    AnimationState       anim;
+    AnimationPlaybackMode playback_mode;
+    bool                 active;
+    
+    // GPU skinning buffers (allocated only if model has skinning)
+    BufferSlice          skinned_vertex_buffer;
+    BufferSlice          palette_buffer;
+    bool                 palette_dirty;
+} ModelInstanceData;
+
+typedef struct ModelInstanceSystem
+{
+    mu_id_pool         instance_id_pool;
+    ModelInstanceData* instances;
+    uint32_t*          active_instance_ids;
+    uint32_t           active_instance_count;
+    uint32_t           instance_capacity;
+    float              frame_dt;
+} ModelInstanceSystem;
 
 typedef struct ModelRenderQueue
 {
@@ -183,6 +243,11 @@ typedef struct ModelApiState
 
     ModelAssetSystem assets;
     ModelRenderQueue queue;
+    ModelInstanceSystem instance_system;
+    AnimationDebugMode  debug_mode;
+    
+    PipelineID       skinning_pipeline;
+    Renderer*        renderer;
 } ModelApiState;
 
 typedef struct ModelMaterialSource
@@ -211,15 +276,30 @@ typedef struct ModelSource
 {
     float*    positions_xyz;
     float*    uv0_xy;
+    float*    normals_xyz;
+    float*    tangents_xyzw;
+    uint16_t* joints_u16;
+    uint16_t* weights_u16;
     uint32_t* indices;
     uint32_t  vertex_count;
     uint32_t  index_count;
+
+    bool has_normal;
+    bool has_tangent;
+    bool has_joints;
+    bool has_weights;
 
     ModelMaterialSource* materials;
     uint32_t             material_count;
 
     ModelSubmeshSource* submeshes;
     uint32_t            submesh_count;
+
+    AnimationClipData* clips;
+    uint32_t           clip_count;
+
+    bool has_skeleton;
+    bool has_skinning;
 
     AABB bounds;
 } ModelSource;
@@ -247,6 +327,9 @@ typedef struct MeshxSubmeshParse
     bool seen_bounds_max;
 } MeshxSubmeshParse;
 
+// Include helper functions for vertex packing and normal/tangent computation
+#include "gltf_gpu_mesh_helpers.c"
+
 static ModelApiState g_model_api = {0};
 
 #define MODEL_INVALID_TEXTURE_ID UINT32_MAX
@@ -255,6 +338,85 @@ static ModelApiState g_model_api = {0};
 static bool model_handle_valid(const ModelAssetSystem* sys, ModelHandle h)
 {
     return h != MODEL_HANDLE_INVALID && h < sys->model_capacity && mu_id_pool_is_id(&sys->model_id_pool, h);
+}
+
+static void mat4_identity(float out[4][4])
+{
+    memset(out, 0, sizeof(float[4][4]));
+    out[0][0] = 1.0f;
+    out[1][1] = 1.0f;
+    out[2][2] = 1.0f;
+    out[3][3] = 1.0f;
+}
+
+static AnimationState animation_state_default(void)
+{
+    AnimationState s = {0};
+    s.clip = ANIMATION_CLIP_INVALID;
+    s.time = 0.0f;
+    s.speed = 1.0f;
+    s.weight = 1.0f;
+    s.playing = false;
+    s.paused = false;
+    s.loop = true;
+    return s;
+}
+
+static bool model_instance_valid(const ModelApiState* api, ModelInstanceHandle instance)
+{
+    if(!api)
+        return false;
+
+    const ModelInstanceSystem* sys = &api->instance_system;
+    return instance != MODEL_INSTANCE_HANDLE_INVALID
+           && instance < sys->instance_capacity
+           && mu_id_pool_is_id(&sys->instance_id_pool, instance)
+           && sys->instances[instance].active;
+}
+
+static bool model_instance_remove_active_id(ModelInstanceSystem* sys, uint32_t id)
+{
+    for(uint32_t i = 0; i < sys->active_instance_count; ++i)
+    {
+        if(sys->active_instance_ids[i] == id)
+        {
+            sys->active_instance_ids[i] = sys->active_instance_ids[sys->active_instance_count - 1u];
+            sys->active_instance_count--;
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool model_instance_system_init(ModelInstanceSystem* sys, uint32_t instance_capacity)
+{
+    if(!sys || instance_capacity == 0)
+        return false;
+
+    memset(sys, 0, sizeof(*sys));
+    mu_id_pool_init(&sys->instance_id_pool, instance_capacity);
+
+    sys->instance_capacity = instance_capacity;
+    sys->instances = (ModelInstanceData*)calloc(instance_capacity, sizeof(ModelInstanceData));
+    sys->active_instance_ids = (uint32_t*)calloc(instance_capacity, sizeof(uint32_t));
+    if(!sys->instances || !sys->active_instance_ids)
+        return false;
+
+    return true;
+}
+
+static void model_instance_system_shutdown(ModelInstanceSystem* sys)
+{
+    if(!sys)
+        return;
+
+    free(sys->active_instance_ids);
+    free(sys->instances);
+
+    if(sys->instance_id_pool.ranges)
+        mu_id_pool_deinit(&sys->instance_id_pool);
+
+    memset(sys, 0, sizeof(*sys));
 }
 
 static char* strdup_owned(const char* src)
@@ -424,6 +586,10 @@ static void model_source_free(ModelSource* src)
 
     free(src->positions_xyz);
     free(src->uv0_xy);
+    free(src->normals_xyz);
+    free(src->tangents_xyzw);
+    free(src->joints_u16);
+    free(src->weights_u16);
     free(src->indices);
 
     if(src->materials)
@@ -437,6 +603,13 @@ static void model_source_free(ModelSource* src)
     }
     free(src->materials);
     free(src->submeshes);
+
+    if(src->clips)
+    {
+        for(uint32_t i = 0; i < src->clip_count; ++i)
+            free(src->clips[i].name);
+    }
+    free(src->clips);
 
     memset(src, 0, sizeof(*src));
 }
@@ -480,8 +653,13 @@ static bool model_asset_system_init(ModelAssetSystem* sys, uint32_t max_models)
     sys->material_table = (MaterialData*)calloc(sys->material_capacity, sizeof(MaterialData));
     sys->material_gpu_table = (MaterialGpu*)calloc(sys->material_capacity, sizeof(MaterialGpu));
 
+    sys->clip_capacity = max_models * 32u;
+    if(sys->clip_capacity < 64u)
+        sys->clip_capacity = 64u;
+    sys->clip_table = (AnimationClipData*)calloc(sys->clip_capacity, sizeof(AnimationClipData));
+
     if(!sys->models || !sys->debug_paths || !sys->active_model_ids || !sys->submesh_table || !sys->submesh_meta_table
-       || !sys->material_table || !sys->material_gpu_table)
+       || !sys->material_table || !sys->material_gpu_table || !sys->clip_table)
     {
         return false;
     }
@@ -530,12 +708,16 @@ static void model_asset_system_shutdown(ModelAssetSystem* sys)
             destroy_texture(&renderer, sys->material_table[i].orm_texture_id);
     }
 
+    for(uint32_t i = 0; i < sys->clip_count; ++i)
+        free(sys->clip_table[i].name);
+
     for(uint32_t i = 0; i < sys->pending_upload_count; ++i)
         free(sys->pending_uploads[i].src);
 
     free(sys->pending_uploads);
     free(sys->material_gpu_table);
     free(sys->material_table);
+    free(sys->clip_table);
     free(sys->submesh_meta_table);
     free(sys->submesh_table);
     free(sys->active_model_ids);
@@ -609,7 +791,17 @@ static bool meshx_reserve_vertices(ModelSource* out_src, uint32_t vertex_count)
 
     out_src->positions_xyz = (float*)realloc(out_src->positions_xyz, (size_t)vertex_count * 3u * sizeof(float));
     out_src->uv0_xy = (float*)realloc(out_src->uv0_xy, (size_t)vertex_count * 2u * sizeof(float));
-    return out_src->positions_xyz && out_src->uv0_xy;
+    if(out_src->has_normal)
+        out_src->normals_xyz = (float*)realloc(out_src->normals_xyz, (size_t)vertex_count * 3u * sizeof(float));
+    if(out_src->has_tangent)
+        out_src->tangents_xyzw = (float*)realloc(out_src->tangents_xyzw, (size_t)vertex_count * 4u * sizeof(float));
+    if(out_src->has_joints)
+        out_src->joints_u16 = (uint16_t*)realloc(out_src->joints_u16, (size_t)vertex_count * 4u * sizeof(uint16_t));
+    if(out_src->has_weights)
+        out_src->weights_u16 = (uint16_t*)realloc(out_src->weights_u16, (size_t)vertex_count * 4u * sizeof(uint16_t));
+
+    return out_src->positions_xyz && out_src->uv0_xy && (!out_src->has_normal || out_src->normals_xyz) && (!out_src->has_tangent || out_src->tangents_xyzw)
+           && (!out_src->has_joints || out_src->joints_u16) && (!out_src->has_weights || out_src->weights_u16);
 }
 
 static bool meshx_reserve_indices(ModelSource* out_src, uint32_t index_count)
@@ -653,6 +845,20 @@ static bool meshx_append_submesh(ModelSource* out_src)
     return true;
 }
 
+static bool meshx_append_clip(ModelSource* out_src)
+{
+    uint32_t next = out_src->clip_count + 1u;
+    AnimationClipData* arr = (AnimationClipData*)realloc(out_src->clips, (size_t)next * sizeof(AnimationClipData));
+    if(!arr)
+        return false;
+
+    out_src->clips = arr;
+    memset(&out_src->clips[out_src->clip_count], 0, sizeof(AnimationClipData));
+    out_src->clips[out_src->clip_count].duration = 0.0f;
+    out_src->clip_count = next;
+    return true;
+}
+
 static bool model_source_from_meshx(const char* path, ModelSource* out_src)
 {
     char* text = NULL;
@@ -667,6 +873,8 @@ static bool model_source_from_meshx(const char* path, ModelSource* out_src)
         scope_material,
         scope_submesh,
         scope_submesh_bounds,
+        scope_animations,
+        scope_skip_block,
         scope_vertices,
         scope_indices,
     };
@@ -680,6 +888,8 @@ static bool model_source_from_meshx(const char* path, ModelSource* out_src)
     bool have_layout_normal = false;
     bool have_layout_uv0 = false;
     bool have_layout_tangent = false;
+    bool have_layout_joints = false;
+    bool have_layout_weights = false;
 
     enum Scope scope = scope_root;
     enum Scope pending_scope = scope_root;
@@ -690,6 +900,9 @@ static bool model_source_from_meshx(const char* path, ModelSource* out_src)
     uint32_t vertex_capacity = 0;
     uint32_t index_write_index = 0;
     uint32_t index_capacity = 0;
+    int animations_brace_depth = 0;
+    int skip_block_brace_depth = 0;
+    uint32_t current_clip = UINT32_MAX;
 
     char* cursor = text;
     bool ok = true;
@@ -714,18 +927,54 @@ static bool model_source_from_meshx(const char* path, ModelSource* out_src)
 
         if(strcmp(tokens[0], "{") == 0)
         {
+            if(scope == scope_animations)
+            {
+                animations_brace_depth++;
+                continue;
+            }
+
+            if(scope == scope_skip_block)
+            {
+                skip_block_brace_depth++;
+                continue;
+            }
+
             if(pending_scope == scope_root)
             {
                 ok = false;
                 break;
             }
             scope = pending_scope;
+            if(scope == scope_animations)
+                animations_brace_depth = 1;
+            if(scope == scope_skip_block)
+                skip_block_brace_depth = 1;
             pending_scope = scope_root;
             continue;
         }
 
         if(strcmp(tokens[0], "}") == 0)
         {
+            if(scope == scope_animations)
+            {
+                if(animations_brace_depth > 0)
+                    animations_brace_depth--;
+                if(animations_brace_depth <= 1)
+                    current_clip = UINT32_MAX;
+                if(animations_brace_depth == 0)
+                    scope = scope_root;
+                continue;
+            }
+
+            if(scope == scope_skip_block)
+            {
+                if(skip_block_brace_depth > 0)
+                    skip_block_brace_depth--;
+                if(skip_block_brace_depth == 0)
+                    scope = scope_root;
+                continue;
+            }
+
             if(scope == scope_submesh_bounds)
             {
                 scope = scope_submesh;
@@ -797,8 +1046,30 @@ static bool model_source_from_meshx(const char* path, ModelSource* out_src)
                 pending_scope = scope_submesh;
                 continue;
             }
+            if(strcmp(tokens[0], "animations") == 0)
+            {
+                pending_scope = scope_animations;
+                continue;
+            }
+            if(strcmp(tokens[0], "skeletons") == 0)
+            {
+                src.has_skeleton = true;
+                pending_scope = scope_skip_block;
+                continue;
+            }
+            if(strcmp(tokens[0], "skins") == 0)
+            {
+                src.has_skinning = true;
+                pending_scope = scope_skip_block;
+                continue;
+            }
             if(strcmp(tokens[0], "vertices") == 0)
             {
+                // commit layout choices to source so reserves allocate correctly
+                src.has_normal = have_layout_normal;
+                src.has_tangent = have_layout_tangent;
+                src.has_joints = have_layout_joints;
+                src.has_weights = have_layout_weights;
                 pending_scope = scope_vertices;
                 continue;
             }
@@ -811,6 +1082,51 @@ static bool model_source_from_meshx(const char* path, ModelSource* out_src)
             ok = false;
             break;
         }
+
+        if(scope == scope_animations)
+        {
+            if(animations_brace_depth == 1 && strcmp(tokens[0], "clip") == 0)
+            {
+                if(!meshx_append_clip(&src))
+                {
+                    ok = false;
+                    break;
+                }
+                current_clip = src.clip_count - 1u;
+                continue;
+            }
+
+            if(animations_brace_depth == 2 && current_clip != UINT32_MAX)
+            {
+                AnimationClipData* clip = &src.clips[current_clip];
+                if(strcmp(tokens[0], "name") == 0 && token_count == 2)
+                {
+                    free(clip->name);
+                    clip->name = strdup_owned(tokens[1]);
+                    if(!clip->name)
+                    {
+                        ok = false;
+                        break;
+                    }
+                    continue;
+                }
+
+                if(strcmp(tokens[0], "duration") == 0 && token_count == 2)
+                {
+                    if(!helpers_parse_f32(tokens[1], &clip->duration))
+                    {
+                        ok = false;
+                        break;
+                    }
+                    continue;
+                }
+            }
+
+            continue;
+        }
+
+        if(scope == scope_skip_block)
+            continue;
 
         if(scope == scope_model_bounds)
         {
@@ -861,6 +1177,10 @@ static bool model_source_from_meshx(const char* path, ModelSource* out_src)
                 have_layout_uv0 = true;
             else if(strcmp(tokens[0], "tangent") == 0 && strcmp(tokens[1], "f32x4") == 0)
                 have_layout_tangent = true;
+            else if(strcmp(tokens[0], "joints0") == 0 && strcmp(tokens[1], "u16x4") == 0)
+                have_layout_joints = true;
+            else if(strcmp(tokens[0], "weights0") == 0 && strcmp(tokens[1], "unorm16x4") == 0)
+                have_layout_weights = true;
             else
                 ok = false;
             if(!ok)
@@ -1070,7 +1390,7 @@ static bool model_source_from_meshx(const char* path, ModelSource* out_src)
 
         if(scope == scope_vertices)
         {
-            if(strcmp(tokens[0], "v") != 0 || token_count != 13)
+            if(strcmp(tokens[0], "v") != 0)
             {
                 ok = false;
                 break;
@@ -1087,20 +1407,97 @@ static bool model_source_from_meshx(const char* path, ModelSource* out_src)
                 vertex_capacity = new_cap;
             }
 
-            float px, py, pz, u, v;
-            ok = helpers_parse_f32(tokens[1], &px)
-                 && helpers_parse_f32(tokens[2], &py)
-                 && helpers_parse_f32(tokens[3], &pz)
-                 && helpers_parse_f32(tokens[7], &u)
-                 && helpers_parse_f32(tokens[8], &v);
-            if(!ok)
+            uint32_t ti = 1;
+            float f0, f1, f2, f3;
+            // position
+            if(!helpers_parse_f32(tokens[ti++], &f0) || !helpers_parse_f32(tokens[ti++], &f1) || !helpers_parse_f32(tokens[ti++], &f2))
+            {
+                ok = false;
                 break;
+            }
+            src.positions_xyz[vertex_write_index * 3u + 0u] = f0;
+            src.positions_xyz[vertex_write_index * 3u + 1u] = f1;
+            src.positions_xyz[vertex_write_index * 3u + 2u] = f2;
 
-            src.positions_xyz[vertex_write_index * 3u + 0u] = px;
-            src.positions_xyz[vertex_write_index * 3u + 1u] = py;
-            src.positions_xyz[vertex_write_index * 3u + 2u] = pz;
-            src.uv0_xy[vertex_write_index * 2u + 0u] = u;
-            src.uv0_xy[vertex_write_index * 2u + 1u] = v;
+            // normal
+            if(have_layout_normal)
+            {
+                if(!helpers_parse_f32(tokens[ti++], &f0) || !helpers_parse_f32(tokens[ti++], &f1) || !helpers_parse_f32(tokens[ti++], &f2))
+                {
+                    ok = false;
+                    break;
+                }
+                src.normals_xyz[vertex_write_index * 3u + 0u] = f0;
+                src.normals_xyz[vertex_write_index * 3u + 1u] = f1;
+                src.normals_xyz[vertex_write_index * 3u + 2u] = f2;
+            }
+
+            // uv
+            if(have_layout_uv0)
+            {
+                if(!helpers_parse_f32(tokens[ti++], &f0) || !helpers_parse_f32(tokens[ti++], &f1))
+                {
+                    ok = false;
+                    break;
+                }
+                src.uv0_xy[vertex_write_index * 2u + 0u] = f0;
+                src.uv0_xy[vertex_write_index * 2u + 1u] = f1;
+            }
+
+            // tangent
+            if(have_layout_tangent)
+            {
+                if(!helpers_parse_f32(tokens[ti++], &f0) || !helpers_parse_f32(tokens[ti++], &f1) || !helpers_parse_f32(tokens[ti++], &f2) || !helpers_parse_f32(tokens[ti++], &f3))
+                {
+                    ok = false;
+                    break;
+                }
+                src.tangents_xyzw[vertex_write_index * 4u + 0u] = f0;
+                src.tangents_xyzw[vertex_write_index * 4u + 1u] = f1;
+                src.tangents_xyzw[vertex_write_index * 4u + 2u] = f2;
+                src.tangents_xyzw[vertex_write_index * 4u + 3u] = f3;
+            }
+
+            // joints
+            if(have_layout_joints)
+            {
+                for(int j = 0; j < 4; ++j)
+                {
+                    uint32_t ui = 0;
+                    if(!helpers_parse_u32(tokens[ti++], &ui))
+                    {
+                        ok = false;
+                        break;
+                    }
+                    src.joints_u16[vertex_write_index * 4u + j] = (uint16_t)ui;
+                }
+                if(!ok)
+                    break;
+            }
+
+            // weights (assume unorm16 provided as integer or float in 0..1)
+            if(have_layout_weights)
+            {
+                for(int j = 0; j < 4; ++j)
+                {
+                    float wf = 0.0f;
+                    if(helpers_parse_f32(tokens[ti], &wf))
+                    {
+                        src.weights_u16[vertex_write_index * 4u + j] = (uint16_t)(wf * 65535.0f);
+                        ++ti;
+                        continue;
+                    }
+                    uint32_t wi = 0;
+                    if(!helpers_parse_u32(tokens[ti++], &wi))
+                    {
+                        ok = false;
+                        break;
+                    }
+                    src.weights_u16[vertex_write_index * 4u + j] = (uint16_t)wi;
+                }
+                if(!ok)
+                    break;
+            }
             ++vertex_write_index;
             continue;
         }
@@ -1207,6 +1604,22 @@ void model_api_unload(ModelHandle model)
     if(!model_handle_valid(sys, model))
         return;
 
+    ModelInstanceSystem* inst_sys = &g_model_api.instance_system;
+    for(uint32_t i = 0; i < inst_sys->active_instance_count; )
+    {
+        uint32_t iid = inst_sys->active_instance_ids[i];
+        if(iid < inst_sys->instance_capacity && inst_sys->instances[iid].active && inst_sys->instances[iid].model == model)
+        {
+            inst_sys->instances[iid].active = false;
+            memset(&inst_sys->instances[iid], 0, sizeof(ModelInstanceData));
+            mu_id_pool_destroy_id(&inst_sys->instance_id_pool, iid);
+            inst_sys->active_instance_ids[i] = inst_sys->active_instance_ids[inst_sys->active_instance_count - 1u];
+            inst_sys->active_instance_count--;
+            continue;
+        }
+        ++i;
+    }
+
     ModelData* m = &sys->models[model];
 
     for(uint32_t i = 0; i < m->submesh_count; ++i)
@@ -1242,6 +1655,15 @@ void model_api_unload(ModelHandle model)
         memset(&sys->material_gpu_table[mid], 0, sizeof(MaterialGpu));
     }
 
+    for(uint32_t i = 0; i < m->clip_count; ++i)
+    {
+        uint32_t cid = m->first_clip_id + i;
+        if(cid >= sys->clip_count)
+            break;
+        free(sys->clip_table[cid].name);
+        memset(&sys->clip_table[cid], 0, sizeof(AnimationClipData));
+    }
+
     free(sys->debug_paths[model]);
     sys->debug_paths[model] = NULL;
 
@@ -1268,6 +1690,8 @@ static bool model_asset_create_from_source(ModelAssetSystem* sys, const char* so
         return false;
     if(sys->material_count + src->material_count > sys->material_capacity)
         return false;
+    if(sys->clip_count + src->clip_count > sys->clip_capacity)
+        return false;
 
     uint32_t id = MODEL_HANDLE_INVALID;
     if(!mu_id_pool_create_id(&sys->model_id_pool, &id))
@@ -1281,6 +1705,7 @@ static bool model_asset_create_from_source(ModelAssetSystem* sys, const char* so
 
     uint32_t first_submesh = sys->submesh_count;
     uint32_t first_material = sys->material_count;
+    uint32_t first_clip = sys->clip_count;
 
     char* path_copy = strdup_owned(source_path);
     if(!path_copy)
@@ -1335,6 +1760,36 @@ static bool model_asset_create_from_source(ModelAssetSystem* sys, const char* so
         out_gpu->base_color_factor[3] = out_mat->base_color_factor[3];
     }
 
+    for(uint32_t i = 0; i < src->clip_count; ++i)
+    {
+        uint32_t cid = first_clip + i;
+        sys->clip_table[cid].duration = src->clips[i].duration;
+        sys->clip_table[cid].name = src->clips[i].name ? strdup_owned(src->clips[i].name) : NULL;
+        if(src->clips[i].name && !sys->clip_table[cid].name)
+        {
+            free(path_copy);
+            mu_id_pool_destroy_id(&sys->model_id_pool, id);
+            return false;
+        }
+    }
+
+    // Compute normals and tangents if needed for skinning
+    if(src->has_skinning)
+    {
+        if(!src->has_normal && !compute_normals(src))
+        {
+            free(path_copy);
+            mu_id_pool_destroy_id(&sys->model_id_pool, id);
+            return false;
+        }
+        if(!src->has_tangent && !compute_tangents(src))
+        {
+            free(path_copy);
+            mu_id_pool_destroy_id(&sys->model_id_pool, id);
+            return false;
+        }
+    }
+
     for(uint32_t i = 0; i < src->submesh_count; ++i)
     {
         uint32_t sid = first_submesh + i;
@@ -1344,11 +1799,16 @@ static bool model_asset_create_from_source(ModelAssetSystem* sys, const char* so
         VkDeviceSize pos_bytes = (VkDeviceSize)in_sm->vertex_count * 3u * sizeof(float);
         VkDeviceSize uv_bytes = (VkDeviceSize)in_sm->vertex_count * 2u * sizeof(float);
         VkDeviceSize idx_bytes = (VkDeviceSize)in_sm->index_count * sizeof(uint32_t);
+        VkDeviceSize packed_bytes = src->has_skinning ? (VkDeviceSize)in_sm->vertex_count * 56u : 0;  // 56 = 12+12+16+8+8
 
         out_sm->position_slice = buffer_pool_alloc(&renderer.gpu_pool, pos_bytes, 16);
         out_sm->uv_slice = buffer_pool_alloc(&renderer.gpu_pool, uv_bytes, 16);
         out_sm->index_slice = buffer_pool_alloc(&renderer.gpu_pool, idx_bytes, 16);
-        if(out_sm->position_slice.buffer == VK_NULL_HANDLE || out_sm->uv_slice.buffer == VK_NULL_HANDLE || out_sm->index_slice.buffer == VK_NULL_HANDLE)
+        if(packed_bytes > 0)
+            out_sm->packed_slice = buffer_pool_alloc(&renderer.gpu_pool, packed_bytes, 16);
+
+        if(out_sm->position_slice.buffer == VK_NULL_HANDLE || out_sm->uv_slice.buffer == VK_NULL_HANDLE || out_sm->index_slice.buffer == VK_NULL_HANDLE
+           || (packed_bytes > 0 && out_sm->packed_slice.buffer == VK_NULL_HANDLE))
         {
             if(out_sm->position_slice.buffer != VK_NULL_HANDLE)
                 buffer_pool_free(out_sm->position_slice);
@@ -1356,6 +1816,8 @@ static bool model_asset_create_from_source(ModelAssetSystem* sys, const char* so
                 buffer_pool_free(out_sm->uv_slice);
             if(out_sm->index_slice.buffer != VK_NULL_HANDLE)
                 buffer_pool_free(out_sm->index_slice);
+            if(out_sm->packed_slice.buffer != VK_NULL_HANDLE)
+                buffer_pool_free(out_sm->packed_slice);
             free(path_copy);
             mu_id_pool_destroy_id(&sys->model_id_pool, id);
             return false;
@@ -1372,6 +1834,33 @@ static bool model_asset_create_from_source(ModelAssetSystem* sys, const char* so
             free(path_copy);
             mu_id_pool_destroy_id(&sys->model_id_pool, id);
             return false;
+        }
+
+        // Pack and upload skin vertices if needed
+        if(packed_bytes > 0)
+        {
+            uint8_t* packed_data = (uint8_t*)malloc((size_t)packed_bytes);
+            if(!packed_data)
+            {
+                free(path_copy);
+                mu_id_pool_destroy_id(&sys->model_id_pool, id);
+                return false;
+            }
+            if(!pack_skin_vertices(src, in_sm->vertex_offset, in_sm->vertex_count, packed_data))
+            {
+                free(packed_data);
+                free(path_copy);
+                mu_id_pool_destroy_id(&sys->model_id_pool, id);
+                return false;
+            }
+            if(!model_asset_push_upload(sys, out_sm->packed_slice, packed_data, (uint32_t)packed_bytes, 16, VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT))
+            {
+                free(packed_data);
+                free(path_copy);
+                mu_id_pool_destroy_id(&sys->model_id_pool, id);
+                return false;
+            }
+            free(packed_data);
         }
 
         out_sm->vertex_offset = 0;
@@ -1393,6 +1882,10 @@ static bool model_asset_create_from_source(ModelAssetSystem* sys, const char* so
     sys->models[id].submesh_count = src->submesh_count;
     sys->models[id].first_material_id = first_material;
     sys->models[id].material_count = src->material_count;
+    sys->models[id].first_clip_id = first_clip;
+    sys->models[id].clip_count = src->clip_count;
+    sys->models[id].has_skinning = src->has_skinning ? 1u : 0u;
+    sys->models[id].has_skeleton = src->has_skeleton ? 1u : 0u;
     sys->models[id].bounds = src->bounds;
 
     sys->debug_paths[id] = path_copy;
@@ -1400,6 +1893,7 @@ static bool model_asset_create_from_source(ModelAssetSystem* sys, const char* so
 
     sys->submesh_count += src->submesh_count;
     sys->material_count += src->material_count;
+    sys->clip_count += src->clip_count;
     sys->model_count++;
 
     sys->submesh_meta_dirty = true;
@@ -1411,7 +1905,7 @@ static bool model_asset_create_from_source(ModelAssetSystem* sys, const char* so
 
 static bool model_asset_upload_pending(ModelAssetSystem* sys, VkCommandBuffer cmd)
 {
-    if(!sys)
+    if(!sys)     
         return false;
 
     if(sys->pending_upload_count > 0)
@@ -1520,22 +2014,57 @@ bool model_api_init(uint32_t max_models, uint32_t instance_capacity)
         return false;
 
     memset(&g_model_api, 0, sizeof(g_model_api));
+    
+    // Capture global renderer for compute operations
+    g_model_api.renderer = &renderer;
 
+    // Initialize new modular systems
+    if(!model_instances_init(instance_capacity))
+        goto error_exit;
+
+    if(!animation_system_init())
+        goto error_exit;
+
+    if(!model_render_init(instance_capacity))
+        goto error_exit;
+
+    if(!model_assets_init(max_models))
+        goto error_exit;
+
+    // Initialize legacy internal systems (will be replaced by new modules)
     if(!model_asset_system_init(&g_model_api.assets, max_models))
-    {
-        model_asset_system_shutdown(&g_model_api.assets);
-        return false;
-    }
+        goto error_exit;
 
     if(!model_queue_init(&g_model_api.queue, instance_capacity))
-    {
-        model_queue_shutdown(&g_model_api.queue);
-        model_asset_system_shutdown(&g_model_api.assets);
-        return false;
-    }
+        goto error_exit;
 
+    if(!model_instance_system_init(&g_model_api.instance_system, instance_capacity))
+        goto error_exit;
+    
+    // Create compute skinning pipeline from compiled SPIR-V.
+    g_model_api.skinning_pipeline = pipeline_create_compute(&renderer, "compiledshaders/skinning.comp.spv");
+
+    g_model_api.debug_mode = ANIM_DEBUG_OFF;
     g_model_api.initialized = true;
     return true;
+
+error_exit:
+    // Shutdown in reverse order of initialization
+    model_assets_shutdown();
+    model_render_shutdown();
+    animation_system_shutdown();
+    model_instances_shutdown();
+    
+    // Shutdown legacy systems if they were partially initialized
+    if(g_model_api.instance_system.active_instance_ids)
+        model_instance_system_shutdown(&g_model_api.instance_system);
+    if(g_model_api.queue.requests)
+        model_queue_shutdown(&g_model_api.queue);
+    if(g_model_api.assets.models)
+        model_asset_system_shutdown(&g_model_api.assets);
+
+    memset(&g_model_api, 0, sizeof(g_model_api));
+    return false;
 }
 
 void model_api_shutdown(void)
@@ -1543,8 +2072,17 @@ void model_api_shutdown(void)
     if(!g_model_api.initialized)
         return;
 
+    // Shutdown new modular systems first (reverse order)
+    model_assets_shutdown();
+    model_render_shutdown();
+    animation_system_shutdown();
+    model_instances_shutdown();
+
+    // Shutdown legacy systems
+    model_instance_system_shutdown(&g_model_api.instance_system);
     model_queue_shutdown(&g_model_api.queue);
     model_asset_system_shutdown(&g_model_api.assets);
+    
     memset(&g_model_api, 0, sizeof(g_model_api));
 }
 
@@ -1575,6 +2113,445 @@ bool model_api_find_or_load_meshx(const char* path, ModelHandle* out_model)
     }
 
     return model_api_load_meshx(path, out_model);
+}
+
+bool model_api_is_valid(ModelHandle model)
+{
+    if(!g_model_api.initialized)
+        return false;
+    return model_handle_valid(&g_model_api.assets, model);
+}
+
+bool model_api_has_skeleton(ModelHandle model)
+{
+    if(!model_api_is_valid(model))
+        return false;
+    return g_model_api.assets.models[model].has_skeleton != 0;
+}
+
+bool model_api_has_skinning(ModelHandle model)
+{
+    if(!model_api_is_valid(model))
+        return false;
+    return g_model_api.assets.models[model].has_skinning != 0;
+}
+
+bool model_api_has_animations(ModelHandle model)
+{
+    if(!model_api_is_valid(model))
+        return false;
+    return g_model_api.assets.models[model].clip_count > 0;
+}
+
+uint32_t model_api_animation_count(ModelHandle model)
+{
+    if(!model_api_is_valid(model))
+        return 0;
+    return g_model_api.assets.models[model].clip_count;
+}
+
+AnimationClipHandle model_api_find_clip(ModelHandle model, const char* name)
+{
+    if(!model_api_is_valid(model) || !name)
+        return ANIMATION_CLIP_INVALID;
+
+    const ModelData* m = &g_model_api.assets.models[model];
+    for(uint32_t i = 0; i < m->clip_count; ++i)
+    {
+        uint32_t cid = m->first_clip_id + i;
+        if(cid >= g_model_api.assets.clip_count)
+            break;
+        const AnimationClipData* clip = &g_model_api.assets.clip_table[cid];
+        if(clip->name && strcmp(clip->name, name) == 0)
+            return i;
+    }
+
+    return ANIMATION_CLIP_INVALID;
+}
+
+const char* model_api_clip_name(ModelHandle model, AnimationClipHandle clip)
+{
+    if(!model_api_is_valid(model))
+        return NULL;
+
+    const ModelData* m = &g_model_api.assets.models[model];
+    if(clip >= m->clip_count)
+        return NULL;
+
+    uint32_t cid = m->first_clip_id + clip;
+    if(cid >= g_model_api.assets.clip_count)
+        return NULL;
+
+    return g_model_api.assets.clip_table[cid].name;
+}
+
+float model_api_clip_duration(ModelHandle model, AnimationClipHandle clip)
+{
+    if(!model_api_is_valid(model))
+        return 0.0f;
+
+    const ModelData* m = &g_model_api.assets.models[model];
+    if(clip >= m->clip_count)
+        return 0.0f;
+
+    uint32_t cid = m->first_clip_id + clip;
+    if(cid >= g_model_api.assets.clip_count)
+        return 0.0f;
+
+    return g_model_api.assets.clip_table[cid].duration;
+}
+
+ModelInstanceHandle model_instance_create(ModelHandle model)
+{
+    if(!g_model_api.initialized || !model_api_is_valid(model))
+        return MODEL_INSTANCE_HANDLE_INVALID;
+
+    ModelInstanceSystem* sys = &g_model_api.instance_system;
+    if(sys->active_instance_count >= sys->instance_capacity)
+        return MODEL_INSTANCE_HANDLE_INVALID;
+
+    uint32_t id = MODEL_INSTANCE_HANDLE_INVALID;
+    if(!mu_id_pool_create_id(&sys->instance_id_pool, &id))
+        return MODEL_INSTANCE_HANDLE_INVALID;
+
+    ModelInstanceData* inst = &sys->instances[id];
+    memset(inst, 0, sizeof(*inst));
+    inst->model = model;
+    mat4_identity(inst->transform);
+    inst->color[0] = 1.0f;
+    inst->color[1] = 1.0f;
+    inst->color[2] = 1.0f;
+    inst->color[3] = 1.0f;
+    inst->anim = animation_state_default();
+    inst->playback_mode = ANIM_LOOP;
+    inst->active = true;
+
+    // Allocate skinned vertex buffers if model has skinning
+    ModelData* model_data = &g_model_api.assets.models[model];
+    if(model_data->has_skinning)
+    {
+        // Calculate total vertex count from all submeshes
+        uint32_t total_vertex_count = 0;
+        for(uint32_t i = 0; i < model_data->submesh_count; ++i)
+        {
+            Submesh* sm = &g_model_api.assets.submesh_table[model_data->first_submesh_id + i];
+            total_vertex_count += sm->vertex_count;
+        }
+
+        // Allocate skinned output buffer (3 floats position + 3 floats normal + 3 floats tangent per vertex)
+        uint32_t skinned_vertex_size = total_vertex_count * (3 * 4 + 3 * 4 + 3 * 4);
+        inst->skinned_vertex_buffer = buffer_pool_alloc(&g_model_api.renderer->gpu_pool, skinned_vertex_size, 16);
+
+        // Allocate palette buffer (256 mat4s max)
+        uint32_t palette_size = 256 * sizeof(float) * 16;
+        inst->palette_buffer = buffer_pool_alloc(&g_model_api.renderer->gpu_pool, palette_size, 16);
+        inst->palette_dirty = true;
+    }
+
+    sys->active_instance_ids[sys->active_instance_count++] = id;
+    return id;
+}
+
+void model_instance_destroy(ModelInstanceHandle instance)
+{
+    if(!model_instance_valid(&g_model_api, instance))
+        return;
+
+    ModelInstanceSystem* sys = &g_model_api.instance_system;
+    sys->instances[instance].active = false;
+    memset(&sys->instances[instance], 0, sizeof(ModelInstanceData));
+    mu_id_pool_destroy_id(&sys->instance_id_pool, instance);
+    model_instance_remove_active_id(sys, instance);
+}
+
+bool model_instance_is_valid(ModelInstanceHandle instance)
+{
+    return model_instance_valid(&g_model_api, instance);
+}
+
+ModelHandle model_instance_model(ModelInstanceHandle instance)
+{
+    if(!model_instance_valid(&g_model_api, instance))
+        return MODEL_HANDLE_INVALID;
+    return g_model_api.instance_system.instances[instance].model;
+}
+
+void model_instance_set_transform(ModelInstanceHandle instance, const float model_matrix[4][4])
+{
+    if(!model_instance_valid(&g_model_api, instance) || !model_matrix)
+        return;
+    memcpy(g_model_api.instance_system.instances[instance].transform, model_matrix, sizeof(float[4][4]));
+}
+
+void model_instance_get_transform(ModelInstanceHandle instance, float out_model_matrix[4][4])
+{
+    if(!model_instance_valid(&g_model_api, instance) || !out_model_matrix)
+        return;
+    memcpy(out_model_matrix, g_model_api.instance_system.instances[instance].transform, sizeof(float[4][4]));
+}
+
+void model_instance_set_color(ModelInstanceHandle instance, const float color[4])
+{
+    if(!model_instance_valid(&g_model_api, instance) || !color)
+        return;
+    memcpy(g_model_api.instance_system.instances[instance].color, color, sizeof(float[4]));
+}
+
+bool model_instance_play(ModelInstanceHandle instance, AnimationClipHandle clip, AnimationPlaybackMode mode)
+{
+    if(!model_instance_valid(&g_model_api, instance))
+        return false;
+
+    ModelInstanceData* inst = &g_model_api.instance_system.instances[instance];
+    uint32_t clip_count = model_api_animation_count(inst->model);
+    if(clip_count == 0 || clip >= clip_count)
+        return false;
+
+    inst->anim.clip = clip;
+    inst->anim.time = 0.0f;
+    inst->anim.playing = true;
+    inst->anim.paused = false;
+    inst->playback_mode = mode;
+    inst->anim.loop = (mode != ANIM_PLAY_ONCE);
+    return true;
+}
+
+bool model_instance_play_by_name(ModelInstanceHandle instance, const char* clip_name, AnimationPlaybackMode mode)
+{
+    if(!model_instance_valid(&g_model_api, instance) || !clip_name)
+        return false;
+
+    ModelHandle model = g_model_api.instance_system.instances[instance].model;
+    AnimationClipHandle clip = model_api_find_clip(model, clip_name);
+    if(clip == ANIMATION_CLIP_INVALID)
+        return false;
+
+    return model_instance_play(instance, clip, mode);
+}
+
+void model_instance_stop(ModelInstanceHandle instance)
+{
+    if(!model_instance_valid(&g_model_api, instance))
+        return;
+    ModelInstanceData* inst = &g_model_api.instance_system.instances[instance];
+    inst->anim.playing = false;
+    inst->anim.time = 0.0f;
+}
+
+void model_instance_pause(ModelInstanceHandle instance, bool paused)
+{
+    if(!model_instance_valid(&g_model_api, instance))
+        return;
+    g_model_api.instance_system.instances[instance].anim.paused = paused;
+}
+
+void model_instance_set_time(ModelInstanceHandle instance, float time_sec)
+{
+    if(!model_instance_valid(&g_model_api, instance))
+        return;
+    g_model_api.instance_system.instances[instance].anim.time = time_sec < 0.0f ? 0.0f : time_sec;
+}
+
+void model_instance_set_speed(ModelInstanceHandle instance, float speed)
+{
+    if(!model_instance_valid(&g_model_api, instance))
+        return;
+    g_model_api.instance_system.instances[instance].anim.speed = speed;
+}
+
+void model_instance_set_loop(ModelInstanceHandle instance, bool enabled)
+{
+    if(!model_instance_valid(&g_model_api, instance))
+        return;
+    g_model_api.instance_system.instances[instance].anim.loop = enabled;
+    g_model_api.instance_system.instances[instance].playback_mode = enabled ? ANIM_LOOP : ANIM_PLAY_ONCE;
+}
+
+AnimationState model_instance_animation_state(ModelInstanceHandle instance)
+{
+    if(!model_instance_valid(&g_model_api, instance))
+        return animation_state_default();
+    return g_model_api.instance_system.instances[instance].anim;
+}
+
+bool model_instance_blend_to(ModelInstanceHandle instance, AnimationClipHandle target_clip, float blend_time_sec, AnimationPlaybackMode mode)
+{
+    (void)blend_time_sec;
+    return model_instance_play(instance, target_clip, mode);
+}
+
+bool model_instance_blend_to_by_name(ModelInstanceHandle instance, const char* clip_name, float blend_time_sec, AnimationPlaybackMode mode)
+{
+    (void)blend_time_sec;
+    return model_instance_play_by_name(instance, clip_name, mode);
+}
+
+void animation_system_begin_frame(float dt_sec)
+{
+    if(!g_model_api.initialized)
+        return;
+    
+    // Store dt in legacy system for backward compatibility
+    g_model_api.instance_system.frame_dt = dt_sec;
+
+    // Call new modular animation system
+    animation_system_update_frame(dt_sec);
+}
+
+void animation_system_update_instance(ModelInstanceHandle instance)
+{
+    if(!model_instance_valid(&g_model_api, instance))
+        return;
+
+    ModelInstanceData* inst = &g_model_api.instance_system.instances[instance];
+    if(!inst->anim.playing || inst->anim.paused || inst->anim.clip == ANIMATION_CLIP_INVALID)
+        return;
+
+    float duration = model_api_clip_duration(inst->model, inst->anim.clip);
+    if(duration <= 0.0f)
+        return;
+
+    inst->anim.time += g_model_api.instance_system.frame_dt * inst->anim.speed;
+    if(inst->anim.loop)
+    {
+        while(inst->anim.time >= duration)
+            inst->anim.time -= duration;
+        while(inst->anim.time < 0.0f)
+            inst->anim.time += duration;
+    }
+    else
+    {
+        if(inst->anim.time >= duration)
+        {
+            inst->anim.time = duration;
+            inst->anim.playing = false;
+        }
+        if(inst->anim.time < 0.0f)
+            inst->anim.time = 0.0f;
+    }
+}
+
+void animation_system_prepare_frame(VkCommandBuffer cmd)
+{
+    if(!g_model_api.initialized || !cmd)
+        return;
+
+    Renderer* r = g_model_api.renderer;
+    if(!r || !g_model_api.skinning_pipeline)
+        return;
+
+    ModelInstanceSystem* sys = &g_model_api.instance_system;
+    
+    // Process each active instance that has skinning enabled
+    for(uint32_t i = 0; i < sys->active_instance_count; ++i)
+    {
+        uint32_t inst_id = sys->active_instance_ids[i];
+        ModelInstanceData* inst = &sys->instances[inst_id];
+        
+        if(!inst->active || !inst->palette_dirty)
+            continue;
+
+        ModelData* model_data = &g_model_api.assets.models[inst->model];
+        if(!model_data->has_skinning)
+            continue;
+
+        // Calculate total vertex count from all submeshes
+        uint32_t total_vertex_count = 0;
+        for (uint32_t s = 0; s < model_data->submesh_count; ++s)
+        {
+            Submesh* sm = &g_model_api.assets.submesh_table[model_data->first_submesh_id + s];
+            total_vertex_count += sm->vertex_count;
+        }
+
+        if(total_vertex_count == 0)
+            continue;
+
+        // For now, fill palette with identity matrices to test the compute dispatch
+        // TODO: Evaluate animation clips and build proper joint matrices
+        float identity_matrices[256 * 16];
+        for(uint32_t j = 0; j < 256; ++j)
+        {
+            float* m = &identity_matrices[j * 16];
+            memset(m, 0, sizeof(float) * 16);
+            m[0] = 1.0f;
+            m[5] = 1.0f;
+            m[10] = 1.0f;
+            m[15] = 1.0f;
+        }
+
+        // Upload palette to GPU
+        void* palette_data = buffer_slice_get_mapped(&inst->palette_buffer);
+        if(palette_data)
+            memcpy(palette_data, identity_matrices, 256 * 16 * sizeof(float));
+
+        // Get source vertex buffer device address (first submesh's packed buffer for skinning)
+        Submesh* first_sm = &g_model_api.assets.submesh_table[model_data->first_submesh_id];
+        VkDeviceAddress src_vertex_addr = buffer_slice_device_address(&first_sm->packed_slice);
+        VkDeviceAddress dst_vertex_addr = buffer_slice_device_address(&inst->skinned_vertex_buffer);
+        VkDeviceAddress palette_addr = buffer_slice_device_address(&inst->palette_buffer);
+
+        if(!src_vertex_addr || !dst_vertex_addr || !palette_addr)
+            continue;
+
+        // Build push constants
+        SkinningPush push = {
+            .src_vertex_ptr = src_vertex_addr,
+            .dst_vertex_ptr = dst_vertex_addr,
+            .palette_ptr = palette_addr,
+            .vertex_count = total_vertex_count,
+            .joint_count = 256,  // TODO: Get actual joint count
+        };
+
+        // Bind compute pipeline and dispatch
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_get(g_model_api.skinning_pipeline));
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, r->bindless_system.pipeline_layout, 0, 1, &r->bindless_system.set, 0, NULL);
+        vkCmdPushConstants(cmd, r->bindless_system.pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(SkinningPush), &push);
+
+        // Calculate workgroup count (64 threads per workgroup)
+        uint32_t workgroups_x = (total_vertex_count + 63) / 64;
+        vkCmdDispatch(cmd, workgroups_x, 1, 1);
+
+        // Add buffer barrier: compute write -> graphics read
+        VkBufferMemoryBarrier2 barrier = {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
+            .srcStageMask = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+            .srcAccessMask = VK_ACCESS_2_SHADER_WRITE_BIT,
+            .dstStageMask = VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT,
+            .dstAccessMask = VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT,
+            .buffer = r->gpu_pool.buffer,
+            .offset = inst->skinned_vertex_buffer.offset,
+            .size = inst->skinned_vertex_buffer.size,
+        };
+
+        VkDependencyInfo dep = {
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .bufferMemoryBarrierCount = 1,
+            .pBufferMemoryBarriers = &barrier,
+        };
+        vkCmdPipelineBarrier2(cmd, &dep);
+
+        inst->palette_dirty = false;
+    }
+}
+
+
+bool model_instance_draw(ModelInstanceHandle instance)
+{
+    if(!model_instance_valid(&g_model_api, instance))
+        return false;
+
+    ModelInstanceData* inst = &g_model_api.instance_system.instances[instance];
+    return model_api_draw(inst->model, inst->transform, inst->color);
+}
+
+void animation_debug_set_mode(AnimationDebugMode mode)
+{
+    g_model_api.debug_mode = mode;
+}
+
+void animation_debug_draw(ModelInstanceHandle instance)
+{
+    (void)instance;
 }
 
 void model_api_begin_frame(const Camera* cam)
@@ -1720,6 +2697,26 @@ void model_api_prepare_frame(VkCommandBuffer cmd)
         dst->flags = req->flags;
         memcpy(dst->transform, queue->transforms[req->transform_index], sizeof(dst->transform));
         memcpy(dst->color, queue->colors[req->color_index], sizeof(dst->color));
+
+        // If there is an active instance with skinned vertex buffer for this model, use its device address
+        VkDeviceAddress override_pos = 0;
+        ModelInstanceSystem* inst_sys = &g_model_api.instance_system;
+        for(uint32_t ai = 0; ai < inst_sys->active_instance_count; ++ai)
+        {
+            uint32_t iid = inst_sys->active_instance_ids[ai];
+            if(iid >= inst_sys->instance_capacity)
+                continue;
+            ModelInstanceData* mid = &inst_sys->instances[iid];
+            if(!mid->active)
+                continue;
+            if(mid->model != req->model)
+                continue;
+            if(mid->skinned_vertex_buffer.buffer == VK_NULL_HANDLE)
+                continue;
+            override_pos = buffer_slice_device_address(&mid->skinned_vertex_buffer);
+            break;
+        }
+        dst->pos_ptr = override_pos;
     }
 
     queue->indirect_count = 0;
@@ -1810,7 +2807,7 @@ void model_api_draw_queued(VkCommandBuffer cmd)
     if(!queue->prepared || queue->indirect_count == 0 || queue->instance_count == 0)
         return;
 
-    GltfIndirectPush push = {0};
+    ModelIndirectPush push = {0};
     push.submesh_table_ptr = slice_device_address(&renderer, assets->submesh_meta_slice);
     push.material_table_ptr = slice_device_address(&renderer, assets->material_gpu_slice);
     push.instance_ptr = slice_device_address(&renderer, queue->instance_slice);
@@ -1818,7 +2815,7 @@ void model_api_draw_queued(VkCommandBuffer cmd)
 
     vk_cmd_set_viewport_scissor(cmd, renderer.swapchain.extent);
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_pipelines.pipelines[pipelines.gltf_minimal]);
-    vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(GltfIndirectPush), &push);
+    vkCmdPushConstants(cmd, renderer.bindless_system.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(ModelIndirectPush), &push);
     vkCmdDrawIndirect(cmd, queue->indirect_slice.buffer, queue->indirect_slice.offset, queue->indirect_count, sizeof(VkDrawIndirectCommand));
 }
 

@@ -8,6 +8,8 @@ static const char* GLTF_MODEL_PATHS[] = {
     "gameassets/blockychar/character-a.meshx",
 };
 
+static const char* WALK_MODEL_PATH = "gameassets/blockychar/character-a.meshx";
+
 #define GLTF_MODEL_COUNT (sizeof(GLTF_MODEL_PATHS) / sizeof(GLTF_MODEL_PATHS[0]))
 
 
@@ -21,6 +23,16 @@ int main(void)
         return 1;
     }
 
+    ModelHandle walk_model = MODEL_HANDLE_INVALID;
+    ModelInstanceHandle walk_instance = MODEL_INSTANCE_HANDLE_INVALID;
+    if(model_api_find_or_load_meshx(WALK_MODEL_PATH, &walk_model))
+    {
+        walk_instance = model_instance_create(walk_model);
+        if(walk_instance != MODEL_INSTANCE_HANDLE_INVALID)
+            model_instance_play_by_name(walk_instance, "walk", ANIM_LOOP);
+    }
+
+
     Camera cam = {0};
     camera_defaults_3d(&cam);
     camera3d_set_position(&cam, 0.0f, 0.6f, 4.0f);
@@ -28,6 +40,12 @@ int main(void)
 
     while(!glfwWindowShouldClose(renderer.window))
     {
+        float now = (float)glfwGetTime();
+        animation_system_begin_frame(renderer.dt);
+
+        if(model_instance_is_valid(walk_instance))
+            animation_system_update_instance(walk_instance);
+
         TracyCFrameMark;
         pipeline_rebuild(&renderer);
         frame_start(&renderer, &cam);
@@ -68,6 +86,8 @@ int main(void)
                 image_transition_swapchain(cmd, &renderer.swapchain, VK_IMAGE_LAYOUT_GENERAL,
                                            VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT, VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT);
                 flush_barriers(cmd);
+
+                animation_system_prepare_frame(cmd);
 
                 model_api_prepare_frame(cmd);
             }

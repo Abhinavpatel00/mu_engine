@@ -10,7 +10,9 @@ CXX := clang++
 # Sources
 # -----------------------------
 
-SRC_C := main.c ext.c vk.c helpers.c offset_allocator.c passes.c renderer.c text_baker.c text_system.c gltf_gpu_mesh.c
+SRC_C := main.c ext.c vk.c helpers.c offset_allocator.c passes.c renderer.c text_baker.c text_system.c \
+           gltf_gpu_mesh.c \
+           model_assets.c model_instances.c animation_system.c model_render.c
 
 
 
